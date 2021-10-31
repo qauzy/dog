@@ -1,7 +1,7 @@
 package cfg
 
 import (
-	"../control"
+	"dog/control"
 	"fmt"
 	"log"
 	"os"

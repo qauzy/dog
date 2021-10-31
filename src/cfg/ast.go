@@ -1,7 +1,7 @@
 package cfg
 
 import (
-	"../util"
+	"dog/util"
 	"strconv"
 )
 

@@ -1,8 +1,8 @@
 package util
 
 import (
-	"../control"
 	"bytes"
+	"dog/control"
 	"fmt"
 	"os"
 	"os/exec"

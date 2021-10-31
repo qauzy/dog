@@ -1,7 +1,7 @@
 package cfg
 
 import (
-	"../util"
+	"dog/util"
 )
 
 func Quasi_reverse(g *util.Graph) []Block {

@@ -1,7 +1,7 @@
 package cfg_opt
 
 import (
-	. "../../cfg"
+	. "dog/cfg"
 )
 
 func CopyProp(prog Program) Program {

@@ -1,8 +1,8 @@
 package elaborator
 
 import (
-	"../ast"
-	"../control"
+	"dog/ast"
+	"dog/control"
 )
 
 var current_class string

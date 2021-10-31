@@ -1,8 +1,8 @@
 package cfg
 
 import (
-	"../codegen/C"
-	"../util"
+	"dog/codegen/C"
+	"dog/util"
 )
 
 func TransCfg(prog codegen_c.Program) Program {

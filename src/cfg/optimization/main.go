@@ -1,9 +1,9 @@
 package cfg_opt
 
 import (
-	. "../../cfg"
-	"../../control"
-	"../../util"
+	. "dog/cfg"
+	"dog/control"
+	"dog/util"
 )
 
 func Opt(prog Program) Program {

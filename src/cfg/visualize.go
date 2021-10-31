@@ -1,9 +1,9 @@
 package cfg
 
 import (
-	"../control"
-	"../util"
 	"bytes"
+	"dog/control"
+	"dog/util"
 	"fmt"
 	"strconv"
 )

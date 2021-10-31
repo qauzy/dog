@@ -1,7 +1,7 @@
 package codegen_c
 
 import (
-	"../../util"
+	"dog/util"
 	"fmt"
 )
 

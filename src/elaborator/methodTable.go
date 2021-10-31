@@ -1,7 +1,7 @@
 package elaborator
 
 import (
-	"../ast"
+	"dog/ast"
 	"fmt"
 )
 

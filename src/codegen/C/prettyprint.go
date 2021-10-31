@@ -1,8 +1,8 @@
 package codegen_c
 
 import (
-	"../../control"
-	"../../util"
+	"dog/control"
+	"dog/util"
 	"fmt"
 	"os"
 	"strconv"

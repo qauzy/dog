@@ -1,9 +1,9 @@
 package ast_opt
 
 import (
-	"../../ast"
-	"../../util"
 	"container/list"
+	"dog/ast"
+	"dog/util"
 )
 
 type DeadClass struct {

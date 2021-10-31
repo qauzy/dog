@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"../ast"
-	"../control"
-	"../util"
+	"dog/ast"
+	"dog/control"
+	"dog/util"
 	"fmt"
 	"strconv"
 )

@@ -1,7 +1,7 @@
 package ast_opt
 
 import (
-	"../../ast"
+	"dog/ast"
 )
 
 func AlgSimp(prog ast.Program) ast.Program {

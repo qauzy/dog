@@ -1,9 +1,9 @@
 package codegen_c
 
 import (
-	"../../ast"
-	"../../control"
-	"../../util"
+	"dog/ast"
+	"dog/control"
+	"dog/util"
 )
 
 var table *ClassTable

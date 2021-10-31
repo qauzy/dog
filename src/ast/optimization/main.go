@@ -1,8 +1,8 @@
 package ast_opt
 
 import (
-	"../../ast"
-	"../../control"
+	"dog/ast"
+	"dog/control"
 )
 
 func Opt(prog ast.Program) ast.Program {
