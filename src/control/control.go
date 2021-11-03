@@ -1,7 +1,7 @@
 package control
 
 var Lexer_test bool = false
-var Lexer_dump bool = false
+var Lexer_dump bool = true
 
 var CodeGen_fileName string = ""
 var CodeGen_outputName string = ""

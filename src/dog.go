@@ -50,7 +50,7 @@ func main() {
 	if control.Ast_dumpAst == true {
 		ast.NewPP().DumpProg(Ast)
 	}
-	//step2: elaborate
+	//step2: elaborate -- 细化
 	control.Verbose("Elaborate", func() {
 		elaborator.Elaborate(Ast)
 	}, control.VERBOSE_PASS)
@@ -59,7 +59,7 @@ func main() {
 		Ast = ast_opt.Opt(Ast)
 	}, control.VERBOSE_PASS)
 
-	//set3: trans
+	//set3: trans -- 翻译
 	var Ast_c codegen_c.Program
 	control.Verbose("Transaction", func() {
 		switch control.CodeGen_codegen {
@@ -75,14 +75,14 @@ func main() {
 			panic("impossible")
 		}
 	}, control.VERBOSE_PASS)
-	//step4: codegen
+	//step4: codegen -- 代码生成
 	if control.Optimization_Level <= 1 {
 		control.Verbose("CodeGen", func() {
 			codegen_c.CodegenC(Ast_c)
 		}, control.VERBOSE_PASS)
 	} else {
 
-		//setp5:optimization
+		//setp5:optimization -- 优化
 		//Ast_c -> Ast_cfg
 		var Ast_cfg cfg.Program
 		control.Verbose("TransCfg", func() {

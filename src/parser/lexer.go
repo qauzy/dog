@@ -31,6 +31,7 @@ func NewLexer(fname string, buf []byte) *Lexer {
 func (this *Lexer) NextToken() *Token {
 	var t *Token
 	t = nil
+	//拿不到token就继续读入字符
 	for t == nil {
 		t = this.nextTokenInternal()
 	}
@@ -94,10 +95,15 @@ func (this *Lexer) lex_Comments(c byte) {
 			c = ex
 			ex = this.buf[this.fp]
 			this.fp++
+			if ex == '\n' {
+				this.lineNum++
+			}
 		}
 		if this.fp == len(this.buf) {
 			fmt.Println("error")
 			os.Exit(0)
+		} else {
+			this.lineNum++
 		}
 	} else {
 		fmt.Println("error")
@@ -119,7 +125,7 @@ func (this *Lexer) lex_Num(c byte) string {
 
 		//999abc is not number
 		if (next == '_') || (next >= 'a' && next <= 'z') ||
-			(next >= 'A' && next <= 'Z') {
+			(next >= 'A' && next <= 'Z' && next != 'L') {
 			fmt.Println("ilegal number")
 			os.Exit(0)
 		}
@@ -139,6 +145,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 	c := this.buf[this.fp]
 	this.fp++
 
+	//换行处理
 	for c == '\t' || '\n' == c || '\r' == c {
 		if c == '\n' {
 			this.lineNum++
@@ -150,10 +157,11 @@ func (this *Lexer) nextTokenInternal() *Token {
 		this.fp++
 	}
 
+	//文档末尾
 	if this.fp >= len(this.buf) {
 		return newToken(TOKEN_EOF, "EOF", this.lineNum)
 	}
-
+	//fallthrough强制执行后面的case代码
 	switch c {
 	case '&':
 		if this.s == "" {
@@ -165,6 +173,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
+	case '@':
+		return newToken(TOKEN_AT, "@", this.lineNum)
 	case ' ':
 		fallthrough
 	case '+':

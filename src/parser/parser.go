@@ -391,6 +391,15 @@ func (this *Parser) parseStatements() []ast.Stm {
 func (this *Parser) parseVarDecl() ast.Dec {
 	var dec *ast.DecSingle
 	var id string
+	if this.current.Kind == TOKEN_PRIVATE {
+		this.eatToken(TOKEN_PRIVATE)
+	}
+	if this.current.Kind == TOKEN_STATIC {
+		this.eatToken(TOKEN_STATIC)
+	}
+	if this.current.Kind == TOKEN_FINAL {
+		this.eatToken(TOKEN_FINAL)
+	}
 
 	if !this.isSpecial {
 		tp := this.parseType()
@@ -413,9 +422,14 @@ func (this *Parser) parseVarDecl() ast.Dec {
 
 func (this *Parser) parseVarDecls() []ast.Dec {
 	decs := []ast.Dec{}
-	for this.current.Kind == TOKEN_INT ||
+	for this.current.Kind == TOKEN_INT || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_AT ||
 		this.current.Kind == TOKEN_BOOLEAN ||
 		this.current.Kind == TOKEN_ID {
+		for this.current.Kind == TOKEN_AT {
+			this.parseAnnotation()
+
+		}
+		this.advance()
 		if this.current.Kind != TOKEN_ID {
 			decs = append(decs, this.parseVarDecl())
 		} else {
@@ -488,6 +502,13 @@ func (this *Parser) parseClassDecl() ast.Class {
 		extends = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 	}
+
+	if this.current.Kind == TOKEN_IMPLEMENTS {
+		this.eatToken(TOKEN_IMPLEMENTS)
+		extends = this.current.Lexeme
+		this.eatToken(TOKEN_ID)
+	}
+
 	this.eatToken(TOKEN_LBRACE)
 	decs := this.parseVarDecls()
 	methods := this.parseMethodDecls()
@@ -502,8 +523,13 @@ func (this *Parser) parseClassDecls() []ast.Class {
 	}
 	return classes
 }
+func (this *Parser) parseAnnotation() {
+	this.eatToken(TOKEN_AT)
+
+}
 
 func (this *Parser) parseMainClass() ast.MainClass {
+	//
 	this.eatToken(TOKEN_CLASS)
 	id := this.current.Lexeme
 	this.eatToken(TOKEN_ID)
@@ -527,10 +553,38 @@ func (this *Parser) parseMainClass() ast.MainClass {
 }
 
 func (this *Parser) parseProgram() ast.Program {
-	main_class := this.parseMainClass()
+	//处理package
+	if this.current.Kind == TOKEN_PACKAGE {
+		this.advance()
+		for this.current.Kind != TOKEN_SEMI {
+			this.advance()
+		}
+		this.advance()
+	}
+
+	//处理import
+	for this.current.Kind == TOKEN_IMPORT {
+		this.advance()
+		for this.current.Kind != TOKEN_SEMI {
+			this.advance()
+		}
+		this.advance()
+	}
+
+	////解析主入口类
+	//main_class := this.parseMainClass()
+	////解析类描述
+
+	for this.current.Kind == TOKEN_AT {
+		fmt.Println("********", this.current.ToString(), "********")
+		this.parseAnnotation()
+
+	}
+	this.advance()
+
 	classes := this.parseClassDecls()
 	this.eatToken(TOKEN_EOF)
-	return &ast.ProgramSingle{main_class, classes}
+	return &ast.ProgramSingle{nil, classes}
 }
 
 func (this *Parser) Parser() ast.Program {

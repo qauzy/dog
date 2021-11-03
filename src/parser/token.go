@@ -59,6 +59,13 @@ func initTokenMap() {
 	tokenMap["true"] = TOKEN_TRUE
 	tokenMap["void"] = TOKEN_VOID
 	tokenMap["while"] = TOKEN_WHILE
+	tokenMap["package"] = TOKEN_PACKAGE
+	tokenMap["import"] = TOKEN_IMPORT
+	tokenMap["@"] = TOKEN_AT
+	tokenMap["implements"] = TOKEN_IMPLEMENTS
+	tokenMap["private"] = TOKEN_PRIVATE
+
+	tokenMap["final"] = TOKEN_FINAL
 
 	tMap = make(map[int]string)
 	tMap[TOKEN_ADD] = "TOKEN_ADD"
@@ -101,6 +108,12 @@ func initTokenMap() {
 	tMap[TOKEN_TIMES] = "TOKEN_TIMES"
 	tMap[TOKEN_VOID] = "TOKEN_VOID"
 	tMap[TOKEN_WHILE] = "TOKEN_WHILE"
+	tMap[TOKEN_PACKAGE] = "TOKEN_PACKAGE"
+	tMap[TOKEN_IMPORT] = "TOKEN_IMPORT"
+	tMap[TOKEN_AT] = "TOKEN_AT"
+	tMap[TOKEN_IMPLEMENTS] = "TOKEN_IMPLEMENTS"
+	tMap[TOKEN_PRIVATE] = "TOKEN_PRIVATE"
+	tMap[TOKEN_FINAL] = "TOKEN_FINAL"
 
 }
 
@@ -133,6 +146,7 @@ const (
 	TOKEN_OUT
 	TOKEN_PRINTLN
 	TOKEN_PUBLIC
+	TOKEN_PRIVATE
 	TOKEN_RBRACE
 	TOKEN_RBRACK
 	TOKEN_RETURN
@@ -147,6 +161,11 @@ const (
 	TOKEN_TRUE
 	TOKEN_VOID
 	TOKEN_WHILE
+	TOKEN_PACKAGE
+	TOKEN_IMPORT
+	TOKEN_AT
+	TOKEN_IMPLEMENTS
+	TOKEN_FINAL
 )
 
 func (this *Token) ToString() string {
