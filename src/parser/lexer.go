@@ -75,6 +75,24 @@ func (this *Lexer) expectIdOrKey(c byte) *Token {
 	}
 }
 
+// 忽略注解
+//
+// param: c
+func (this *Lexer) lex_Annotation(c byte) {
+	ex := this.buf[this.fp]
+	this.fp++
+	var ss string
+	for c != '\n' && this.fp < len(this.buf) {
+		c = ex
+		ex = this.buf[this.fp]
+		this.fp++
+		if ex == '\n' {
+			this.lineNum++
+		}
+		ss += string(c)
+	}
+	fmt.Println("注解:", ss)
+}
 func (this *Lexer) lex_Comments(c byte) {
 	ex := this.buf[this.fp]
 	this.fp++
@@ -174,7 +192,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 			return this.expectIdOrKey(c)
 		}
 	case '@':
-		return newToken(TOKEN_AT, "@", this.lineNum)
+		//return newToken(TOKEN_AT, "@", this.lineNum)
+		this.lex_Annotation(c)
 	case ' ':
 		fallthrough
 	case '+':
