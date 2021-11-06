@@ -251,7 +251,7 @@ func AlgSimp(prog ast.Program) ast.Program {
 				opt(m)
 				methods = append(methods, method)
 			}
-			new_class = &ast.ClassSingle{c.Name, c.Extends, c.Decs, methods}
+			new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, methods}
 		} else {
 			panic("impossible")
 		}

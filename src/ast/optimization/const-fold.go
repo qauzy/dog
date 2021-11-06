@@ -235,7 +235,7 @@ func ConstFold(prog ast.Program) ast.Program {
 				opt(m)
 				methods = append(methods, method)
 			}
-			class = &ast.ClassSingle{c.Name, c.Extends, c.Decs, methods}
+			class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, methods}
 		default:
 			panic("impossible")
 		}

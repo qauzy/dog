@@ -47,6 +47,7 @@ type Type interface {
 
 /*Dec*/ /*{{{*/
 type DecSingle struct {
+	Access  int
 	Tp      Type
 	Name    string
 	IsField bool
@@ -84,6 +85,7 @@ func (this *MainClassSingle) _mainclass() {
 
 /* ClassSingle {{{*/
 type ClassSingle struct {
+	Access  int
 	Name    string
 	Extends string
 	Decs    []Dec
@@ -655,6 +657,7 @@ const (
 	TYPE_BOOLEAN
 	TYPE_INTARRAY
 	TYPE_CLASS
+	TOKEN_STRING
 )
 
 type Int struct {
@@ -687,6 +690,22 @@ func (this *Boolean) Gettype() int {
 
 func (this *Boolean) String() string {
 	return "@boolean"
+}
+
+//Type.Bool /*{{{*/
+type String struct {
+	TypeKind int
+}
+
+func (this *String) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *String) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *String) String() string {
+	return "@String"
 }
 
 /*}}}*/

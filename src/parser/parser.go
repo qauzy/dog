@@ -57,6 +57,9 @@ func (this *Parser) parseType() ast.Type {
 	case TOKEN_BOOLEAN:
 		this.eatToken(TOKEN_BOOLEAN)
 		this.currentType = &ast.Boolean{ast.TYPE_BOOLEAN}
+	case TOKEN_STRING:
+		this.eatToken(TOKEN_STRING)
+		this.currentType = &ast.String{ast.TOKEN_STRING}
 	case TOKEN_LBRACK:
 		this.eatToken(TOKEN_LBRACK)
 		this.eatToken(TOKEN_RBRACK)
@@ -74,6 +77,12 @@ func (this *Parser) parseFormalList() []ast.Dec {
 	flist := []ast.Dec{}
 	var tp ast.Type
 	var id string
+	var access int
+
+	if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
+		access = this.current.Kind
+		this.advance()
+	}
 
 	if this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_INT ||
@@ -81,14 +90,14 @@ func (this *Parser) parseFormalList() []ast.Dec {
 		tp = this.parseType()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		flist = append(flist, &ast.DecSingle{tp, id, this.isField})
+		flist = append(flist, &ast.DecSingle{access, tp, id, this.isField})
 
 		for this.current.Kind == TOKEN_COMMER {
 			this.eatToken(TOKEN_COMMER)
 			tp = this.parseType()
 			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
-			flist = append(flist, &ast.DecSingle{tp, id, this.isField})
+			flist = append(flist, &ast.DecSingle{access, tp, id, this.isField})
 		}
 	}
 	return flist
@@ -391,29 +400,36 @@ func (this *Parser) parseStatements() []ast.Stm {
 func (this *Parser) parseVarDecl() ast.Dec {
 	var dec *ast.DecSingle
 	var id string
-	if this.current.Kind == TOKEN_PRIVATE {
-		this.eatToken(TOKEN_PRIVATE)
-	}
-	if this.current.Kind == TOKEN_STATIC {
-		this.eatToken(TOKEN_STATIC)
-	}
-	if this.current.Kind == TOKEN_FINAL {
-		this.eatToken(TOKEN_FINAL)
+	var access int
+
+	if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
+		access = this.current.Kind
+		this.advance()
 	}
 
 	if !this.isSpecial {
 		tp := this.parseType()
 		id := this.current.Lexeme
-		dec = &ast.DecSingle{tp, id, this.isField}
+		dec = &ast.DecSingle{access, tp, id, this.isField}
 		this.eatToken(TOKEN_ID)
+		//处理声明变量同时赋值
+		if this.current.Kind == TOKEN_ASSIGN {
+			this.eatToken(TOKEN_ASSIGN)
+			this.eatToken(TOKEN_ID)
+		}
 		this.eatToken(TOKEN_SEMI)
 		return dec
 	} else {
 		tp := &ast.ClassType{this.current.Lexeme, ast.TYPE_CLASS}
 		this.current = this.currentNext
 		id = this.current.Lexeme
-		dec = &ast.DecSingle{tp, id, this.isField}
+		dec = &ast.DecSingle{access, tp, id, this.isField}
 		this.eatToken(TOKEN_ID)
+		//处理声明变量同时赋值
+		if this.current.Kind == TOKEN_ASSIGN {
+			this.eatToken(TOKEN_ASSIGN)
+			this.eatToken(TOKEN_ID)
+		}
 		this.eatToken(TOKEN_SEMI)
 		this.isSpecial = false
 		return dec
@@ -422,17 +438,51 @@ func (this *Parser) parseVarDecl() ast.Dec {
 
 func (this *Parser) parseVarDecls() []ast.Dec {
 	decs := []ast.Dec{}
-	for this.current.Kind == TOKEN_INT || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_AT ||
-		this.current.Kind == TOKEN_BOOLEAN ||
+	for this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PROTECTED ||
+		this.current.Kind == TOKEN_BOOLEAN || this.current.Kind == TOKEN_INT || this.current.Kind == TOKEN_STRING ||
 		this.current.Kind == TOKEN_ID {
-		for this.current.Kind == TOKEN_AT {
-			this.parseAnnotation()
+		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
 
+		//处理 访问修饰符
+		if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
+			fmt.Println("处理访问修饰符:", this.current.ToString())
+			this.advance()
 		}
-		this.advance()
-		if this.current.Kind != TOKEN_ID {
-			decs = append(decs, this.parseVarDecl())
+
+		//处理 其他修饰符
+		if this.current.Kind == TOKEN_STATIC {
+			this.eatToken(TOKEN_STATIC)
+		}
+
+		if this.current.Kind == TOKEN_FINAL {
+			this.eatToken(TOKEN_FINAL)
+		}
+
+		if this.current.Kind == TOKEN_TRANSIENT {
+			this.eatToken(TOKEN_TRANSIENT)
+		}
+
+		//处理方法
+		id := this.current.Lexeme
+		linenum := this.current.LineNum
+		this.eatToken(TOKEN_ID)
+		this.eatToken(TOKEN_ID)
+		if this.current.Kind == TOKEN_LPAREN {
+
+			this.currentNext = this.current
+			this.current = newToken(TOKEN_ID, id, linenum)
+			this.isSpecial = true
+			return decs
+
 		} else {
+			this.currentNext = this.current
+			this.current = newToken(TOKEN_ID, id, linenum)
+			this.Linenum = linenum
+		}
+
+		//处理变量类型
+		if this.current.Kind == TOKEN_ID {
+			fmt.Println("处理TOKEN_ID变量类型:", this.current.ToString())
 			id := this.current.Lexeme
 			linenum := this.current.LineNum
 			this.eatToken(TOKEN_ID)
@@ -452,6 +502,9 @@ func (this *Parser) parseVarDecls() []ast.Dec {
 				this.isSpecial = true
 				decs = append(decs, this.parseVarDecl())
 			}
+
+		} else {
+			decs = append(decs, this.parseVarDecl())
 		}
 	}
 	return decs
@@ -491,18 +544,33 @@ func (this *Parser) parseMethodDecls() []ast.Method {
 	return methods
 }
 
+//解析类
 func (this *Parser) parseClassDecl() ast.Class {
 	var id, extends string
+
+	//类访问权限修饰符
+	var access int
+	if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
+		access = this.current.Kind
+		this.advance()
+	}
+	//处理abstract
+	if this.current.Kind == TOKEN_ABSTRACT {
+		this.advance()
+	}
 
 	this.eatToken(TOKEN_CLASS)
 	id = this.current.Lexeme
 	this.eatToken(TOKEN_ID)
+
+	//处理extends
 	if this.current.Kind == TOKEN_EXTENDS {
 		this.eatToken(TOKEN_EXTENDS)
 		extends = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 	}
 
+	//处理implements
 	if this.current.Kind == TOKEN_IMPLEMENTS {
 		this.eatToken(TOKEN_IMPLEMENTS)
 		extends = this.current.Lexeme
@@ -510,15 +578,23 @@ func (this *Parser) parseClassDecl() ast.Class {
 	}
 
 	this.eatToken(TOKEN_LBRACE)
+
+	//处理成员变量
 	decs := this.parseVarDecls()
+
+	//处理方法
 	methods := this.parseMethodDecls()
+
 	this.eatToken(TOKEN_RBRACE)
-	return &ast.ClassSingle{id, extends, decs, methods}
+	return &ast.ClassSingle{access, id, extends, decs, methods}
 }
 
+// 解析类组
+//
+// return:
 func (this *Parser) parseClassDecls() []ast.Class {
 	classes := []ast.Class{}
-	for this.current.Kind == TOKEN_CLASS {
+	for this.current.Kind == TOKEN_CLASS || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PROTECTED {
 		classes = append(classes, this.parseClassDecl())
 	}
 	return classes
@@ -574,13 +650,6 @@ func (this *Parser) parseProgram() ast.Program {
 	////解析主入口类
 	//main_class := this.parseMainClass()
 	////解析类描述
-
-	for this.current.Kind == TOKEN_AT {
-		fmt.Println("********", this.current.ToString(), "********")
-		this.parseAnnotation()
-
-	}
-	this.advance()
 
 	classes := this.parseClassDecls()
 	this.eatToken(TOKEN_EOF)

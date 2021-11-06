@@ -164,7 +164,7 @@ func (this *DeadCode) opt_Class(cc ast.Class) {
 			this.opt(m)
 			this.methods = append(this.methods, this.method)
 		}
-		this.new_class = &ast.ClassSingle{c.Name, c.Extends, c.Decs, this.methods}
+		this.new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, this.methods}
 	default:
 		panic("impossible")
 	}

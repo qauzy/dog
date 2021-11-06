@@ -79,18 +79,14 @@ func (this *Lexer) expectIdOrKey(c byte) *Token {
 //
 // param: c
 func (this *Lexer) lex_Annotation(c byte) {
-	ex := this.buf[this.fp]
-	this.fp++
+
 	var ss string
 	for c != '\n' && this.fp < len(this.buf) {
-		c = ex
-		ex = this.buf[this.fp]
+		c = this.buf[this.fp]
 		this.fp++
-		if ex == '\n' {
-			this.lineNum++
-		}
 		ss += string(c)
 	}
+	this.lineNum++
 	fmt.Println("注解:", ss)
 }
 func (this *Lexer) lex_Comments(c byte) {
@@ -120,8 +116,6 @@ func (this *Lexer) lex_Comments(c byte) {
 		if this.fp == len(this.buf) {
 			fmt.Println("error")
 			os.Exit(0)
-		} else {
-			this.lineNum++
 		}
 	} else {
 		fmt.Println("error")
