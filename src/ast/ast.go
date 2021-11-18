@@ -51,6 +51,7 @@ type DecSingle struct {
 	Tp      Type
 	Name    string
 	IsField bool
+	Stms    Stm //处理声明变量时的初始化语句
 }
 
 func (this *DecSingle) accept(v Visitor) {
@@ -406,6 +407,44 @@ func (this *NewObject) accept(v Visitor) {
 func (this *NewObject) _exp() {
 }
 
+type NewHash struct {
+	Key string
+	Ele string
+	Exp_T
+}
+
+func NewHash_new(key string, ele string, line int) *NewHash {
+	e := new(NewHash)
+	e.Key = key
+	e.Ele = ele
+	e.LineNum = line
+	return e
+}
+
+func (this *NewHash) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewHash) _exp() {
+}
+
+type NewList struct {
+	Ele string
+	Exp_T
+}
+
+func NewList_new(Ele string, line int) *NewList {
+	e := new(NewList)
+	e.Ele = Ele
+	e.LineNum = line
+	return e
+}
+
+func (this *NewList) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewList) _exp() {
+}
+
 /*}}}*/
 
 //Exp.Not   /*{{{*/
@@ -658,6 +697,8 @@ const (
 	TYPE_INTARRAY
 	TYPE_CLASS
 	TOKEN_STRING
+	TYPE_LIST
+	TYPE_MAP
 )
 
 type Int struct {
@@ -748,3 +789,39 @@ func (this *ClassType) String() string {
 /*}}}*/
 
 //Type end/*}}}*/
+
+//泛型
+type ListType struct {
+	Name     string
+	Ele      string
+	TypeKind int
+}
+
+func (this *ListType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ListType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *ListType) String() string {
+	return "@" + this.Name
+}
+
+type HashType struct {
+	Name     string
+	Key      string
+	Ele      string
+	TypeKind int
+}
+
+func (this *HashType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *HashType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *HashType) String() string {
+	return "@" + this.Name
+}

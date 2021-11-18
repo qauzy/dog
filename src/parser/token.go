@@ -33,11 +33,17 @@ func initTokenMap() {
 	//id
 	tokenMap["if"] = TOKEN_IF
 	tokenMap["int"] = TOKEN_INT
+	tokenMap["List"] = TOEKN_LIST
+	tokenMap["Map"] = TOEKN_MAP
+	tokenMap["HashMap"] = TOEKN_HASHMAP
+	tokenMap["ArrayList"] = TOEKN_ARRAYLIST
+
 	tokenMap["{"] = TOKEN_LBRACE
 	tokenMap["["] = TOKEN_LBRACK
 	tokenMap["length"] = TOKEN_LENGTH
 	tokenMap["("] = TOKEN_LPAREN
 	tokenMap["<"] = TOKEN_LT
+	tokenMap[">"] = TOKEN_GT
 	tokenMap["main"] = TOKEN_MAIN
 	tokenMap["new"] = TOKEN_NEW
 	tokenMap["!"] = TOKEN_NOT
@@ -55,7 +61,7 @@ func initTokenMap() {
 	tokenMap[")"] = TOKEN_RPAREN
 	tokenMap[";"] = TOKEN_SEMI
 	tokenMap["static"] = TOKEN_STATIC
-	tokenMap["String"] = TOKEN_STRING
+	//tokenMap["String"] = TOKEN_STRING
 	tokenMap["-"] = TOKEN_SUB
 	tokenMap["System"] = TOKEN_SYSTEM
 	tokenMap["this"] = TOKEN_THIS
@@ -63,6 +69,8 @@ func initTokenMap() {
 	tokenMap["true"] = TOKEN_TRUE
 	tokenMap["void"] = TOKEN_VOID
 	tokenMap["while"] = TOKEN_WHILE
+	tokenMap["for"] = TOKEN_FOR
+
 	tokenMap["package"] = TOKEN_PACKAGE
 	tokenMap["import"] = TOKEN_IMPORT
 	tokenMap["@"] = TOKEN_AT
@@ -85,12 +93,17 @@ func initTokenMap() {
 	tMap[TOKEN_FALSE] = "TOKEN_FALSE"
 	tMap[TOKEN_IF] = "TOKEN_IF"
 	tMap[TOKEN_INT] = "TOKEN_INT"
+	tMap[TOEKN_LIST] = "TOEKN_LIST"
+	tMap[TOEKN_MAP] = "TOEKN_MAP"
+	tMap[TOEKN_HASHMAP] = "TOEKN_HASHMAP"
+	tMap[TOEKN_ARRAYLIST] = "TOEKN_ARRAYLIST"
 	tMap[TOKEN_ID] = "TOKEN_ID"
 	tMap[TOKEN_LBRACE] = "TOKEN_LBRACE"
 	tMap[TOKEN_LBRACK] = "TOKEN_LBRACK"
 	tMap[TOKEN_LENGTH] = "TOKEN_LENGTH"
 	tMap[TOKEN_LPAREN] = "TOKEN_LPAREN"
 	tMap[TOKEN_LT] = "TOKEN_LT"
+	tMap[TOKEN_GT] = "TOKEN_GT"
 	tMap[TOKEN_MAIN] = "TOKEN_MAIN"
 	tMap[TOKEN_NEW] = "TOKEN_NEW"
 	tMap[TOKEN_NUM] = "TOKEN_NUM"
@@ -107,7 +120,7 @@ func initTokenMap() {
 	tMap[TOKEN_RPAREN] = "TOKEN_RPAREN"
 	tMap[TOKEN_SEMI] = "TOKEN_SEMI"
 	tMap[TOKEN_STATIC] = "TOKEN_STATIC"
-	tMap[TOKEN_STRING] = "TOKEN_STRING"
+	//tMap[TOKEN_STRING] = "TOKEN_STRING"
 	tMap[TOKEN_SUB] = "TOKEN_SUB"
 	tMap[TOKEN_SYSTEM] = "TOKEN_SYSTEM"
 	tMap[TOKEN_TRUE] = "TOKEN_TRUE"
@@ -115,6 +128,7 @@ func initTokenMap() {
 	tMap[TOKEN_TIMES] = "TOKEN_TIMES"
 	tMap[TOKEN_VOID] = "TOKEN_VOID"
 	tMap[TOKEN_WHILE] = "TOKEN_WHILE"
+	tMap[TOKEN_FOR] = "TOKEN_FOR"
 	tMap[TOKEN_PACKAGE] = "TOKEN_PACKAGE"
 	tMap[TOKEN_IMPORT] = "TOKEN_IMPORT"
 	tMap[TOKEN_AT] = "TOKEN_AT"
@@ -142,11 +156,16 @@ const (
 	TOKEN_ID
 	TOKEN_IF
 	TOKEN_INT
+	TOEKN_LIST
+	TOEKN_MAP
+	TOEKN_HASHMAP
+	TOEKN_ARRAYLIST
 	TOKEN_LENGTH
 	TOKEN_LBRACE
 	TOKEN_LBRACK
 	TOKEN_LPAREN
 	TOKEN_LT
+	TOKEN_GT
 	TOKEN_MAIN
 	TOKEN_NEW
 	TOKEN_NOT
@@ -174,6 +193,7 @@ const (
 	TOKEN_TRUE
 	TOKEN_VOID
 	TOKEN_WHILE
+	TOKEN_FOR
 	TOKEN_PACKAGE
 	TOKEN_IMPORT
 	TOKEN_AT
