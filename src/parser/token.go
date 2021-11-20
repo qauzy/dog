@@ -26,6 +26,7 @@ func initTokenMap() {
 	tokenMap["class"] = TOKEN_CLASS
 	tokenMap[","] = TOKEN_COMMER
 	tokenMap["."] = TOKEN_DOT
+	tokenMap[":"] = TOKEN_COLON
 	tokenMap["else"] = TOKEN_ELSE
 	tokenMap["EOF"] = TOKEN_EOF
 	tokenMap["extends"] = TOKEN_EXTENDS
@@ -33,10 +34,10 @@ func initTokenMap() {
 	//id
 	tokenMap["if"] = TOKEN_IF
 	tokenMap["int"] = TOKEN_INT
-	tokenMap["List"] = TOEKN_LIST
-	tokenMap["Map"] = TOEKN_MAP
-	tokenMap["HashMap"] = TOEKN_HASHMAP
-	tokenMap["ArrayList"] = TOEKN_ARRAYLIST
+	tokenMap["List"] = TOKEN_LIST
+	tokenMap["Map"] = TOKEN_MAP
+	tokenMap["HashMap"] = TOKEN_HASHMAP
+	tokenMap["ArrayList"] = TOKEN_ARRAYLIST
 
 	tokenMap["{"] = TOKEN_LBRACE
 	tokenMap["["] = TOKEN_LBRACK
@@ -87,16 +88,17 @@ func initTokenMap() {
 	tMap[TOKEN_CLASS] = "TOKEN_CLASS"
 	tMap[TOKEN_COMMER] = "TOKEN_COMMER"
 	tMap[TOKEN_DOT] = "TOKEN_DOT"
+	tMap[TOKEN_COLON] = "TOKEN_COLON"
 	tMap[TOKEN_ELSE] = "TOKEN_ELSE"
 	tMap[TOKEN_EOF] = "TOKEN_EOF"
 	tMap[TOKEN_EXTENDS] = "TOKEN_EXTENDS"
 	tMap[TOKEN_FALSE] = "TOKEN_FALSE"
 	tMap[TOKEN_IF] = "TOKEN_IF"
 	tMap[TOKEN_INT] = "TOKEN_INT"
-	tMap[TOEKN_LIST] = "TOEKN_LIST"
-	tMap[TOEKN_MAP] = "TOEKN_MAP"
-	tMap[TOEKN_HASHMAP] = "TOEKN_HASHMAP"
-	tMap[TOEKN_ARRAYLIST] = "TOEKN_ARRAYLIST"
+	tMap[TOKEN_LIST] = "TOKEN_LIST"
+	tMap[TOKEN_MAP] = "TOKEN_MAP"
+	tMap[TOKEN_HASHMAP] = "TOKEN_HASHMAP"
+	tMap[TOKEN_ARRAYLIST] = "TOKEN_ARRAYLIST"
 	tMap[TOKEN_ID] = "TOKEN_ID"
 	tMap[TOKEN_LBRACE] = "TOKEN_LBRACE"
 	tMap[TOKEN_LBRACK] = "TOKEN_LBRACK"
@@ -149,6 +151,7 @@ const (
 	TOKEN_CLASS
 	TOKEN_COMMER
 	TOKEN_DOT
+	TOKEN_COLON
 	TOKEN_ELSE
 	TOKEN_EOF
 	TOKEN_EXTENDS
@@ -156,10 +159,10 @@ const (
 	TOKEN_ID
 	TOKEN_IF
 	TOKEN_INT
-	TOEKN_LIST
-	TOEKN_MAP
-	TOEKN_HASHMAP
-	TOEKN_ARRAYLIST
+	TOKEN_LIST
+	TOKEN_MAP
+	TOKEN_HASHMAP
+	TOKEN_ARRAYLIST
 	TOKEN_LENGTH
 	TOKEN_LBRACE
 	TOKEN_LBRACK

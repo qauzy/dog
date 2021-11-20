@@ -208,6 +208,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 		fallthrough
 	case '>':
 		fallthrough
+	case ':':
+		fallthrough
 	case '!':
 		fallthrough
 	case '}':

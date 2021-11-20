@@ -179,6 +179,27 @@ func (this *And) accept(v Visitor) {
 func (this *And) _exp() {
 } /*}}}*/
 
+//Exp.Enum /*{{{*/
+type Enum struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Enum_new(l Exp, r Exp, line int) *And {
+	n := new(And)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *Enum) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Enum) _exp() {
+} /*}}}*/
+
 //Exp.Time  /*{{{*/
 type Times struct {
 	Left  Exp
@@ -257,6 +278,39 @@ func (this *Call) _exp() {
 }
 
 /*}}}*/
+//点调用
+//Exp.Dot /*{{{*/
+type Dot struct {
+	Callee     Exp //new Sub().MethodName(ArgsList)
+	MethodName string
+	ArgsList   []Exp
+	Firsttype  string
+	ArgsType   []Type
+	Rt         Type
+	Exp_T
+}
+
+func Dot_new(callee Exp, m string, args []Exp,
+	ftp string, argstype []Type,
+	rt Type, line int) *Call {
+	e := new(Call)
+	e.Callee = callee
+	e.MethodName = m
+	e.ArgsList = args
+	e.Firsttype = ftp
+	e.ArgsType = argstype
+	e.Rt = rt
+	e.LineNum = line
+	return e
+}
+
+func (this *Dot) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Dot) _exp() {
+}
+
+/*}}}*/
 
 //Exp.False /*{{{*/
 type False struct {
@@ -298,10 +352,21 @@ func (this *True) _exp() {
 
 //Exp.Id /*{{{*/
 type Id struct {
-	Name    string
-	Tp      Type
-	IsField bool
+	Name      string
+	Tp        Type
+	IsField   bool
+	Statement bool //指示是否同时声明
 	Exp_T
+}
+
+func Id_Ex_new(name string, tp Type, isField bool, Statement bool, line int) *Id {
+	e := new(Id)
+	e.Name = name
+	e.Tp = tp
+	e.IsField = isField
+	e.Statement = Statement
+	e.LineNum = line
+	return e
 }
 
 func Id_new(name string, tp Type, isField bool, line int) *Id {
@@ -390,8 +455,17 @@ func (this *NewIntArray) _exp() {
 
 //Exp.NewObject /*{{{*/
 type NewObject struct {
-	Name string
+	Name     string
+	ArgsList []Exp //带初值的初始化
 	Exp_T
+}
+
+func NewObjectWithArgsList_new(name string, ArgsList []Exp, line int) *NewObject {
+	e := new(NewObject)
+	e.Name = name
+	e.LineNum = line
+	e.ArgsList = ArgsList
+	return e
 }
 
 func NewObject_new(name string, line int) *NewObject {
@@ -490,6 +564,28 @@ func (this *Num) _exp() {
 
 /*}}}*/
 
+//Exp.Cast   /*{{{*/
+type Cast struct {
+	Tp    Type
+	Right Exp
+	Exp_T
+}
+
+func Cast_new(Tp Type, r Exp, line int) *Cast {
+	e := new(Cast)
+	e.Tp = Tp
+	e.LineNum = line
+	return e
+}
+
+func (this *Cast) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Cast) _exp() {
+}
+
+/*}}}*/
+
 //Exp.Sub   /*{{{*/
 type Sub struct {
 	Left  Exp
@@ -540,6 +636,7 @@ type Stm_T struct {
 //Stm.Assign    /*{{{*/
 type Assign struct {
 	Name    string
+	Left    Exp //左边可能是一个包含声明语句的
 	E       Exp
 	Tp      Type
 	IsField bool
@@ -682,6 +779,29 @@ func (this *While) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *While) _stm() {
+}
+
+/*}}}*/
+
+//Stm.For   /*{{{*/
+type For struct {
+	Stm_T
+	E    Exp
+	Body Stm
+}
+
+func For_new(exp Exp, body Stm, line int) *For {
+	s := new(For)
+	s.E = exp
+	s.Body = body
+	s.LineNum = line
+	return s
+}
+
+func (this *For) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *For) _stm() {
 }
 
 /*}}}*/
