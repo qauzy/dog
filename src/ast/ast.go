@@ -158,6 +158,27 @@ func (this *Add) accept(v Visitor) {
 func (this *Add) _exp() {
 } /*}}}*/
 
+//Exp.Or /*{{{*/
+type Or struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Or_new(l Exp, r Exp, line int) *Or {
+	n := new(Or)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *Or) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Or) _exp() {
+} /*}}}*/
+
 //Exp.And /*{{{*/
 type And struct {
 	Left  Exp
@@ -281,21 +302,21 @@ func (this *Call) _exp() {
 //点调用
 //Exp.Dot /*{{{*/
 type Dot struct {
-	Callee     Exp //new Sub().MethodName(ArgsList)
-	MethodName string
-	ArgsList   []Exp
-	Firsttype  string
-	ArgsType   []Type
-	Rt         Type
+	Callee    Exp //new Sub().MethodName(ArgsList)
+	Member    Exp
+	ArgsList  []Exp
+	Firsttype string
+	ArgsType  []Type
+	Rt        Type
 	Exp_T
 }
 
-func Dot_new(callee Exp, m string, args []Exp,
+func Dot_new(callee Exp, m Exp, args []Exp,
 	ftp string, argstype []Type,
-	rt Type, line int) *Call {
-	e := new(Call)
+	rt Type, line int) *Dot {
+	e := new(Dot)
 	e.Callee = callee
-	e.MethodName = m
+	e.Member = m
 	e.ArgsList = args
 	e.Firsttype = ftp
 	e.ArgsType = argstype
@@ -359,16 +380,6 @@ type Id struct {
 	Exp_T
 }
 
-func Id_Ex_new(name string, tp Type, isField bool, Statement bool, line int) *Id {
-	e := new(Id)
-	e.Name = name
-	e.Tp = tp
-	e.IsField = isField
-	e.Statement = Statement
-	e.LineNum = line
-	return e
-}
-
 func Id_new(name string, tp Type, isField bool, line int) *Id {
 	e := new(Id)
 	e.Name = name
@@ -428,6 +439,51 @@ func (this *Lt) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Lt) _exp() {
+}
+
+/*}}}*/
+
+//Exp.eq    /*{{{*/
+// left < right
+type Eq struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Eq_new(l Exp, r Exp, line int) *Eq {
+	e := new(Eq)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *Eq) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Eq) _exp() {
+}
+
+/*}}}*/
+
+//Exp.NewObjectArray   /*{{{*/
+type NewObjectArray struct {
+	Eles Exp
+	Exp_T
+}
+
+func NewObjectArray_new(eles Exp, line int) *NewObjectArray {
+	e := new(NewObjectArray)
+	e.Eles = eles
+	e.LineNum = line
+	return e
+}
+
+func (this *NewObjectArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewObjectArray) _exp() {
 }
 
 /*}}}*/
@@ -502,13 +558,15 @@ func (this *NewHash) _exp() {
 }
 
 type NewList struct {
-	Ele string
+	Ele      string
+	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewList_new(Ele string, line int) *NewList {
+func NewList_new(Ele string, ArgsList []Exp, line int) *NewList {
 	e := new(NewList)
 	e.Ele = Ele
+	e.ArgsList = ArgsList
 	e.LineNum = line
 	return e
 }
@@ -661,6 +719,54 @@ func (this *Assign) _stm() {
 
 /*}}}*/
 
+//Stm.Return    /*{{{*/
+type Return struct {
+	E Exp
+	Stm_T
+}
+
+func Return_new(exp Exp, line int) *Return {
+	s := new(Return)
+	s.E = exp
+	s.LineNum = line
+	return s
+}
+
+func (this *Return) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Return) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Common    /*{{{*/
+type Common struct {
+	Left    Exp //左边可能是一个包含声明语句的
+	E       Exp
+	Tp      Type
+	IsField bool
+	Stm_T
+}
+
+func Common_new(Left Exp, exp Exp, tp Type, isField bool, line int) *Common {
+	s := new(Common)
+	s.Left = Left
+	s.E = exp
+	s.Tp = tp
+	s.IsField = isField
+	s.LineNum = line
+	return s
+}
+
+func (this *Common) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Common) _stm() {
+}
+
+/*}}}*/
+
 //Stm.AssignArray   /*{{{*/
 type AssignArray struct {
 	// id[index] = e
@@ -714,6 +820,33 @@ func (this *Block) _stm() {
 
 /*}}}*/
 
+//Stm.Try    /*{{{*/
+type Try struct {
+	Stm_T
+	Test      Stm
+	Condition []Exp
+	Catches   []Stm
+	Finally   Stm
+}
+
+func Try_new(test Stm, cond []Exp, catches []Stm, Finally Stm, line int) *Try {
+	s := new(Try)
+	s.Condition = cond
+	s.Test = test
+	s.Catches = catches
+	s.Finally = Finally
+	s.LineNum = line
+	return s
+}
+
+func (this *Try) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Try) _stm() {
+}
+
+/*}}}*/
+
 //Stm.If    /*{{{*/
 type If struct {
 	Stm_T
@@ -735,6 +868,27 @@ func (this *If) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *If) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Throw/*{{{*/
+type Throw struct {
+	Stm_T
+	E Exp
+}
+
+func Throw_new(exp Exp, line int) *Throw {
+	s := new(Throw)
+	s.E = exp
+	s.LineNum = line
+	return s
+}
+
+func (this *Throw) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Throw) _stm() {
 }
 
 /*}}}*/
@@ -814,6 +968,7 @@ func (this *For) _stm() {
 const (
 	TYPE_INT = iota
 	TYPE_BOOLEAN
+	TYPE_VOID
 	TYPE_INTARRAY
 	TYPE_CLASS
 	TOKEN_STRING
@@ -854,6 +1009,25 @@ func (this *Boolean) String() string {
 }
 
 //Type.Bool /*{{{*/
+
+//Type.Void /*{{{*/
+type Void struct {
+	TypeKind int
+}
+
+func (this *Void) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Void) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *Void) String() string {
+	return "@void"
+}
+
+//Type.Void /*{{{*/
+
 type String struct {
 	TypeKind int
 }

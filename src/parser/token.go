@@ -33,6 +33,9 @@ func initTokenMap() {
 	tokenMap["false"] = TOKEN_FALSE
 	//id
 	tokenMap["if"] = TOKEN_IF
+	tokenMap["try"] = TOKEN_TRY
+	tokenMap["catch"] = TOKEN_CATCH
+	tokenMap["finally"] = TOKEN_FINALLY
 	tokenMap["int"] = TOKEN_INT
 	tokenMap["List"] = TOKEN_LIST
 	tokenMap["Map"] = TOKEN_MAP
@@ -44,9 +47,15 @@ func initTokenMap() {
 	tokenMap["length"] = TOKEN_LENGTH
 	tokenMap["("] = TOKEN_LPAREN
 	tokenMap["<"] = TOKEN_LT
+	tokenMap["<="] = TOKEN_LE
+	tokenMap["=="] = TOKEN_EQ
 	tokenMap[">"] = TOKEN_GT
+	tokenMap[">="] = TOKEN_GE
+	tokenMap["||"] = TOKEN_OR
+	tokenMap["!="] = TOKEN_NE
 	tokenMap["main"] = TOKEN_MAIN
 	tokenMap["new"] = TOKEN_NEW
+	tokenMap["throw"] = TOKEN_THROW
 	tokenMap["!"] = TOKEN_NOT
 	//num
 	tokenMap["out"] = TOKEN_OUT
@@ -83,6 +92,8 @@ func initTokenMap() {
 	tMap = make(map[int]string)
 	tMap[TOKEN_ADD] = "TOKEN_ADD"
 	tMap[TOKEN_AND] = "TOKEN_AND"
+	tMap[TOKEN_OR] = "TOKEN_OR"
+	tMap[TOKEN_NE] = "TOKEN_NE"
 	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"
 	tMap[TOKEN_BOOLEAN] = "TOKEN_BOOLEAN"
 	tMap[TOKEN_CLASS] = "TOKEN_CLASS"
@@ -94,6 +105,9 @@ func initTokenMap() {
 	tMap[TOKEN_EXTENDS] = "TOKEN_EXTENDS"
 	tMap[TOKEN_FALSE] = "TOKEN_FALSE"
 	tMap[TOKEN_IF] = "TOKEN_IF"
+	tMap[TOKEN_TRY] = "TOKEN_TRY"
+	tMap[TOKEN_CATCH] = "TOKEN_CATCH"
+	tMap[TOKEN_FINALLY] = "TOKEN_FINALLY"
 	tMap[TOKEN_INT] = "TOKEN_INT"
 	tMap[TOKEN_LIST] = "TOKEN_LIST"
 	tMap[TOKEN_MAP] = "TOKEN_MAP"
@@ -105,9 +119,13 @@ func initTokenMap() {
 	tMap[TOKEN_LENGTH] = "TOKEN_LENGTH"
 	tMap[TOKEN_LPAREN] = "TOKEN_LPAREN"
 	tMap[TOKEN_LT] = "TOKEN_LT"
+	tMap[TOKEN_LE] = "TOKEN_LE"
+	tMap[TOKEN_GE] = "TOKEN_GE"
+	tMap[TOKEN_EQ] = "TOKEN_EQ"
 	tMap[TOKEN_GT] = "TOKEN_GT"
 	tMap[TOKEN_MAIN] = "TOKEN_MAIN"
 	tMap[TOKEN_NEW] = "TOKEN_NEW"
+	tMap[TOKEN_THROW] = "TOKEN_THROW"
 	tMap[TOKEN_NUM] = "TOKEN_NUM"
 	tMap[TOKEN_NOT] = "TOKEN_NOT"
 	tMap[TOKEN_OUT] = "TOKEN_OUT"
@@ -158,6 +176,9 @@ const (
 	TOKEN_FALSE
 	TOKEN_ID
 	TOKEN_IF
+	TOKEN_TRY
+	TOKEN_CATCH
+	TOKEN_FINALLY
 	TOKEN_INT
 	TOKEN_LIST
 	TOKEN_MAP
@@ -168,9 +189,15 @@ const (
 	TOKEN_LBRACK
 	TOKEN_LPAREN
 	TOKEN_LT
+	TOKEN_LE
+	TOKEN_EQ
 	TOKEN_GT
+	TOKEN_GE
+	TOKEN_OR
+	TOKEN_NE
 	TOKEN_MAIN
 	TOKEN_NEW
+	TOKEN_THROW
 	TOKEN_NOT
 	TOKEN_NUM
 	TOKEN_OUT
@@ -202,6 +229,7 @@ const (
 	TOKEN_AT
 	TOKEN_IMPLEMENTS
 	TOKEN_FINAL
+	TOKEN_CHARS
 )
 
 func (this *Token) ToString() string {

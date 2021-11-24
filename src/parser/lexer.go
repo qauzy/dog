@@ -89,6 +89,21 @@ func (this *Lexer) lex_Annotation(c byte) {
 	this.lineNum++
 	fmt.Println("注解:", ss)
 }
+func (this *Lexer) lex_String(c byte) string {
+	var ss string
+	c = this.buf[this.fp]
+	for c != '\n' && c != '"' && this.fp < len(this.buf) {
+		ss += string(c)
+		this.fp++
+		c = this.buf[this.fp]
+	}
+	//处理字符串末尾的"
+	this.fp++
+	c = this.buf[this.fp]
+	fmt.Println("字符串:", ss)
+	return ss
+}
+
 func (this *Lexer) lex_Comments(c byte) {
 	ex := this.buf[this.fp]
 	this.fp++
@@ -130,7 +145,11 @@ func (this *Lexer) lex_Num(c byte) string {
 	for {
 		next := this.buf[this.fp]
 		this.fp++
-		if next >= '0' && next <= '9' {
+		var f = false
+		if next >= '0' && next <= '9' || next == '.' && !f {
+			if next == '.' {
+				f = true
+			}
 			s += string(next)
 			continue
 		}
@@ -140,6 +159,10 @@ func (this *Lexer) lex_Num(c byte) string {
 			(next >= 'A' && next <= 'Z' && next != 'L') {
 			fmt.Println("ilegal number")
 			os.Exit(0)
+		}
+
+		if next == 'L' {
+			this.fp++
 		}
 		break
 	}
@@ -193,7 +216,15 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '+':
 		fallthrough
 	case '=':
-		fallthrough
+		if this.s == "" {
+			if this.expectKeyword("==") {
+				return newToken(TOKEN_EQ, "==", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
 	case ',':
 		fallthrough
 	case '.':
@@ -211,7 +242,15 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case ':':
 		fallthrough
 	case '!':
-		fallthrough
+		if this.s == "" {
+			if this.expectKeyword("=") {
+				return newToken(TOKEN_NE, "!=", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
 	case '}':
 		fallthrough
 	case ']':
@@ -249,6 +288,12 @@ func (this *Lexer) nextTokenInternal() *Token {
 		this.s += string(c)
 	case '/':
 		this.lex_Comments(c)
+		//字符串
+	case '"':
+		if this.s == "" {
+			return newToken(TOKEN_ID, this.lex_String(c), this.lineNum)
+		}
+
 	default:
 		this.s += string(c)
 	}
