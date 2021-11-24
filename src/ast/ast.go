@@ -558,12 +558,12 @@ func (this *NewHash) _exp() {
 }
 
 type NewList struct {
-	Ele      string
+	Ele      Type
 	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewList_new(Ele string, ArgsList []Exp, line int) *NewList {
+func NewList_new(Ele Type, ArgsList []Exp, line int) *NewList {
 	e := new(NewList)
 	e.Ele = Ele
 	e.ArgsList = ArgsList
@@ -1087,7 +1087,7 @@ func (this *ClassType) String() string {
 //泛型
 type ListType struct {
 	Name     string
-	Ele      string
+	Ele      Type
 	TypeKind int
 }
 

@@ -82,7 +82,7 @@ func (this *Parser) parseType() ast.Type {
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_LIST)
 		this.eatToken(TOKEN_LT)
-		ele := this.current.Lexeme
+		ele := this.parseType()
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_GT)
 		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
@@ -91,7 +91,7 @@ func (this *Parser) parseType() ast.Type {
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ARRAYLIST)
 		this.eatToken(TOKEN_LT)
-		ele := this.current.Lexeme
+		ele := this.parseType()
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_GT)
 		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
@@ -291,10 +291,9 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		case TOKEN_ARRAYLIST:
 			this.eatToken(TOKEN_ARRAYLIST)
 			this.eatToken(TOKEN_LT)
-			var ele = ""
-			if this.current.Kind == TOKEN_ID {
-				ele = this.current.Lexeme
-				this.eatToken(TOKEN_ID)
+			var ele ast.Type
+			if this.current.Kind != TOKEN_GT {
+				ele = this.parseType()
 			} else {
 				ele = this.assignType.(*ast.ListType).Ele
 			}
