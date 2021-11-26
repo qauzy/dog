@@ -691,6 +691,31 @@ type Stm_T struct {
 	LineNum int
 }
 
+//Stm.Statement    /*{{{*/
+type Statement struct {
+	Name    string
+	Tp      Type
+	IsField bool
+	Stm_T
+}
+
+func Statement_new(name string, exp Exp, tp Type, isField bool, line int) *Statement {
+	s := new(Statement)
+	s.Name = name
+	s.Tp = tp
+	s.IsField = isField
+	s.LineNum = line
+	return s
+}
+
+func (this *Statement) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Statement) _stm() {
+}
+
+/*}}}*/
+
 //Stm.Assign    /*{{{*/
 type Assign struct {
 	Name    string
@@ -736,33 +761,6 @@ func (this *Return) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Return) _stm() {
-}
-
-/*}}}*/
-
-//Stm.Common    /*{{{*/
-type Common struct {
-	Left    Exp //左边可能是一个包含声明语句的
-	E       Exp
-	Tp      Type
-	IsField bool
-	Stm_T
-}
-
-func Common_new(Left Exp, exp Exp, tp Type, isField bool, line int) *Common {
-	s := new(Common)
-	s.Left = Left
-	s.E = exp
-	s.Tp = tp
-	s.IsField = isField
-	s.LineNum = line
-	return s
-}
-
-func (this *Common) accept(v Visitor) {
-	v.visit(this)
-}
-func (this *Common) _stm() {
 }
 
 /*}}}*/
