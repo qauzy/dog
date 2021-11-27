@@ -443,6 +443,78 @@ func (this *Lt) _exp() {
 
 /*}}}*/
 
+//Exp.le    /*{{{*/
+// left <= right
+type Le struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Le_new(l Exp, r Exp, line int) *Le {
+	e := new(Le)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *Le) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Le) _exp() {
+}
+
+/*}}}*/
+
+//Exp.gt    /*{{{*/
+// left > right
+type Gt struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Gt_new(l Exp, r Exp, line int) *Gt {
+	e := new(Gt)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *Gt) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Gt) _exp() {
+}
+
+/*}}}*/
+
+//Exp.ge    /*{{{*/
+// left >= right
+type Ge struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Ge_new(l Exp, r Exp, line int) *Ge {
+	e := new(Ge)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *Ge) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Ge) _exp() {
+}
+
+/*}}}*/
+
 //Exp.eq    /*{{{*/
 // left < right
 type Eq struct {
@@ -463,6 +535,30 @@ func (this *Eq) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Eq) _exp() {
+}
+
+/*}}}*/
+
+//Exp.eq    /*{{{*/
+// left < right
+type Neq struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Neq_new(l Exp, r Exp, line int) *Neq {
+	e := new(Neq)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *Neq) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Neq) _exp() {
 }
 
 /*}}}*/
@@ -537,6 +633,9 @@ func (this *NewObject) accept(v Visitor) {
 func (this *NewObject) _exp() {
 }
 
+/*}}}*/
+
+//Exp.NewHash /*{{{*/
 type NewHash struct {
 	Key string
 	Ele string
@@ -557,6 +656,9 @@ func (this *NewHash) accept(v Visitor) {
 func (this *NewHash) _exp() {
 }
 
+/*}}}*/
+
+//Exp.NewList /*{{{*/
 type NewList struct {
 	Ele      Type
 	ArgsList []Exp //带初值的初始化
@@ -575,6 +677,29 @@ func (this *NewList) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *NewList) _exp() {
+}
+
+/*}}}*/
+
+//Exp.NewList /*{{{*/
+type NewSet struct {
+	Ele      Type
+	ArgsList []Exp //带初值的初始化
+	Exp_T
+}
+
+func NewSet_new(Ele Type, ArgsList []Exp, line int) *NewSet {
+	e := new(NewSet)
+	e.Ele = Ele
+	e.ArgsList = ArgsList
+	e.LineNum = line
+	return e
+}
+
+func (this *NewSet) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewSet) _exp() {
 }
 
 /*}}}*/
@@ -937,13 +1062,15 @@ func (this *While) _stm() {
 
 //Stm.For   /*{{{*/
 type For struct {
+	Init Stm
 	Stm_T
 	E    Exp
 	Body Stm
 }
 
-func For_new(exp Exp, body Stm, line int) *For {
+func For_new(Init Stm, exp Exp, body Stm, line int) *For {
 	s := new(For)
+	s.Init = Init
 	s.E = exp
 	s.Body = body
 	s.LineNum = line
@@ -970,6 +1097,7 @@ const (
 	TYPE_INTARRAY
 	TYPE_CLASS
 	TOKEN_STRING
+	TYPE_STRINGARRAY
 	TYPE_LIST
 	TYPE_MAP
 )
@@ -1024,7 +1152,25 @@ func (this *Void) String() string {
 	return "@void"
 }
 
-//Type.Void /*{{{*/
+//Type.IntArray /*{{{*/
+type IntArray struct {
+	TypeKind int
+}
+
+func (this *IntArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *IntArray) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *IntArray) String() string {
+	return "@int[]"
+}
+
+/*}}}*/
+
+//Type.String /*{{{*/
 
 type String struct {
 	TypeKind int
@@ -1043,20 +1189,21 @@ func (this *String) String() string {
 
 /*}}}*/
 
-//Type.IntArray /*{{{*/
-type IntArray struct {
+//Type.Void /*{{{*/
+
+type StringArray struct {
 	TypeKind int
 }
 
-func (this *IntArray) accept(v Visitor) {
+func (this *StringArray) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *IntArray) Gettype() int {
+func (this *StringArray) Gettype() int {
 	return this.TypeKind
 }
 
-func (this *IntArray) String() string {
-	return "@int[]"
+func (this *StringArray) String() string {
+	return "@String[]"
 }
 
 /*}}}*/

@@ -37,9 +37,13 @@ func initTokenMap() {
 	tokenMap["catch"] = TOKEN_CATCH
 	tokenMap["finally"] = TOKEN_FINALLY
 	tokenMap["int"] = TOKEN_INT
-	tokenMap["List"] = TOKEN_LIST
+
+	tokenMap["Set"] = TOKEN_SET
+	tokenMap["HashSet"] = TOKEN_HASHSET
+
 	tokenMap["Map"] = TOKEN_MAP
 	tokenMap["HashMap"] = TOKEN_HASHMAP
+	tokenMap["List"] = TOKEN_LIST
 	tokenMap["ArrayList"] = TOKEN_ARRAYLIST
 
 	tokenMap["{"] = TOKEN_LBRACE
@@ -55,6 +59,7 @@ func initTokenMap() {
 	tokenMap["!="] = TOKEN_NE
 	tokenMap["main"] = TOKEN_MAIN
 	tokenMap["new"] = TOKEN_NEW
+	tokenMap["throws"] = TOKEN_THROWS
 	tokenMap["throw"] = TOKEN_THROW
 	tokenMap["!"] = TOKEN_NOT
 	//num
@@ -71,7 +76,7 @@ func initTokenMap() {
 	tokenMap[")"] = TOKEN_RPAREN
 	tokenMap[";"] = TOKEN_SEMI
 	tokenMap["static"] = TOKEN_STATIC
-	//tokenMap["String"] = TOKEN_STRING
+	tokenMap["String"] = TOKEN_STRING
 	tokenMap["-"] = TOKEN_SUB
 	tokenMap["System"] = TOKEN_SYSTEM
 	tokenMap["this"] = TOKEN_THIS
@@ -109,9 +114,11 @@ func initTokenMap() {
 	tMap[TOKEN_CATCH] = "TOKEN_CATCH"
 	tMap[TOKEN_FINALLY] = "TOKEN_FINALLY"
 	tMap[TOKEN_INT] = "TOKEN_INT"
-	tMap[TOKEN_LIST] = "TOKEN_LIST"
+	tMap[TOKEN_SET] = "TOKEN_SET"
+	tMap[TOKEN_HASHSET] = "TOKEN_HASHSET"
 	tMap[TOKEN_MAP] = "TOKEN_MAP"
 	tMap[TOKEN_HASHMAP] = "TOKEN_HASHMAP"
+	tMap[TOKEN_LIST] = "TOKEN_LIST"
 	tMap[TOKEN_ARRAYLIST] = "TOKEN_ARRAYLIST"
 	tMap[TOKEN_ID] = "TOKEN_ID"
 	tMap[TOKEN_LBRACE] = "TOKEN_LBRACE"
@@ -125,6 +132,7 @@ func initTokenMap() {
 	tMap[TOKEN_GT] = "TOKEN_GT"
 	tMap[TOKEN_MAIN] = "TOKEN_MAIN"
 	tMap[TOKEN_NEW] = "TOKEN_NEW"
+	tMap[TOKEN_THROWS] = "TOKEN_THROWS"
 	tMap[TOKEN_THROW] = "TOKEN_THROW"
 	tMap[TOKEN_NUM] = "TOKEN_NUM"
 	tMap[TOKEN_NOT] = "TOKEN_NOT"
@@ -180,9 +188,11 @@ const (
 	TOKEN_CATCH
 	TOKEN_FINALLY
 	TOKEN_INT
-	TOKEN_LIST
+	TOKEN_SET
+	TOKEN_HASHSET
 	TOKEN_MAP
 	TOKEN_HASHMAP
+	TOKEN_LIST
 	TOKEN_ARRAYLIST
 	TOKEN_LENGTH
 	TOKEN_LBRACE
@@ -197,6 +207,7 @@ const (
 	TOKEN_NE
 	TOKEN_MAIN
 	TOKEN_NEW
+	TOKEN_THROWS
 	TOKEN_THROW
 	TOKEN_NOT
 	TOKEN_NUM
