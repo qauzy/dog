@@ -211,13 +211,19 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '@':
 		//return newToken(TOKEN_AT, "@", this.lineNum)
 		this.lex_Annotation(c)
-	case ' ':
-		fallthrough
 	case '+':
-		fallthrough
+		if this.s == "" {
+			if this.expectKeyword("+") {
+				return newToken(TOKEN_AUTOADD, "++", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
 	case '=':
 		if this.s == "" {
-			if this.expectKeyword("==") {
+			if this.expectKeyword("=") {
 				return newToken(TOKEN_EQ, "==", this.lineNum)
 			} else {
 				return this.expectIdOrKey(c)
@@ -225,22 +231,6 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
-	case ',':
-		fallthrough
-	case '.':
-		fallthrough
-	case '{':
-		fallthrough
-	case '[':
-		fallthrough
-	case '(':
-		fallthrough
-	case '<':
-		fallthrough
-	case '>':
-		fallthrough
-	case ':':
-		fallthrough
 	case '!':
 		if this.s == "" {
 			if this.expectKeyword("=") {
@@ -251,6 +241,52 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
+	case '-':
+		if this.s == "" {
+			if this.expectKeyword("-") {
+				return newToken(TOKEN_AUTOSUB, "--", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
+
+	case '<':
+		if this.s == "" {
+			if this.expectKeyword("=") {
+				return newToken(TOKEN_LE, "<=", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
+	case '>':
+		if this.s == "" {
+			if this.expectKeyword("=") {
+				return newToken(TOKEN_GE, ">=", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
+	case ' ':
+		fallthrough
+	case ',':
+		fallthrough
+	case '.':
+		fallthrough
+	case '{':
+		fallthrough
+	case '[':
+		fallthrough
+	case '(':
+		fallthrough
+
+	case ':':
+		fallthrough
 	case '}':
 		fallthrough
 	case ']':
@@ -259,8 +295,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 		fallthrough
 	case ';':
 		fallthrough
-	case '-':
-		fallthrough
+
 	case '*':
 		return this.expectIdOrKey(c)
 	case '0':

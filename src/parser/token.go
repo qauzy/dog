@@ -20,6 +20,7 @@ var tMap map[int]string
 func initTokenMap() {
 	tokenMap = make(map[string]int)
 	tokenMap["+"] = TOKEN_ADD
+	tokenMap["++"] = TOKEN_AUTOADD
 	tokenMap["&&"] = TOKEN_AND
 	tokenMap["="] = TOKEN_ASSIGN
 	tokenMap["boolean"] = TOKEN_BOOLEAN
@@ -78,6 +79,7 @@ func initTokenMap() {
 	tokenMap["static"] = TOKEN_STATIC
 	tokenMap["String"] = TOKEN_STRING
 	tokenMap["-"] = TOKEN_SUB
+	tokenMap["--"] = TOKEN_AUTOSUB
 	tokenMap["System"] = TOKEN_SYSTEM
 	tokenMap["this"] = TOKEN_THIS
 	tokenMap["*"] = TOKEN_TIMES
@@ -95,7 +97,9 @@ func initTokenMap() {
 	tokenMap["final"] = TOKEN_FINAL
 
 	tMap = make(map[int]string)
+
 	tMap[TOKEN_ADD] = "TOKEN_ADD"
+	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD"
 	tMap[TOKEN_AND] = "TOKEN_AND"
 	tMap[TOKEN_OR] = "TOKEN_OR"
 	tMap[TOKEN_NE] = "TOKEN_NE"
@@ -149,6 +153,7 @@ func initTokenMap() {
 	tMap[TOKEN_SEMI] = "TOKEN_SEMI"
 	tMap[TOKEN_STATIC] = "TOKEN_STATIC"
 	//tMap[TOKEN_STRING] = "TOKEN_STRING"
+	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"
 	tMap[TOKEN_SUB] = "TOKEN_SUB"
 	tMap[TOKEN_SYSTEM] = "TOKEN_SYSTEM"
 	tMap[TOKEN_TRUE] = "TOKEN_TRUE"
@@ -171,6 +176,7 @@ type Kind int
 
 const (
 	TOKEN_ADD = iota
+	TOKEN_AUTOADD
 	TOKEN_AND
 	TOKEN_ASSIGN
 	TOKEN_BOOLEAN
@@ -228,6 +234,7 @@ const (
 	TOKEN_STATIC
 	TOKEN_STRING
 	TOKEN_SUB
+	TOKEN_AUTOSUB
 	TOKEN_SYSTEM
 	TOKEN_THIS
 	TOKEN_TIMES

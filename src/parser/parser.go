@@ -401,8 +401,16 @@ func (this *Parser) parseNotExp() ast.Exp {
 	log.Infof("解析 parseNotExp")
 	exp := this.parseAtomExp()
 	for this.current.Kind == TOKEN_DOT ||
+		this.current.Kind == TOKEN_AUTOSUB ||
+		this.current.Kind == TOKEN_AUTOADD ||
 		this.current.Kind == TOKEN_LBRACK {
 		switch this.current.Kind {
+		case TOKEN_AUTOSUB:
+			this.eatToken(TOKEN_AUTOSUB)
+			return ast.AutoSub_new(exp, nil, this.Linenum)
+		case TOKEN_AUTOADD:
+			this.eatToken(TOKEN_AUTOADD)
+			return ast.AutoAdd_new(exp, nil, this.Linenum)
 		//可以不断循环下去
 		case TOKEN_DOT:
 			log.Infof("解析函数调用,或成员变量")
@@ -445,12 +453,25 @@ func (this *Parser) parseNotExp() ast.Exp {
 func (this *Parser) parseTimeExp() ast.Exp {
 	log.Infof("解析 parseTimeExp")
 	var exp2 ast.Exp
-	for this.current.Kind == TOKEN_NOT {
+	var opt = this.current.Kind
+	for this.current.Kind == TOKEN_NOT ||
+		this.current.Kind == TOKEN_AUTOADD ||
+		this.current.Kind == TOKEN_AUTOSUB {
 		this.advance()
 		exp2 = this.parseTimeExp()
 	}
 	if exp2 != nil {
-		return ast.Not_new(exp2, this.Linenum)
+		switch opt {
+		case TOKEN_NOT:
+			return ast.Not_new(exp2, this.Linenum)
+		case TOKEN_AUTOADD:
+			return ast.AutoAdd_new(nil, exp2, this.Linenum)
+		case TOKEN_AUTOSUB:
+			return ast.AutoSub_new(nil, exp2, this.Linenum)
+		default:
+			panic("不支持")
+		}
+
 	} else {
 		return this.parseNotExp()
 	}
@@ -559,20 +580,6 @@ func (this *Parser) parseExp() ast.Exp {
 		this.advance()
 		right := this.parseOrExp()
 		left = ast.Or_new(left, right, this.Linenum)
-	}
-	//可能是for循环枚举
-	if this.current.Kind == TOKEN_COLON {
-		this.eatToken(TOKEN_COLON)
-		var right ast.Exp
-
-		//处理强制类型转换
-		if this.current.Kind == TOKEN_LPAREN {
-			right = this.parseCastExp()
-		} else {
-			right = this.parseOrExp()
-		}
-		log.Infof("*******for循环枚举*************")
-		return ast.Enum_new(left, right, this.Linenum)
 	}
 
 	return left
@@ -730,6 +737,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		}
 		return ast.Try_new(test, conditions, catches, finally, this.Linenum)
 	case TOKEN_WHILE:
+		log.Infof("********TOKEN_WHILE***********")
 		this.eatToken(TOKEN_WHILE)
 		this.eatToken(TOKEN_LPAREN)
 		exp := this.parseExp()
@@ -737,31 +745,47 @@ func (this *Parser) parseStatement() ast.Stm {
 		body := this.parseStatement()
 		return ast.While_new(exp, body, this.Linenum)
 	case TOKEN_FOR:
+		log.Infof("********TOKEN_FOR***********")
 		this.eatToken(TOKEN_FOR)
 		this.eatToken(TOKEN_LPAREN)
 		//init := this.parseStatement()
 		var Init ast.Stm
 		exp := this.parseExp()
+		//for循环三段式
 		if this.current.Kind == TOKEN_ASSIGN {
-			assign := new(ast.Assign)
-			assign.Left = exp
+			log.Infof("********TOKEN_FOR--> 解析初始化语句 ***********")
+			Init := new(ast.Assign)
+			Init.Left = exp
 			//临时变量类型
 			this.eatToken(TOKEN_ASSIGN)
 			exp1 := this.parseExp()
-			assign.E = exp1
+			Init.E = exp1
 			this.eatToken(TOKEN_SEMI)
-			Init = assign
-
 			//
-			exp2 := this.parseExp()
+			log.Infof("********TOKEN_FOR--> 解析条件语句 ***********")
+			Condition := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
-			_ = exp2
-			exp3 := this.parseExp()
 
-			_ = exp3
+			log.Infof("********TOKEN_FOR--> 解析更新语句 ***********")
+			Update := this.parseExp()
+			log.Infof("*******1111**********")
+			//可能是for循环枚举
+			exp = ast.Fcon_new(Init, Condition, Update, this.Linenum)
 
+		} else if this.current.Kind == TOKEN_COLON {
+			this.eatToken(TOKEN_COLON)
+			var right ast.Exp
+
+			//处理强制类型转换
+			if this.current.Kind == TOKEN_LPAREN {
+				right = this.parseCastExp()
+			} else {
+				right = this.parseOrExp()
+			}
+			log.Infof("*******for循环枚举*************")
+			exp = ast.Enum_new(exp, right, this.Linenum)
 		}
-		log.Infof("*****************")
+
 		this.eatToken(TOKEN_RPAREN)
 		log.Infof("解析for语句body")
 		body := this.parseStatement()

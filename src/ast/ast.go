@@ -158,6 +158,48 @@ func (this *Add) accept(v Visitor) {
 func (this *Add) _exp() {
 } /*}}}*/
 
+//Exp.AutoAdd /*{{{*/
+type AutoAdd struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func AutoAdd_new(l Exp, r Exp, line int) *AutoAdd {
+	e := new(AutoAdd)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *AutoAdd) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *AutoAdd) _exp() {
+} /*}}}*/
+
+//Exp.AutoSub /*{{{*/
+type AutoSub struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func AutoSub_new(l Exp, r Exp, line int) *AutoSub {
+	e := new(AutoSub)
+	e.Left = l
+	e.Right = r
+	e.LineNum = line
+	return e
+}
+
+func (this *AutoSub) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *AutoSub) _exp() {
+} /*}}}*/
+
 //Exp.Or /*{{{*/
 type Or struct {
 	Left  Exp
@@ -219,6 +261,29 @@ func (this *Enum) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Enum) _exp() {
+} /*}}}*/
+
+//Exp.Fcon /*{{{*/
+type Fcon struct {
+	Init      Stm
+	Condition Exp
+	Update    Exp
+	Exp_T
+}
+
+func Fcon_new(Init Stm, Condition Exp, Update Exp, line int) *Fcon {
+	n := new(Fcon)
+	n.Init = Init
+	n.Condition = Condition
+	n.Update = Update
+	n.LineNum = line
+	return n
+}
+
+func (this *Fcon) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Fcon) _exp() {
 } /*}}}*/
 
 //Exp.Time  /*{{{*/
