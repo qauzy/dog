@@ -4,7 +4,7 @@ import (
 	"dog/ast"
 )
 
-func ConstFold(prog ast.Program) ast.Program {
+func ConstFold(prog ast.File) ast.File {
 	var class ast.Class
 	var main_class ast.MainClass
 	var method ast.Method
@@ -235,7 +235,7 @@ func ConstFold(prog ast.Program) ast.Program {
 				opt(m)
 				methods = append(methods, method)
 			}
-			class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, methods}
+			class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Fields, methods}
 		default:
 			panic("impossible")
 		}
@@ -255,22 +255,22 @@ func ConstFold(prog ast.Program) ast.Program {
 			opt_Class(v)
 		case ast.Type:
 			//no need
-		case ast.Dec:
+		case ast.Field:
 			//no need
 		default:
 			panic("impossible")
 		}
 	}
 
-	var Ast *ast.ProgramSingle
-	if p, ok := prog.(*ast.ProgramSingle); ok {
+	var Ast *ast.FileSingle
+	if p, ok := prog.(*ast.FileSingle); ok {
 		opt(p.Mainclass)
 		classes := make([]ast.Class, 0)
 		for _, c := range p.Classes {
 			opt(c)
 			classes = append(classes, class)
 		}
-		Ast = &ast.ProgramSingle{main_class, classes}
+		Ast = &ast.FileSingle{p.Name, main_class, classes}
 	} else {
 		panic("impossible")
 	}

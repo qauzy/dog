@@ -164,7 +164,7 @@ func (this *DeadCode) opt_Class(cc ast.Class) {
 			this.opt(m)
 			this.methods = append(this.methods, this.method)
 		}
-		this.new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, this.methods}
+		this.new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Fields, this.methods}
 	default:
 		panic("impossible")
 	}
@@ -183,23 +183,23 @@ func (this *DeadCode) opt(e ast.Acceptable) {
 	case ast.Exp:
 		this.opt_Exp(v)
 	case ast.Type:
-	case ast.Dec:
+	case ast.Field:
 	default:
 		panic("impossible")
 	}
 }
 
-func (this *DeadCode) DeadCode_Opt(prog ast.Program) ast.Program {
-	var Ast *ast.ProgramSingle
+func (this *DeadCode) DeadCode_Opt(prog ast.File) ast.File {
+	var Ast *ast.FileSingle
 	switch p := prog.(type) {
-	case *ast.ProgramSingle:
+	case *ast.FileSingle:
 		this.opt(p.Mainclass)
 		this.classes = make([]ast.Class, 0)
 		for _, c := range p.Classes {
 			this.opt(c)
 			this.classes = append(this.classes, this.new_class)
 		}
-		Ast = &ast.ProgramSingle{this.main_class, this.classes}
+		Ast = &ast.FileSingle{p.Name, this.main_class, this.classes}
 
 	default:
 		panic("impossible")

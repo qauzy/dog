@@ -1,8 +1,10 @@
 package elaborator
 
+//阐释者; 阐述者; 详细说明者;
 import (
 	"dog/ast"
 	"dog/control"
+	log "github.com/corgi-kx/logcustom"
 )
 
 var current_class string
@@ -16,6 +18,7 @@ func elabMainClass(mc ast.MainClass) {
 		current_class = m.Name
 		elaborate(m.Stms)
 	default:
+		log.Infof("wrong type")
 		panic("wrong type")
 	}
 }
@@ -179,7 +182,7 @@ func elabExp_Call(e *ast.Call) {
 		if arg.Gettype() != mtd_type.argsType[i].GetDecType() {
 			elab_error(MISTYPE)
 		}
-		if dec, ok := mtd_type.argsType[i].(*ast.DecSingle); ok {
+		if dec, ok := mtd_type.argsType[i].(*ast.FieldSingle); ok {
 			if t1, ok := arg.(*ast.ClassType); ok {
 				if t2, ok2 := dec.Tp.(*ast.ClassType); ok2 {
 					if !compareClass(t2.Name, t1.Name) {
@@ -350,6 +353,7 @@ func buildMainClass(c ast.MainClass) {
 	case *ast.MainClassSingle:
 		ct_put(v.Name, &ClassBinding{})
 	default:
+		log.Infof("wrong type")
 		panic("wrong type")
 	}
 }
@@ -358,9 +362,9 @@ func buildClass(c ast.Class) {
 	switch v := c.(type) {
 	case *ast.ClassSingle:
 		ct_put(v.Name, ClassBinding_new(v.Extends))
-		for _, dec := range v.Decs {
+		for _, dec := range v.Fields {
 			switch d := dec.(type) {
-			case *ast.DecSingle:
+			case *ast.FieldSingle:
 				ct_putFieldType(v.Name, d.Name, d.Tp)
 			default:
 				panic("wrong type")
@@ -379,15 +383,15 @@ func buildClass(c ast.Class) {
 	}
 }
 
-func elabProg(p ast.Program) {
+func elabProg(p ast.File) {
 	switch v := p.(type) {
-	case *ast.ProgramSingle:
+	case *ast.FileSingle:
 		//setp1 : duild classtable
 		buildMainClass(v.Mainclass)
 		for _, c := range v.Classes {
 			buildClass(c)
 		}
-		elabMainClass(v.Mainclass)
+		//elabMainClass(v.Mainclass)
 		for _, c := range v.Classes {
 			elaborate(c)
 		}
@@ -395,6 +399,7 @@ func elabProg(p ast.Program) {
 			classTable_dump()
 		}
 	default:
+		log.Infof("wrong type")
 		panic("wrong type")
 	}
 }
@@ -412,6 +417,7 @@ func elaborate(e ast.Acceptable) {
 	case ast.MainClass:
 		elabMainClass(v)
 	default:
+		log.Infof("wrong type")
 		panic("wrong type")
 	}
 }
@@ -423,9 +429,10 @@ func Elaborate(e ast.Acceptable) {
 	initClassTable()
 
 	switch v := e.(type) {
-	case ast.Program:
+	case ast.File:
 		elabProg(v)
 	default:
+		log.Infof("wrong type")
 		panic("wrong type")
 	}
 }

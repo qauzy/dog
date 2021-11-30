@@ -2,20 +2,17 @@ package main
 
 import (
 	"dog/ast"
-	"dog/ast/optimization"
-	"dog/cfg"
-	"dog/cfg/optimization"
-	"dog/codegen/C"
+	codegen_go "dog/codegen/go"
 	"dog/control"
-	"dog/elaborator"
 	"dog/parser"
 	"dog/util"
 	"fmt"
+	gast "go/ast"
 	"io/ioutil"
 	"os"
 )
 
-func dog_Parser(filename string, buf []byte) ast.Program {
+func dog_Parser(filename string, buf []byte) ast.File {
 	return parser.NewParse(filename, buf).Parser()
 }
 
@@ -42,7 +39,7 @@ func main() {
 		fmt.Println(tk.ToString())
 		os.Exit(0)
 	}
-	var Ast ast.Program
+	var Ast ast.File
 	//setp1: lexer&&parser
 	control.Verbose("parser", func() {
 		Ast = dog_Parser(filename, buf)
@@ -52,19 +49,21 @@ func main() {
 	}
 	//step2: elaborate -- 细化
 	control.Verbose("Elaborate", func() {
-		elaborator.Elaborate(Ast)
+		//elaborator.Elaborate(Ast)
 	}, control.VERBOSE_PASS)
 
 	control.Verbose("ast-Opt", func() {
-		Ast = ast_opt.Opt(Ast)
+		//Ast = ast_opt.Opt(Ast)
 	}, control.VERBOSE_PASS)
 
 	//set3: trans -- 翻译
-	var Ast_c codegen_c.Program
+	var Ast_go *gast.File
 	control.Verbose("Transaction", func() {
 		switch control.CodeGen_codegen {
+		case control.Go:
+			Ast_go = codegen_go.TransGo(Ast)
 		case control.C:
-			Ast_c = codegen_c.TransC(Ast)
+			//Ast_c = codegen_c.TransC(Ast)
 		case control.Bytecode:
 			util.Todo()
 		case control.Dalvik:
@@ -78,26 +77,26 @@ func main() {
 	//step4: codegen -- 代码生成
 	if control.Optimization_Level <= 1 {
 		control.Verbose("CodeGen", func() {
-			codegen_c.CodegenC(Ast_c)
+			//codegen_go.TransGo(Ast_go)
 		}, control.VERBOSE_PASS)
 	} else {
 
-		//setp5:optimization -- 优化
-		//Ast_c -> Ast_cfg
-		var Ast_cfg cfg.Program
-		control.Verbose("TransCfg", func() {
-			Ast_cfg = cfg.TransCfg(Ast_c)
-		}, control.VERBOSE_PASS)
-		if control.Visualize_format != control.None {
-			cfg.Visualize(Ast_cfg)
-		}
-		Ast_cfg = cfg_opt.Opt(Ast_cfg)
-		util.Assert(Ast_cfg != nil, func() { panic("impossible") })
-
-		//CodegenCfg
-		control.Verbose("GenCfg", func() {
-			cfg.CodegenCfg(Ast_cfg)
-		}, control.VERBOSE_PASS)
+		////setp5:optimization -- 优化
+		////Ast_c -> Ast_cfg
+		//var Ast_cfg cfg.File
+		//control.Verbose("TransCfg", func() {
+		//	Ast_cfg = cfg.TransCfg(Ast_c)
+		//}, control.VERBOSE_PASS)
+		//if control.Visualize_format != control.None {
+		//	cfg.Visualize(Ast_cfg)
+		//}
+		//Ast_cfg = cfg_opt.Opt(Ast_cfg)
+		//util.Assert(Ast_cfg != nil, func() { panic("impossible") })
+		//
+		////CodegenCfg
+		//control.Verbose("GenCfg", func() {
+		//	cfg.CodegenCfg(Ast_cfg)
+		//}, control.VERBOSE_PASS)
 
 	}
 

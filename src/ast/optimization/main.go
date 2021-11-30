@@ -5,7 +5,7 @@ import (
 	"dog/control"
 )
 
-func Opt(prog ast.Program) ast.Program {
+func Opt(prog ast.File) ast.File {
 	if control.Optimization_Level < 1 {
 		return prog
 	}

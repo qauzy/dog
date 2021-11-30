@@ -4,7 +4,7 @@ import (
 	"dog/ast"
 )
 
-func AlgSimp(prog ast.Program) ast.Program {
+func AlgSimp(prog ast.File) ast.File {
 	var main_class ast.MainClass
 	var classes []ast.Class
 	var new_class ast.Class
@@ -251,7 +251,7 @@ func AlgSimp(prog ast.Program) ast.Program {
 				opt(m)
 				methods = append(methods, method)
 			}
-			new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Decs, methods}
+			new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Fields, methods}
 		} else {
 			panic("impossible")
 		}
@@ -269,7 +269,7 @@ func AlgSimp(prog ast.Program) ast.Program {
 			opt_MainClass(v)
 		case ast.Class:
 			opt_Class(v)
-		case ast.Dec:
+		case ast.Field:
 			//no need
 		case ast.Type:
 			//no need
@@ -278,15 +278,15 @@ func AlgSimp(prog ast.Program) ast.Program {
 		}
 	}
 
-	var Ast ast.Program
-	if p, ok := prog.(*ast.ProgramSingle); ok {
+	var Ast ast.File
+	if p, ok := prog.(*ast.FileSingle); ok {
 		opt(p.Mainclass)
 		classes = make([]ast.Class, 0)
 		for _, c := range p.Classes {
 			opt(c)
 			classes = append(classes, new_class)
 		}
-		Ast = &ast.ProgramSingle{main_class, classes}
+		Ast = &ast.FileSingle{p.Name, main_class, classes}
 	} else {
 		panic("impossible")
 	}

@@ -307,8 +307,8 @@ func trans_Type(t ast.Type) {
 	}
 }
 
-func trans_Dec(d ast.Dec) {
-	if dec, ok := d.(*ast.DecSingle); ok {
+func trans_Dec(d ast.Field) {
+	if dec, ok := d.(*ast.FieldSingle); ok {
 		trans(dec.Tp)
 		dec_c = &DecSingle{type_c, dec.Name}
 	} else {
@@ -350,9 +350,9 @@ func trans_MainClass(mc ast.MainClass) {
 	}
 }
 
-func trans_Program(p ast.Program) {
+func trans_Program(p ast.File) {
 	transC_init()
-	if pp, ok := p.(*ast.ProgramSingle); ok {
+	if pp, ok := p.(*ast.FileSingle); ok {
 		scanProgram(pp)
 		trans(pp.Mainclass)
 		for _, c := range pp.Classes {
@@ -371,7 +371,7 @@ func trans(e ast.Acceptable) {
 		trans_Exp(v)
 	case ast.Stm:
 		trans_Stm(v)
-	case ast.Program:
+	case ast.File:
 		trans_Program(v)
 	case ast.Class:
 		trans_Class(v)
@@ -379,7 +379,7 @@ func trans(e ast.Acceptable) {
 		trans_MainClass(v)
 	case ast.Method:
 		trans_Method(v)
-	case ast.Dec:
+	case ast.Field:
 		trans_Dec(v)
 	case ast.Type:
 		trans_Type(v)
@@ -405,7 +405,7 @@ func scanClasses(c []ast.Class) {
 			panic("need *ast.ClassSingle")
 		}
 		// decls
-		for _, dec := range cs.Decs {
+		for _, dec := range cs.Fields {
 			trans(dec)
 			new_decs = append(new_decs, dec_c)
 		}
@@ -441,8 +441,8 @@ func scanMain(m ast.MainClass) {
 	}
 }
 
-func scanProgram(p ast.Program) {
-	if pp, ok := p.(*ast.ProgramSingle); ok {
+func scanProgram(p ast.File) {
+	if pp, ok := p.(*ast.FileSingle); ok {
 		scanMain(pp.Mainclass)
 		scanClasses(pp.Classes)
 	} else {
@@ -457,7 +457,7 @@ func transC_init() {
 	methods_c = make([]Method, 0)
 }
 
-func TransC(p ast.Program) Program {
+func TransC(p ast.File) Program {
 	trans(p)
 	if control.CodeGen_dump == true {
 		table.dump()

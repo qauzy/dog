@@ -4,7 +4,7 @@ import (
 	"dog/ast"
 )
 
-func Statistics_Ast(prog ast.Program) int {
+func Statistics_Ast(prog ast.File) int {
 
 	var do func(e ast.Acceptable)
 	var size int
@@ -95,9 +95,9 @@ func Statistics_Ast(prog ast.Program) int {
 		}
 	}
 
-	do_Dec := func(dd ast.Dec) {
+	do_Dec := func(dd ast.Field) {
 		switch d := dd.(type) {
-		case *ast.DecSingle:
+		case *ast.FieldSingle:
 			do(d.Tp)
 			size++
 		default:
@@ -132,7 +132,7 @@ func Statistics_Ast(prog ast.Program) int {
 	do_Class := func(cc ast.Class) {
 		switch c := cc.(type) {
 		case *ast.ClassSingle:
-			for _, dec := range c.Decs {
+			for _, dec := range c.Fields {
 				do(dec)
 			}
 			for _, m := range c.Methods {
@@ -154,9 +154,9 @@ func Statistics_Ast(prog ast.Program) int {
 		}
 	}
 
-	do_Program := func(pr ast.Program) {
+	do_Program := func(pr ast.File) {
 		switch p := pr.(type) {
-		case *ast.ProgramSingle:
+		case *ast.FileSingle:
 			do(p.Mainclass)
 			for _, c := range p.Classes {
 				do(c)
@@ -171,7 +171,7 @@ func Statistics_Ast(prog ast.Program) int {
 		switch v := e.(type) {
 		case ast.Class:
 			do_Class(v)
-		case ast.Dec:
+		case ast.Field:
 			do_Dec(v)
 		case ast.Exp:
 			do_Exp(v)
@@ -179,7 +179,7 @@ func Statistics_Ast(prog ast.Program) int {
 			do_MainClass(v)
 		case ast.Method:
 			do_Method(v)
-		case ast.Program:
+		case ast.File:
 			do_Program(v)
 		case ast.Stm:
 			do_Stm(v)

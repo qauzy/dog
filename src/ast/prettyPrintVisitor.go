@@ -41,9 +41,9 @@ func (this *PrettyPrintVisitor) printSpeaces() {
 	}
 }
 
-func (this *PrettyPrintVisitor) visitDec(e Dec) {
+func (this *PrettyPrintVisitor) visitDec(e Field) {
 	switch v := e.(type) {
-	case *DecSingle:
+	case *FieldSingle:
 		v.Tp.accept(this)
 		this.say(" " + v.Name)
 	default:
@@ -60,7 +60,7 @@ func (this *PrettyPrintVisitor) visitMethod(e Method) {
 		this.say(" " + v.Name + "(")
 		for i, dec := range v.Formals {
 			switch d := dec.(type) {
-			case *DecSingle:
+			case *FieldSingle:
 				if i != 0 {
 					this.say(",")
 				}
@@ -73,7 +73,7 @@ func (this *PrettyPrintVisitor) visitMethod(e Method) {
 		this.sayln("  {")
 		for _, dec := range v.Locals {
 			switch d := dec.(type) {
-			case *DecSingle:
+			case *FieldSingle:
 				this.printSpeaces()
 				d.Tp.accept(this)
 				this.sayln(" " + d.Name + ";")
@@ -105,9 +105,9 @@ func (this *PrettyPrintVisitor) visitClass(e Class) {
 			this.sayln("")
 		}
 		this.sayln("{")
-		for _, dec := range v.Decs {
+		for _, dec := range v.Fields {
 			switch d := dec.(type) {
-			case *DecSingle:
+			case *FieldSingle:
 				this.say("  ")
 				d.Tp.accept(this)
 				this.say(" ")
@@ -147,16 +147,16 @@ func (this *PrettyPrintVisitor) visitMain(e MainClass) {
 	}
 }
 
-func (this *PrettyPrintVisitor) visitProg(e Program) {
+func (this *PrettyPrintVisitor) visitProg(e File) {
 	switch v := e.(type) {
-	case *ProgramSingle:
+	case *FileSingle:
 		v.Mainclass.accept(this)
 		for _, vv := range v.Classes {
 			vv.accept(this)
 		}
 		fmt.Println("\n\n")
 	default:
-		panic("need ProgramSingle")
+		panic("need FileSingle")
 	}
 }
 func (this *PrettyPrintVisitor) visitExp(e Exp) {
@@ -298,13 +298,13 @@ func (this *PrettyPrintVisitor) visitType(e Type) {
 
 func (this *PrettyPrintVisitor) visit(e Acceptable) {
 	switch v := e.(type) {
-	case Dec:
+	case Field:
 		this.visitDec(v)
 	case Class:
 		this.visitClass(v)
 	case MainClass:
 		this.visitMain(v)
-	case Program:
+	case File:
 		this.visitProg(v)
 	case Exp:
 		this.visitExp(v)

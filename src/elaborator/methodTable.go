@@ -15,11 +15,11 @@ func mt_get(id string) ast.Type {
 	return method_table[id]
 }
 
-func mt_put(formals []ast.Dec, locals []ast.Dec) {
-	f := func(list []ast.Dec) {
+func mt_put(formals []ast.Field, locals []ast.Field) {
+	f := func(list []ast.Field) {
 		for _, dec := range list {
 			switch v := dec.(type) {
-			case *ast.DecSingle:
+			case *ast.FieldSingle:
 				if method_table[v.Name] != nil {
 					panic("duplicated parameter: " + v.Name)
 				} else {

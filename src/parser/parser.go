@@ -64,6 +64,16 @@ func (this *Parser) parseType() ast.Type {
 		} else {
 			this.currentType = &ast.Int{}
 		}
+
+	case TOKEN_INTEGER:
+		this.eatToken(TOKEN_INTEGER)
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+		} else {
+			this.currentType = &ast.Integer{}
+		}
 	case TOKEN_VOID:
 		this.eatToken(TOKEN_VOID)
 		this.currentType = &ast.Void{ast.TYPE_VOID}
@@ -121,24 +131,20 @@ func (this *Parser) parseType() ast.Type {
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_MAP)
 		this.eatToken(TOKEN_LT)
-		key := this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+		key := this.parseType()
 		this.eatToken(TOKEN_COMMER)
-		ele := this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+		value := this.parseType()
 		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.HashType{name, key, ele, ast.TYPE_MAP}
+		this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
 	case TOKEN_HASHMAP:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_HASHMAP)
 		this.eatToken(TOKEN_LT)
-		key := this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+		key := this.parseType()
 		this.eatToken(TOKEN_COMMER)
-		ele := this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+		value := this.parseType()
 		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.HashType{name, key, ele, ast.TYPE_MAP}
+		this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
 
 	default:
 		name := this.current.Lexeme
@@ -149,8 +155,8 @@ func (this *Parser) parseType() ast.Type {
 	return this.currentType
 }
 
-func (this *Parser) parseFormalList() []ast.Dec {
-	flist := []ast.Dec{}
+func (this *Parser) parseFormalList() []ast.Field {
+	flist := []ast.Field{}
 	var tp ast.Type
 	var id string
 	var access int
@@ -158,19 +164,20 @@ func (this *Parser) parseFormalList() []ast.Dec {
 	if this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_INT ||
 		this.current.Kind == TOKEN_LIST ||
+		this.current.Kind == TOKEN_INTEGER ||
 		this.current.Kind == TOKEN_MAP ||
 		this.current.Kind == TOKEN_BOOLEAN {
 		tp = this.parseType()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		flist = append(flist, &ast.DecSingle{access, tp, id, this.isField, nil})
+		flist = append(flist, &ast.FieldSingle{access, tp, id, this.isField, nil})
 
 		for this.current.Kind == TOKEN_COMMER {
 			this.eatToken(TOKEN_COMMER)
 			tp = this.parseType()
 			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
-			flist = append(flist, &ast.DecSingle{access, tp, id, this.isField, nil})
+			flist = append(flist, &ast.FieldSingle{access, tp, id, this.isField, nil})
 		}
 	}
 	return flist
@@ -299,16 +306,14 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			this.eatToken(TOKEN_LT)
 			var key = ""
 			var ele = ""
-			if this.current.Kind == TOKEN_ID {
+			if this.current.Kind != TOKEN_GT {
 				key = this.current.Lexeme
 				this.eatToken(TOKEN_ID)
 				this.eatToken(TOKEN_COMMER)
 				ele = this.current.Lexeme
 				this.eatToken(TOKEN_ID)
-			} else {
-				key = this.currentType.(*ast.HashType).Key
-				ele = this.currentType.(*ast.HashType).Ele
 			}
+
 			this.eatToken(TOKEN_GT)
 			this.eatToken(TOKEN_LPAREN)
 			this.eatToken(TOKEN_RPAREN)
@@ -848,8 +853,8 @@ func (this *Parser) parseStatements() []ast.Stm {
 	}
 	return stms
 }
-func (this *Parser) parseMemberVarDecl(tmp *ast.DecSingle) ast.Dec {
-	var dec *ast.DecSingle
+func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle) ast.Field {
+	var dec *ast.FieldSingle
 	var assign *ast.Assign
 
 	if this.current.Kind == TOKEN_ASSIGN {
@@ -860,7 +865,7 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.DecSingle) ast.Dec {
 		assign.Name = tmp.Name
 		assign.E = e
 	}
-	dec = &ast.DecSingle{tmp.Access, tmp.Tp, tmp.Name, this.isField, assign}
+	dec = &ast.FieldSingle{tmp.Access, tmp.Tp, tmp.Name, this.isField, assign}
 	this.eatToken(TOKEN_SEMI)
 	return dec
 }
@@ -868,14 +873,14 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.DecSingle) ast.Dec {
 // 解析成员变量和成员方法
 //
 // return:
-func (this *Parser) parseClassContext() (decs []ast.Dec, methods []ast.Method) {
+func (this *Parser) parseClassContext() (decs []ast.Field, methods []ast.Method) {
 
 	//每次循环解析一个成员变量或一个成员函数
 	for this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PROTECTED ||
 		this.current.Kind == TOKEN_BOOLEAN || this.current.Kind == TOKEN_INT || this.current.Kind == TOKEN_STRING ||
 		this.current.Kind == TOKEN_ID {
 		//
-		var tmp ast.DecSingle
+		var tmp ast.FieldSingle
 
 		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
 		//处理 访问修饰符
@@ -920,7 +925,7 @@ func (this *Parser) parseClassContext() (decs []ast.Dec, methods []ast.Method) {
 	return
 }
 
-func (this *Parser) parseMemberMethod(dec *ast.DecSingle) ast.Method {
+func (this *Parser) parseMemberMethod(dec *ast.FieldSingle) ast.Method {
 	log.Infof("*******解析成员函数*******")
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
@@ -936,7 +941,7 @@ func (this *Parser) parseMemberMethod(dec *ast.DecSingle) ast.Method {
 	//做大括号
 	this.eatToken(TOKEN_LBRACE)
 	var stms []ast.Stm
-	var locals []ast.Dec
+	var locals []ast.Field
 
 	//解析本地变量和表达式
 	stms = this.parseStatements()
@@ -1036,11 +1041,13 @@ func (this *Parser) parseMainClass() ast.MainClass {
 	return &ast.MainClassSingle{id, arg, stm}
 }
 
-func (this *Parser) parseProgram() ast.Program {
+func (this *Parser) parseProgram() ast.File {
+	var name string
 	//处理package
 	if this.current.Kind == TOKEN_PACKAGE {
 		this.advance()
 		for this.current.Kind != TOKEN_SEMI {
+			name = this.current.Lexeme
 			this.advance()
 		}
 		this.advance()
@@ -1061,10 +1068,10 @@ func (this *Parser) parseProgram() ast.Program {
 
 	classes := this.parseClassDecls()
 	this.eatToken(TOKEN_EOF)
-	return &ast.ProgramSingle{nil, classes}
+	return &ast.FileSingle{name, nil, classes}
 }
 
-func (this *Parser) Parser() ast.Program {
+func (this *Parser) Parser() ast.File {
 	p := this.parseProgram()
 	return p
 }

@@ -12,12 +12,13 @@ type CodeGen_Kind int
 
 const (
 	C = iota
+	Go
 	Bytecode
 	Dalvik
 	X86
 )
 
-var CodeGen_codegen CodeGen_Kind = C
+var CodeGen_codegen CodeGen_Kind = Go
 
 var Ast_test bool = false
 var Ast_dumpAst bool = false
@@ -35,4 +36,4 @@ const (
 
 var Visualize_format int = None
 
-var Optimization_Level int = 6
+var Optimization_Level int = 1

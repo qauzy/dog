@@ -151,7 +151,7 @@ func (this *DeadClass) opt(e ast.Acceptable) {
 		this.opt_Stm(v)
 	case ast.Type:
 		//no need
-	case ast.Dec:
+	case ast.Field:
 		//no need
 	case ast.Method:
 		this.opt_Method(v)
@@ -164,9 +164,9 @@ func (this *DeadClass) opt(e ast.Acceptable) {
 	}
 }
 
-func (this *DeadClass) DeadClass_Opt(prog ast.Program) ast.Program {
-	var p *ast.ProgramSingle
-	if v, ok := prog.(*ast.ProgramSingle); ok {
+func (this *DeadClass) DeadClass_Opt(prog ast.File) ast.File {
+	var p *ast.FileSingle
+	if v, ok := prog.(*ast.FileSingle); ok {
 		p = v
 	} else {
 		panic("impossible")
@@ -201,7 +201,7 @@ func (this *DeadClass) DeadClass_Opt(prog ast.Program) ast.Program {
 		}
 	}
 
-	Ast := &ast.ProgramSingle{p.Mainclass, newclasses}
+	Ast := &ast.FileSingle{p.Name, p.Mainclass, newclasses}
 
 	return Ast
 }

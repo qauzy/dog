@@ -6,7 +6,7 @@ type Class interface {
 	_class()
 }
 
-type Dec interface {
+type Field interface {
 	accept(v Visitor)
 	GetDecType() int
 	String() string
@@ -27,7 +27,7 @@ type Method interface {
 	_method()
 }
 
-type Program interface {
+type File interface {
 	accept(v Visitor)
 	_prog()
 }
@@ -45,8 +45,8 @@ type Type interface {
 
 /*------------------ struct -----------------------*/
 
-/*Dec*/ /*{{{*/
-type DecSingle struct {
+/*Field*/ /*{{{*/
+type FieldSingle struct {
 	Access  int
 	Tp      Type
 	Name    string
@@ -54,14 +54,14 @@ type DecSingle struct {
 	Stms    Stm //处理声明变量时的初始化语句
 }
 
-func (this *DecSingle) accept(v Visitor) {
+func (this *FieldSingle) accept(v Visitor) {
 	v.visit(this)
 }
 
-func (this *DecSingle) GetDecType() int {
+func (this *FieldSingle) GetDecType() int {
 	return this.Tp.Gettype()
 }
-func (this *DecSingle) String() string {
+func (this *FieldSingle) String() string {
 	s := this.Name + " " + this.Tp.String()
 	return s
 }
@@ -89,7 +89,7 @@ type ClassSingle struct {
 	Access  int
 	Name    string
 	Extends string
-	Decs    []Dec
+	Fields  []Field
 	Methods []Method
 }
 
@@ -105,8 +105,8 @@ func (this *ClassSingle) _class() {
 type MethodSingle struct {
 	RetType Type
 	Name    string // the name of whitch class belong to
-	Formals []Dec
-	Locals  []Dec
+	Formals []Field
+	Locals  []Field
 	Stms    []Stm
 	RetExp  Exp
 }
@@ -120,15 +120,16 @@ func (this *MethodSingle) _method() {
 /*}}}*/
 
 /*Prog*/ /*{{{*/
-type ProgramSingle struct {
+type FileSingle struct {
+	Name      string // identifier name
 	Mainclass MainClass
 	Classes   []Class
 }
 
-func (this *ProgramSingle) accept(v Visitor) {
+func (this *FileSingle) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *ProgramSingle) _prog() {
+func (this *FileSingle) _prog() {
 } /*}}}*/
 
 /*Exp*/ /*{{{*/
@@ -1157,6 +1158,7 @@ func (this *For) _stm() {
 //Type.Int  /*{{{*/
 const (
 	TYPE_INT = iota
+	TYPE_Integer
 	TYPE_BOOLEAN
 	TYPE_VOID
 	TYPE_INTARRAY
@@ -1179,6 +1181,20 @@ func (this *Int) Gettype() int {
 }
 func (this *Int) String() string {
 	return "@int"
+}
+
+type Integer struct {
+	TypeKind int
+}
+
+func (this *Integer) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Integer) Gettype() int {
+	return this.TypeKind
+}
+func (this *Integer) String() string {
+	return "@Integer"
 }
 
 /*}}}*/
@@ -1314,8 +1330,8 @@ func (this *ListType) String() string {
 
 type HashType struct {
 	Name     string
-	Key      string
-	Ele      string
+	Key      Type
+	Value    Type
 	TypeKind int
 }
 

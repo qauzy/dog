@@ -7,7 +7,7 @@ import (
 
 type MethodType struct {
 	retType  ast.Type
-	argsType []ast.Dec
+	argsType []ast.Field
 }
 
 func methodType_dump(m *MethodType) {
