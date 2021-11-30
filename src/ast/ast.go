@@ -882,27 +882,27 @@ type Stm_T struct {
 	LineNum int
 }
 
-//Stm.Statement    /*{{{*/
-type Statement struct {
-	Name    string
-	Tp      Type
-	IsField bool
+//Stm.Decl    /*{{{*/
+type Decl struct {
+	Name  string
+	Tp    Type
+	Value Exp
 	Stm_T
 }
 
-func Statement_new(name string, exp Exp, tp Type, isField bool, line int) *Statement {
-	s := new(Statement)
+func Decl_new(name string, tp Type, Value Exp, line int) *Decl {
+	s := new(Decl)
 	s.Name = name
 	s.Tp = tp
-	s.IsField = isField
+	s.Value = Value
 	s.LineNum = line
 	return s
 }
 
-func (this *Statement) accept(v Visitor) {
+func (this *Decl) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *Statement) _stm() {
+func (this *Decl) _stm() {
 }
 
 /*}}}*/

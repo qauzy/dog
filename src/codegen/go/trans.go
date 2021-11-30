@@ -124,6 +124,19 @@ func transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		} else {
 			results = nil
 		}
+		var body = &gast.BlockStmt{
+			Lbrace: 0,
+			List:   nil,
+			Rbrace: 0,
+		}
+		//处理函数体
+		for _, stm := range method.Stms {
+			ss := transStm(stm)
+			if ss != nil {
+				body.List = append(body.List, ss)
+			}
+
+		}
 
 		fn = &gast.FuncDecl{
 			Doc:  nil,
@@ -134,7 +147,7 @@ func transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Params:  params,
 				Results: results,
 			},
-			Body: nil,
+			Body: body,
 		}
 
 	}
@@ -152,6 +165,54 @@ func transField(fi ast.Field) (gfi *gast.Field) {
 		}
 
 	}
+	return
+}
+
+func transStm(s ast.Stm) (stmt gast.Stmt) {
+	switch v := s.(type) {
+	//变量声明
+	case *ast.Decl:
+		d := &gast.GenDecl{
+			Doc:    nil,
+			TokPos: 0,
+			Tok:    token.VAR,
+			Lparen: 0,
+			Specs:  nil,
+			Rparen: 0,
+		}
+		sp := &gast.ValueSpec{
+			Doc:     nil,
+			Names:   []*gast.Ident{gast.NewIdent(v.Name)},
+			Type:    transType(v.Tp),
+			Values:  nil,
+			Comment: nil,
+		}
+
+		d.Specs = append(d.Specs, sp)
+		stmt = &gast.DeclStmt{Decl: d}
+	}
+	return
+}
+
+func transExp(e ast.Exp) (expr gast.Expr) {
+	switch v := e.(type) {
+	case *ast.Or:
+		expr = &gast.BinaryExpr{
+			X:     transExp(v.Left),
+			OpPos: 0,
+			Op:    token.OR,
+			Y:     transExp(v.Right),
+		}
+		//call := &gast.CallExpr{
+		//	Fun:      nil,
+		//	Lparen:   0,
+		//	Args:     nil,
+		//	Ellipsis: 0,
+		//	Rparen:   0,
+		//}
+
+	}
+
 	return
 }
 

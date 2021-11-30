@@ -163,6 +163,7 @@ func (this *Parser) parseFormalList() []ast.Field {
 
 	if this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_INT ||
+		this.current.Kind == TOKEN_STRING ||
 		this.current.Kind == TOKEN_LIST ||
 		this.current.Kind == TOKEN_INTEGER ||
 		this.current.Kind == TOKEN_MAP ||
@@ -616,22 +617,19 @@ func (this *Parser) parseStatement() ast.Stm {
 		tp := this.parseType()
 		id := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		assign := new(ast.Assign)
-		assign.Left = ast.Id_new(id, tp, false, this.Linenum)
-		assign.Name = id
+		decl := ast.Decl_new(id, tp, nil, this.Linenum)
 		//有赋值语句
 		if this.current.Kind == TOKEN_ASSIGN {
 			//临时变量类型
-			this.assignType = tp
 			log.Infof("*******解析临时变量声明语句(有赋值语句)*******")
 			this.eatToken(TOKEN_ASSIGN)
 			exp := this.parseExp()
-			assign.E = exp
+			decl.Value = exp
 		} else {
 			log.Infof("*******解析临时变量声明语句(无赋值语句)*******")
 		}
 		this.eatToken(TOKEN_SEMI)
-		return assign
+		return decl
 
 	case TOKEN_LBRACE: //{
 		log.Infof("*******解析代码段*******")
@@ -657,19 +655,19 @@ func (this *Parser) parseStatement() ast.Stm {
 		//处理声明临时变量和赋值语句
 		case TOKEN_ID:
 			log.Infof("*******解析临时变量声明语句*******")
-			id := this.current.Lexeme
+			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
+			decl := ast.Decl_new(id, tp, nil, this.Linenum)
+			//有赋值语句
 			if this.current.Kind == TOKEN_ASSIGN {
+				//临时变量类型
+				log.Infof("*******解析临时变量声明语句(有赋值语句)*******")
 				this.eatToken(TOKEN_ASSIGN)
 				exp := this.parseExp()
-				this.eatToken(TOKEN_SEMI)
-				assign := new(ast.Assign)
-				assign.Left = ast.Id_new(id, tp, false, this.Linenum)
-				assign.Name = id
-				assign.E = exp
-				return assign
+				decl.Value = exp
 			}
 			this.eatToken(TOKEN_SEMI)
+			return decl
 			//都统一为赋值语句
 		case TOKEN_LPAREN:
 			fallthrough
