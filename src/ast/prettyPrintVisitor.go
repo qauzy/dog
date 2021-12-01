@@ -257,7 +257,7 @@ func (this *PrettyPrintVisitor) visitStm(e Stm) {
 		v.Condition.accept(this)
 		this.sayln(") {")
 		this.indent()
-		v.Thenn.accept(this)
+		v.Body.accept(this)
 		this.unIndent()
 		this.printSpeaces()
 		this.sayln("}else {")

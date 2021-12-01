@@ -64,9 +64,10 @@ func (this *Parser) parseType() ast.Type {
 		} else {
 			this.currentType = &ast.Int{}
 		}
-
+	case TOKEN_LONG:
+		fallthrough
 	case TOKEN_INTEGER:
-		this.eatToken(TOKEN_INTEGER)
+		this.advance()
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
@@ -163,6 +164,7 @@ func (this *Parser) parseFormalList() []ast.Field {
 
 	if this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_INT ||
+		this.current.Kind == TOKEN_LONG ||
 		this.current.Kind == TOKEN_STRING ||
 		this.current.Kind == TOKEN_LIST ||
 		this.current.Kind == TOKEN_INTEGER ||
@@ -241,6 +243,9 @@ func (this *Parser) parseAtomExp() ast.Exp {
 	case TOKEN_FALSE:
 		this.advance()
 		return &ast.False{}
+	case TOKEN_NULL:
+		this.advance()
+		return &ast.Null{}
 	case TOKEN_THIS:
 		this.advance()
 		return &ast.This{}
@@ -440,11 +445,20 @@ func (this *Parser) parseNotExp() ast.Exp {
 				exp = ast.CallExpr_new(exp, args, this.Linenum)
 				//成员变量
 			}
+			//数组索引操作
 		case TOKEN_LBRACK: //[exp]
 			this.advance()
 			index := this.parseExp()
-			this.eatToken(TOKEN_RBRACK)
-			return ast.ArraySelect_new(exp, index, this.Linenum)
+			if index != nil {
+				log.Infof("数组索引表达式")
+				this.eatToken(TOKEN_RBRACK)
+				return ast.ArraySelect_new(exp, index, this.Linenum)
+			} else {
+				log.Infof("数组索引用")
+				this.eatToken(TOKEN_RBRACK)
+
+			}
+
 		default:
 			panic("need TOKEN_NOT or TOKEN_LBRACK")
 		}
@@ -599,6 +613,8 @@ func (this *Parser) parseStatement() ast.Stm {
 		fallthrough
 	case TOKEN_STRING:
 		fallthrough
+	case TOKEN_LONG:
+		fallthrough
 	case TOKEN_INT:
 		fallthrough
 	case TOKEN_SET:
@@ -703,13 +719,13 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_LPAREN)
 		condition := this.parseExp()
 		this.eatToken(TOKEN_RPAREN)
-		thenn := this.parseStatement()
+		body := this.parseStatement()
 		if this.current.Kind == TOKEN_ELSE {
 			this.eatToken(TOKEN_ELSE)
 			elsee := this.parseStatement()
-			return ast.If_new(condition, thenn, elsee, this.Linenum)
+			return ast.If_new(condition, body, elsee, this.Linenum)
 		} else {
-			return ast.If_new(condition, thenn, nil, this.Linenum)
+			return ast.If_new(condition, body, nil, this.Linenum)
 		}
 	case TOKEN_TRY:
 		log.Infof("********TOKEN_TRY***********")
@@ -746,7 +762,6 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_FOR)
 		this.eatToken(TOKEN_LPAREN)
 		//init := this.parseStatement()
-		var Init ast.Stm
 		exp := this.parseExp()
 		//for循环三段式
 		if this.current.Kind == TOKEN_ASSIGN {
@@ -764,12 +779,14 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.eatToken(TOKEN_SEMI)
 
 			log.Infof("********TOKEN_FOR--> 解析更新语句 ***********")
-			Update := this.parseExp()
-			log.Infof("*******1111**********")
-			//可能是for循环枚举
-			exp = ast.Fcon_new(Init, Condition, Update, this.Linenum)
+			Post := this.parseExp()
+			this.eatToken(TOKEN_RPAREN)
+			body := this.parseStatement()
+			return ast.For_new(Init, Condition, Post, body, this.Linenum)
 
+			//枚举式
 		} else if this.current.Kind == TOKEN_COLON {
+			log.Infof("*******for循环枚举*************")
 			this.eatToken(TOKEN_COLON)
 			var right ast.Exp
 
@@ -779,14 +796,13 @@ func (this *Parser) parseStatement() ast.Stm {
 			} else {
 				right = this.parseOrExp()
 			}
-			log.Infof("*******for循环枚举*************")
-			exp = ast.Enum_new(exp, right, this.Linenum)
+			this.eatToken(TOKEN_RPAREN)
+
+			body := this.parseStatement()
+
+			return ast.Range_new(exp, right, body, this.Linenum)
 		}
 
-		this.eatToken(TOKEN_RPAREN)
-		log.Infof("解析for语句body")
-		body := this.parseStatement()
-		return ast.For_new(Init, exp, body, this.Linenum)
 	case TOKEN_SYSTEM:
 		this.eatToken(TOKEN_SYSTEM)
 		this.eatToken(TOKEN_DOT)
@@ -835,6 +851,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_RETURN ||
 		this.current.Kind == TOKEN_BOOLEAN ||
 		this.current.Kind == TOKEN_INT ||
+		this.current.Kind == TOKEN_LONG ||
 		this.current.Kind == TOKEN_STRING ||
 		this.current.Kind == TOKEN_SET ||
 		this.current.Kind == TOKEN_HASHSET ||
@@ -857,7 +874,7 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle) ast.Field {
 		assign.Name = tmp.Name
 		assign.E = e
 	}
-	dec = &ast.FieldSingle{tmp.Access, tmp.Tp, tmp.Name, this.isField, assign}
+	dec = &ast.FieldSingle{tmp.Access, tmp.Tp, tmp.Name, true, assign}
 	this.eatToken(TOKEN_SEMI)
 	return dec
 }

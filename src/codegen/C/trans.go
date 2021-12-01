@@ -237,7 +237,7 @@ func trans_Stm_Block(s *ast.Block) {
 func trans_Stm_If(s *ast.If) {
 	trans(s.Condition)
 	cond := exp_c
-	trans(s.Thenn)
+	trans(s.Body)
 	thenn := stm_c
 	trans(s.Elsee)
 	elsee := stm_c

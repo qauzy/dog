@@ -104,7 +104,7 @@ func (this *DeadCode) opt_Stm(stm ast.Stm) {
 		this.opt(s.Condition)
 		if this.is_bool {
 			if this.is_true {
-				this.stm = s.Thenn
+				this.stm = s.Body
 			} else {
 				this.stm = s.Elsee
 			}

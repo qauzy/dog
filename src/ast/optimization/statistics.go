@@ -80,7 +80,7 @@ func Statistics_Ast(prog ast.File) int {
 			size++
 		case *ast.If:
 			do(s.Condition)
-			do(s.Thenn)
+			do(s.Body)
 			do(s.Elsee)
 			size++
 		case *ast.Print:

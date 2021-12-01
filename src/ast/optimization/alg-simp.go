@@ -197,7 +197,7 @@ func AlgSimp(prog ast.File) ast.File {
 		case *ast.If:
 			opt(s.Condition)
 			cond := exp
-			opt(s.Thenn)
+			opt(s.Body)
 			thenn := stm
 			opt(s.Elsee)
 			elsee := stm

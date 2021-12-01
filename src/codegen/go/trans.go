@@ -8,6 +8,8 @@ import (
 	gast "go/ast"
 	"go/format"
 	"go/token"
+	"reflect"
+	"strconv"
 )
 
 func TransGo(p ast.File) (f *gast.File) {
@@ -161,6 +163,7 @@ func transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		//处理函数体
 		for _, stm := range method.Stms {
 			ss := transStm(stm)
+
 			if ss != nil {
 				body.List = append(body.List, ss)
 			}
@@ -189,15 +192,43 @@ func transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 
 func transField(fi ast.Field) (gfi *gast.Field) {
 	if field, ok := fi.(*ast.FieldSingle); ok {
+		//只处理成员变量
+		var name = field.Name
+		if field.IsField {
+			name = Capitalize(field.Name)
+		}
 		gfi = &gast.Field{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(Capitalize(field.Name))},
+			Names:   []*gast.Ident{gast.NewIdent(name)},
 			Type:    transType(field.Tp),
 			Tag:     nil,
 			Comment: nil,
 		}
 
 	}
+	return
+}
+func transBlock(s ast.Stm) (block *gast.BlockStmt) {
+	log.Infof("解析Block语句")
+	block = new(gast.BlockStmt)
+	if bl, ok := s.(*ast.Block); ok {
+		for _, st := range bl.Stms {
+			if st != nil {
+				log.Infof("解析Block语句-->分段%v", st)
+				block.List = append(block.List, transStm(st))
+
+			} else {
+				block.List = append(block.List, &gast.ExprStmt{X: gast.NewIdent("/**********************/")})
+				log.Infof("解析Block语句-->不解析空分段")
+			}
+
+		}
+
+	} else {
+		log.Infof("transBlock-->%v", reflect.TypeOf(s).String())
+		panic("bug")
+	}
+
 	return
 }
 
@@ -209,7 +240,8 @@ func transStm(s ast.Stm) (stmt gast.Stmt) {
 	switch v := s.(type) {
 	//变量声明
 	case *ast.Decl:
-		log.Info("变量声明:", v.Name, "行:", v.LineNum)
+
+		//log.Info("变量声明:", v.Name, "行:", v.LineNum)
 		d := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
@@ -226,7 +258,7 @@ func transStm(s ast.Stm) (stmt gast.Stmt) {
 			Comment: nil,
 		}
 		//临时变量初值
-		log.Infof("初值:%v", v.Value)
+		//log.Infof("初值:%v", v.Value)
 		val := transExp(v.Value)
 		if val != nil {
 			sp.Values = append(sp.Values, val)
@@ -237,16 +269,79 @@ func transStm(s ast.Stm) (stmt gast.Stmt) {
 		stmt = &gast.DeclStmt{Decl: d}
 		//赋值语句
 	case *ast.Assign:
-		log.Infof("解析赋值语句:%v", v)
+
+		//log.Infof("解析赋值语句:%v", v)
 		stmt = &gast.AssignStmt{
 			Lhs:    []gast.Expr{transExp(v.Left)},
 			TokPos: 0,
 			Tok:    token.ASSIGN,
 			Rhs:    []gast.Expr{transExp(v.E)},
 		}
+	case *ast.If:
+		log.Infof("If语句:%v", (*v).Body)
+
+		//stmt = transBlock(v.Body)
+		stmt = &gast.IfStmt{
+			If:   0,
+			Init: nil,
+			Cond: transExp(v.Condition),
+			Body: transBlock(v.Body),
+			Else: nil,
+		}
+	//
+	case *ast.For:
+		log.Infof("For语句:%v", *v)
+		//return  &gast.ExprStmt{X:gast.NewIdent("/**********************/")}
+		stmt = &gast.ForStmt{
+			For:  0,
+			Init: transStm(v.Init),
+			Cond: transExp(v.Cond),
+			Post: nil,
+			Body: transBlock(v.Body),
+		}
+		log.Infof("For语句结束:%v", *v)
+
+	case *ast.Range:
+		//return  &gast.ExprStmt{X:gast.NewIdent("/**********************/")}
+		log.Infof("Range语句:%v", *v)
+		stmt = &gast.RangeStmt{
+			For:    0,
+			Key:    gast.NewIdent("_"),
+			Value:  transExp(v.Value),
+			TokPos: 0,
+			Tok:    token.DEFINE,
+			X:      transExp(v.E),
+			Body:   transBlock(v.Body),
+		}
+		log.Infof("Range语句结束:%v", *v)
 	case *ast.ExprStm:
-		log.Infof("表达式语句:%v", v)
+		//log.Infof("表达式语句:%v", v)
 		stmt = &gast.ExprStmt{X: transExp(v.E)}
+	case *ast.Throw:
+
+		log.Infof("Throw语句:%v", v)
+		stmt = &gast.ReturnStmt{
+			Return:  0,
+			Results: nil,
+		}
+	case *ast.Return:
+		//log.Infof("Return语句:%v", v)
+		result := &gast.ReturnStmt{
+			Return:  0,
+			Results: nil,
+		}
+		if v.E != nil {
+			ret := transExp(v.E)
+			if ret != nil {
+				result.Results = append(result.Results, ret)
+			}
+		} else {
+			log.Infof("空Return语句")
+		}
+		return result
+	default:
+		//log.Infof("transBlock-->%v",reflect.TypeOf(s).String())
+		panic("bug")
 	}
 
 	return
@@ -254,6 +349,12 @@ func transStm(s ast.Stm) (stmt gast.Stmt) {
 
 func transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
+	case *ast.Not:
+		expr = &gast.UnaryExpr{
+			OpPos: 0,
+			Op:    token.NOT,
+			X:     transExp(v.E),
+		}
 	case *ast.Or:
 		expr = &gast.BinaryExpr{
 			X:     transExp(v.Left),
@@ -332,16 +433,16 @@ func transExp(e ast.Exp) (expr gast.Expr) {
 			Y:     transExp(v.Right),
 		}
 	case *ast.SelectorExpr:
-		log.Infof("选择表达式,%v, %s", v.X, v.Sel)
+		//	log.Infof("选择表达式,%v, %s", v.X, v.Sel)
 		expr = &gast.SelectorExpr{
 			X:   transExp(v.X),
 			Sel: gast.NewIdent(Capitalize(v.Sel)),
 		}
 	case *ast.This:
-		log.Infof("This表达式")
+		//log.Infof("This表达式")
 		return gast.NewIdent("this")
 	case *ast.NewList:
-		log.Infof("初始化List表达式")
+		//log.Infof("初始化List表达式")
 		call := &gast.CallExpr{
 			Fun:      gast.NewIdent("make"),
 			Lparen:   0,
@@ -366,7 +467,7 @@ func transExp(e ast.Exp) (expr gast.Expr) {
 		return call
 		//TODO 这里需要自己构造一个初始化函数
 	case *ast.NewObject:
-		log.Infof("初始化NewObject表达式")
+		//log.Infof("初始化NewObject表达式")
 		call := &gast.CallExpr{
 			Fun:      gast.NewIdent("New" + v.Name),
 			Lparen:   0,
@@ -389,7 +490,7 @@ func transExp(e ast.Exp) (expr gast.Expr) {
 			Rparen:   0,
 		}
 	case *ast.CallExpr:
-		log.Infof("函数调用表达式,%v", v.Callee)
+		//log.Infof("函数调用表达式,%v", v.Callee)
 		fn := transExp(v.Callee)
 		call := &gast.CallExpr{
 			Fun:      fn,
@@ -400,15 +501,45 @@ func transExp(e ast.Exp) (expr gast.Expr) {
 		}
 
 		for _, a := range v.ArgsList {
-			log.Infof("解析函数调用参数")
+			//log.Infof("解析函数调用参数-->%v",a)
 			call.Args = append(call.Args, transExp(a))
 		}
 		return call
 	case *ast.Id:
 		log.Infof("变量ID-->%s,行:%v", v.Name, v.LineNum)
 		return gast.NewIdent(v.Name)
+	case *ast.Num:
+		return &gast.BasicLit{
+			ValuePos: 0,
+			Kind:     token.INT,
+			Value:    strconv.Itoa(v.Value),
+		}
+	case *ast.False:
+		//log.Infof("False表达式")
+		return gast.NewIdent("false")
+	case *ast.True:
+		//log.Infof("True表达式")
+		return gast.NewIdent("true")
+	case *ast.Null:
+		//log.Infof("Null表达式")
+		return gast.NewIdent("nil")
+	case *ast.Length:
+		call := &gast.CallExpr{
+			Fun:      gast.NewIdent("len"),
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+		call.Args = append(call.Args, transExp(v.Arrayref))
+		return call
+	case *ast.ArraySelect:
+
 	default:
-		log.Infof("%v", v)
+		if v == nil {
+			log.Infof("***************")
+		}
+		log.Infof("%v", reflect.TypeOf(v).String())
 		panic("bug")
 	}
 

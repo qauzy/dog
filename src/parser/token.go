@@ -37,7 +37,10 @@ func initTokenMap() {
 	tokenMap["try"] = TOKEN_TRY
 	tokenMap["catch"] = TOKEN_CATCH
 	tokenMap["finally"] = TOKEN_FINALLY
+	tokenMap["null"] = TOKEN_NULL
+
 	tokenMap["int"] = TOKEN_INT
+	tokenMap["Long"] = TOKEN_LONG
 	tokenMap["Integer"] = TOKEN_INTEGER
 
 	tokenMap["Set"] = TOKEN_SET
@@ -120,7 +123,10 @@ func initTokenMap() {
 	tMap[TOKEN_TRY] = "TOKEN_TRY"
 	tMap[TOKEN_CATCH] = "TOKEN_CATCH"
 	tMap[TOKEN_FINALLY] = "TOKEN_FINALLY"
+	tMap[TOKEN_NULL] = "TOKEN_NULL"
 	tMap[TOKEN_INT] = "TOKEN_INT"
+	tMap[TOKEN_LONG] = "TOKEN_LONG"
+
 	tMap[TOKEN_INTEGER] = "TOKEN_INTEGER"
 	tMap[TOKEN_SET] = "TOKEN_SET"
 	tMap[TOKEN_HASHSET] = "TOKEN_HASHSET"
@@ -199,7 +205,9 @@ const (
 	TOKEN_TRY
 	TOKEN_CATCH
 	TOKEN_FINALLY
+	TOKEN_NULL
 	TOKEN_INT
+	TOKEN_LONG
 	TOKEN_INTEGER
 	TOKEN_SET
 	TOKEN_HASHSET

@@ -78,7 +78,7 @@ func (this *DeadClass) opt_Stm(stm ast.Stm) {
 		}
 	case *ast.If:
 		this.opt(s.Condition)
-		this.opt(s.Thenn)
+		this.opt(s.Body)
 		this.opt(s.Elsee)
 	case *ast.Print:
 		this.opt(s.E)

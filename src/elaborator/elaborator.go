@@ -98,7 +98,7 @@ func elabStm_If(s *ast.If) {
 	if _, ok := current_type.(*ast.Boolean); !ok {
 		elab_error(MISTYPE)
 	}
-	elaborate(s.Thenn)
+	elaborate(s.Body)
 	elaborate(s.Elsee)
 }
 

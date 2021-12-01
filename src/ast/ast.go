@@ -268,15 +268,15 @@ func (this *Enum) _exp() {
 type Fcon struct {
 	Init      Stm
 	Condition Exp
-	Update    Exp
+	Post      Exp
 	Exp_T
 }
 
-func Fcon_new(Init Stm, Condition Exp, Update Exp, line int) *Fcon {
+func Fcon_new(Init Stm, Condition Exp, Post Exp, line int) *Fcon {
 	n := new(Fcon)
 	n.Init = Init
 	n.Condition = Condition
-	n.Update = Update
+	n.Post = Post
 	n.LineNum = line
 	return n
 }
@@ -446,6 +446,25 @@ func (this *True) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *True) _exp() {
+}
+
+/*}}}*/
+
+//Exp.Null   /*{{{*/
+type Null struct {
+	Exp_T
+}
+
+func Null_new(line int) *Null {
+	e := new(Null)
+	e.LineNum = line
+	return e
+}
+
+func (this *Null) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Null) _exp() {
 }
 
 /*}}}*/
@@ -1073,14 +1092,14 @@ func (this *Try) _stm() {
 type If struct {
 	Stm_T
 	Condition Exp
-	Thenn     Stm
+	Body      Stm
 	Elsee     Stm
 }
 
-func If_new(cond Exp, then Stm, elsee Stm, line int) *If {
+func If_new(cond Exp, Body Stm, elsee Stm, line int) *If {
 	s := new(If)
 	s.Condition = cond
-	s.Thenn = then
+	s.Body = Body
 	s.Elsee = elsee
 	s.LineNum = line
 	return s
@@ -1163,14 +1182,16 @@ func (this *While) _stm() {
 type For struct {
 	Init Stm
 	Stm_T
-	E    Exp
+	Cond Exp
+	Post Exp
 	Body Stm
 }
 
-func For_new(Init Stm, exp Exp, body Stm, line int) *For {
+func For_new(Init Stm, Condition Exp, Post Exp, body Stm, line int) *For {
 	s := new(For)
 	s.Init = Init
-	s.E = exp
+	s.Cond = Condition
+	s.Post = Post
 	s.Body = body
 	s.LineNum = line
 	return s
@@ -1180,6 +1201,31 @@ func (this *For) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *For) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Range   /*{{{*/
+type Range struct {
+	Value Exp
+	Stm_T
+	E    Exp
+	Body Stm
+}
+
+func Range_new(Value Exp, exp Exp, body Stm, line int) *Range {
+	s := new(Range)
+	s.Value = Value
+	s.E = exp
+	s.Body = body
+	s.LineNum = line
+	return s
+}
+
+func (this *Range) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Range) _stm() {
 }
 
 /*}}}*/
