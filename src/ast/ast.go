@@ -365,36 +365,49 @@ func (this *Call) _exp() {
 }
 
 /*}}}*/
-//点调用
-//Exp.Dot /*{{{*/
-type Dot struct {
-	Callee    Exp //new Sub().MethodName(ArgsList)
-	Member    Exp
-	ArgsList  []Exp
-	Firsttype string
-	ArgsType  []Type
-	Rt        Type
+
+//Exp.SelectorExpr /*{{{*/
+type SelectorExpr struct {
+	X   Exp
+	Sel string
 	Exp_T
 }
 
-func Dot_new(callee Exp, m Exp, args []Exp,
-	ftp string, argstype []Type,
-	rt Type, line int) *Dot {
-	e := new(Dot)
-	e.Callee = callee
-	e.Member = m
-	e.ArgsList = args
-	e.Firsttype = ftp
-	e.ArgsType = argstype
-	e.Rt = rt
+func SelectorExpr_new(x Exp, sel string, line int) *SelectorExpr {
+	e := new(SelectorExpr)
+	e.X = x
+	e.Sel = sel
 	e.LineNum = line
 	return e
 }
 
-func (this *Dot) accept(v Visitor) {
+func (this *SelectorExpr) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *Dot) _exp() {
+func (this *SelectorExpr) _exp() {
+}
+
+/*}}}*/
+
+//Exp.CallExpr /*{{{*/
+type CallExpr struct {
+	Callee   Exp //new Sub().MethodName(ArgsList)
+	ArgsList []Exp
+	Exp_T
+}
+
+func CallExpr_new(callee Exp, args []Exp, line int) *CallExpr {
+	e := new(CallExpr)
+	e.Callee = callee
+	e.ArgsList = args
+	e.LineNum = line
+	return e
+}
+
+func (this *CallExpr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *CallExpr) _exp() {
 }
 
 /*}}}*/
@@ -931,6 +944,26 @@ func (this *Assign) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Assign) _stm() {
+}
+
+/*}}}*/
+
+//Stm.ExprStm    /*{{{*/
+type ExprStm struct {
+	E Exp
+	Stm_T
+}
+
+func ExprStm_new(exp Exp, line int) *ExprStm {
+	s := new(ExprStm)
+	s.E = exp
+	s.LineNum = line
+	return s
+}
+func (this *ExprStm) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ExprStm) _stm() {
 }
 
 /*}}}*/

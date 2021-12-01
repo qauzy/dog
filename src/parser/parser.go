@@ -245,23 +245,22 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		this.advance()
 		return &ast.This{}
 	case TOKEN_SYSTEM:
-		var m ast.Exp
-		m = ast.Id_new(this.current.Lexeme, nil, false, this.Linenum)
+		var x ast.Exp
+		x = ast.Id_new(this.current.Lexeme, nil, false, this.Linenum)
 		this.eatToken(TOKEN_SYSTEM)
 		for this.current.Kind == TOKEN_DOT {
 			this.eatToken(TOKEN_DOT)
-			exp := ast.Id_new(this.current.Lexeme, nil, false, this.Linenum)
+			x = ast.SelectorExpr_new(x, this.current.Lexeme, this.Linenum)
+
 			this.eatToken(TOKEN_ID)
 			if this.current.Kind == TOKEN_LPAREN {
 				this.eatToken(TOKEN_LPAREN)
 				args := this.parseExpList()
 				this.eatToken(TOKEN_RPAREN)
-				m = ast.Dot_new(m, exp, args, "", nil, nil, this.Linenum)
-			} else {
-				m = ast.Dot_new(m, exp, nil, "", nil, nil, this.Linenum)
+				x = ast.CallExpr_new(x, args, this.Linenum)
 			}
 		}
-		return m
+		return x
 	case TOKEN_ID:
 		id := this.current.Lexeme
 		tp := this.parseType()
@@ -276,8 +275,9 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			args := this.parseExpList()
 			this.eatToken(TOKEN_RPAREN)
 			m := ast.Id_new(id, tp, false, this.Linenum)
-			return ast.Dot_new(nil, m, args, "", nil, nil, this.Linenum)
+			return ast.CallExpr_new(m, args, this.Linenum)
 		}
+		log.Infof("适配变量ID->>%s", id)
 		return ast.Id_new(id, this.currentType, false, this.Linenum)
 	case TOKEN_STRING:
 		log.Infof("解析 TOKEN_STRING")
@@ -426,21 +426,19 @@ func (this *Parser) parseNotExp() ast.Exp {
 				return ast.Length_new(exp, this.Linenum)
 			}
 			//else ast.Call
-			var right ast.Exp
-			right = ast.Id_new(this.current.Lexeme, nil, false, this.Linenum)
+			exp = ast.SelectorExpr_new(exp, this.current.Lexeme, this.Linenum)
 			//点之后必须这个
 			this.eatToken(TOKEN_ID)
+
 			//成员函数
 			if this.current.Kind == TOKEN_LPAREN {
 				this.eatToken(TOKEN_LPAREN)
 				args := this.parseExpList()
 				log.Infof(this.current.Lexeme)
 				this.eatToken(TOKEN_RPAREN)
-				exp = ast.Dot_new(exp, right, args, "", nil, nil, this.Linenum)
-
+				log.Infof("返回CallExpr表达式")
+				exp = ast.CallExpr_new(exp, args, this.Linenum)
 				//成员变量
-			} else {
-				exp = ast.Dot_new(exp, right, nil, "", nil, nil, this.Linenum)
 			}
 		case TOKEN_LBRACK: //[exp]
 			this.advance()
@@ -620,6 +618,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		decl := ast.Decl_new(id, tp, nil, this.Linenum)
 		//有赋值语句
 		if this.current.Kind == TOKEN_ASSIGN {
+			this.assignType = tp
 			//临时变量类型
 			log.Infof("*******解析临时变量声明语句(有赋值语句)*******")
 			this.eatToken(TOKEN_ASSIGN)
@@ -640,11 +639,8 @@ func (this *Parser) parseStatement() ast.Stm {
 	case TOKEN_THIS:
 		exp := this.parseExp()
 		this.eatToken(TOKEN_SEMI)
-		assign := new(ast.Assign)
-		//assign.Left = ast.Id_new(id, tp, false, this.Linenum)--->直接点调用,没有赋值语句,只是作为一个承载
-		//assign.Name = id
-		assign.E = exp
-		return assign
+		exprStm := ast.ExprStm_new(exp, this.Linenum)
+		return exprStm
 	case TOKEN_ID:
 		id := this.current.Lexeme
 
@@ -677,16 +673,14 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.current = cur
 			exp := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
-			assign := new(ast.Assign)
-			//assign.Left = ast.Id_new(id, tp, false, this.Linenum)--->直接点调用,没有赋值语句,只是作为一个承载
-			//assign.Name = id
-			assign.E = exp
-			return assign
+			exprStm := ast.ExprStm_new(exp, this.Linenum)
+			return exprStm
 		case TOKEN_ASSIGN:
 			this.eatToken(TOKEN_ASSIGN)
 			exp := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
+			assign.Left = ast.Id_new(id, nil, false, this.Linenum)
 			assign.Name = id
 			assign.E = exp
 			return assign
