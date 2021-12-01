@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"dog/util"
 	"fmt"
 	"os"
 )
@@ -91,15 +92,21 @@ func (this *Lexer) lex_Annotation(c byte) {
 }
 func (this *Lexer) lex_String(c byte) string {
 	var ss string
+	var st = this.fp
+
 	c = this.buf[this.fp]
 	for c != '\n' && c != '"' && this.fp < len(this.buf) {
-		ss += string(c)
 		this.fp++
 		c = this.buf[this.fp]
+
 	}
+	if c != '"' && this.fp >= len(this.buf) {
+		util.ParserError("\"", "", this.lineNum)
+	}
+	var ed = this.fp
 	//处理字符串末尾的"
 	this.fp++
-	c = this.buf[this.fp]
+	ss = string(this.buf[st-1 : ed+1])
 	fmt.Println("字符串:", ss)
 	return ss
 }
