@@ -488,7 +488,7 @@ func (this *Parser) parseTimeExp() ast.Exp {
 func (this *Parser) parseAddSubExp() ast.Exp {
 	log.Infof("解析 parseAddSubExp")
 	left := this.parseTimeExp()
-	for this.current.Kind == TOKEN_TIMES {
+	for this.current.Kind == TOKEN_MUL {
 		this.advance()
 		right := this.parseTimeExp()
 		return ast.Times_new(left, right, this.Linenum)

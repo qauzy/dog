@@ -83,7 +83,9 @@ func initTokenMap() {
 	tokenMap["--"] = TOKEN_AUTOSUB
 	tokenMap["System"] = TOKEN_SYSTEM
 	tokenMap["this"] = TOKEN_THIS
-	tokenMap["*"] = TOKEN_TIMES
+	tokenMap["*"] = TOKEN_MUL
+	tokenMap["/"] = TOKEN_QUO
+
 	tokenMap["true"] = TOKEN_TRUE
 	tokenMap["void"] = TOKEN_VOID
 	tokenMap["while"] = TOKEN_WHILE
@@ -160,7 +162,9 @@ func initTokenMap() {
 	tMap[TOKEN_SYSTEM] = "TOKEN_SYSTEM"
 	tMap[TOKEN_TRUE] = "TOKEN_TRUE"
 	tMap[TOKEN_THIS] = "TOKEN_THIS"
-	tMap[TOKEN_TIMES] = "TOKEN_TIMES"
+	tMap[TOKEN_MUL] = "TOKEN_MUL"
+	tMap[TOKEN_QUO] = "TOKEN_QUO"
+
 	tMap[TOKEN_VOID] = "TOKEN_VOID"
 	tMap[TOKEN_WHILE] = "TOKEN_WHILE"
 	tMap[TOKEN_FOR] = "TOKEN_FOR"
@@ -240,7 +244,8 @@ const (
 	TOKEN_AUTOSUB
 	TOKEN_SYSTEM
 	TOKEN_THIS
-	TOKEN_TIMES
+	TOKEN_MUL
+	TOKEN_QUO
 	TOKEN_TRUE
 	TOKEN_VOID
 	TOKEN_WHILE
