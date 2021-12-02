@@ -1,7 +1,9 @@
 package parser
 
-import "fmt"
-import "os"
+import (
+	log "github.com/corgi-kx/logcustom"
+	"os"
+)
 import "strconv"
 
 type Token struct {
@@ -28,6 +30,7 @@ func initTokenMap() {
 	tokenMap[","] = TOKEN_COMMER
 	tokenMap["."] = TOKEN_DOT
 	tokenMap[":"] = TOKEN_COLON
+	tokenMap["?"] = TOKEN_QUESTION
 	tokenMap["else"] = TOKEN_ELSE
 	tokenMap["EOF"] = TOKEN_EOF
 	tokenMap["extends"] = TOKEN_EXTENDS
@@ -115,6 +118,7 @@ func initTokenMap() {
 	tMap[TOKEN_COMMER] = "TOKEN_COMMER"
 	tMap[TOKEN_DOT] = "TOKEN_DOT"
 	tMap[TOKEN_COLON] = "TOKEN_COLON"
+	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"
 	tMap[TOKEN_ELSE] = "TOKEN_ELSE"
 	tMap[TOKEN_EOF] = "TOKEN_EOF"
 	tMap[TOKEN_EXTENDS] = "TOKEN_EXTENDS"
@@ -196,6 +200,7 @@ const (
 	TOKEN_COMMER
 	TOKEN_DOT
 	TOKEN_COLON
+	TOKEN_QUESTION
 	TOKEN_ELSE
 	TOKEN_EOF
 	TOKEN_EXTENDS
@@ -269,7 +274,7 @@ const (
 func (this *Token) ToString() string {
 	var s string
 	if this.LineNum == 0 {
-		fmt.Println("error")
+		log.Info("error")
 		os.Exit(0)
 	}
 

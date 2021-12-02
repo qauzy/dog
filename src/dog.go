@@ -6,7 +6,7 @@ import (
 	"dog/control"
 	"dog/parser"
 	"dog/util"
-	"fmt"
+	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"io/ioutil"
 	"os"
@@ -26,17 +26,17 @@ func main() {
 	control.CodeGen_fileName = filename
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Info(err)
 		os.Exit(0)
 	}
 	if control.Lexer_test == true {
 		lex := parser.NewLexer(filename, buf)
 		tk := lex.NextToken()
 		for tk.Kind != parser.TOKEN_EOF {
-			fmt.Println(tk.ToString())
+			log.Info(tk.ToString())
 			tk = lex.NextToken()
 		}
-		fmt.Println(tk.ToString())
+		log.Info(tk.ToString())
 		os.Exit(0)
 	}
 	var Ast ast.File

@@ -61,7 +61,7 @@ func Liveness(p Program) {
 		for x, _ := range m {
 			fmt.Printf("%s ", x)
 		}
-		fmt.Println("")
+		log.Info("")
 	}
 
 	refresh_oneStmGenKill := func() {

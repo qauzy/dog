@@ -4,7 +4,6 @@ import (
 	"dog/ast"
 	"dog/control"
 	"dog/util"
-	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"strconv"
 )
@@ -18,6 +17,8 @@ type Parser struct {
 	assignType  ast.Type
 	isSpecial   bool
 	isField     bool
+	fpBak       int    //用于记录测试前的指针
+	currentBak  *Token //用于记录测试前的token
 	Linenum     int
 }
 
@@ -26,24 +27,39 @@ func NewParse(fname string, buf []byte) *Parser {
 	p := new(Parser)
 	p.lexer = lexer
 	p.current = p.lexer.NextToken()
-
 	return p
 }
 
-func (this *Parser) getFP() int {
-	return this.lexer.fp
+func (this *Parser) TestIn() {
+	this.fpBak = this.lexer.fp
+	this.currentBak = this.current
 }
 
-func (this *Parser) resetFP(fp int) {
-	this.lexer.fp = fp
+func (this *Parser) TestOut() {
+	this.lexer.fp = this.fpBak
+	this.current = this.currentBak
 }
 
 func (this *Parser) advance() {
 	if control.Lexer_dump == true {
-		fmt.Println(this.current.ToString())
+		log.Info(this.current.ToString())
 	}
 	this.Linenum = this.current.LineNum
 	this.current = this.lexer.NextToken()
+
+	//处理注解
+	if this.current.Kind == TOKEN_AT {
+		this.eatToken(TOKEN_AT)
+		this.eatToken(TOKEN_ID)
+		if this.current.Kind == TOKEN_LPAREN {
+			for this.current.Kind != TOKEN_RPAREN {
+				this.advance()
+			}
+			this.advance()
+		}
+
+	}
+
 }
 
 func (this *Parser) eatToken(kind int) {
@@ -86,9 +102,9 @@ func (this *Parser) parseType() ast.Type {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.StringArray{ast.TOKEN_STRING}
+			this.currentType = &ast.StringArray{ast.TYPE_STRINGARRAY}
 		} else {
-			this.currentType = &ast.String{}
+			this.currentType = &ast.String{ast.TYPE_STRING}
 		}
 	case TOKEN_LBRACK:
 		this.eatToken(TOKEN_LBRACK)
@@ -131,12 +147,17 @@ func (this *Parser) parseType() ast.Type {
 	case TOKEN_MAP:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_MAP)
-		this.eatToken(TOKEN_LT)
-		key := this.parseType()
-		this.eatToken(TOKEN_COMMER)
-		value := this.parseType()
-		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			key := this.parseType()
+			this.eatToken(TOKEN_COMMER)
+			value := this.parseType()
+			this.eatToken(TOKEN_GT)
+			this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
+		} else {
+			this.currentType = &ast.HashType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
+		}
+
 	case TOKEN_HASHMAP:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_HASHMAP)
@@ -150,7 +171,15 @@ func (this *Parser) parseType() ast.Type {
 	default:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+		if this.current.Kind != TOKEN_LT {
+			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+		} else {
+			this.TestIn()
+			this.eatToken(TOKEN_LT)
+			tp := this.parseType()
+			this.eatToken(TOKEN_GT)
+			this.currentType = &ast.GenericType{name, tp, ast.TYPE_GENERIC}
+		}
 	}
 	log.Infof("解析类型:%s", this.currentType.String())
 	return this.currentType
@@ -268,14 +297,19 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		return x
 	case TOKEN_ID:
 		id := this.current.Lexeme
-		tp := this.parseType()
+		this.TestIn()
+		this.advance()
 		//声明一个临时变量的语句
 		if this.current.Kind == TOKEN_ID {
+			this.TestOut()
+			tp := this.parseType()
 			id := this.current.Lexeme
 			this.advance()
 			return ast.Id_new(id, tp, false, this.Linenum)
 			//函数调用
 		} else if this.current.Kind == TOKEN_LPAREN {
+			this.TestOut()
+			tp := this.parseType()
 			this.eatToken(TOKEN_LPAREN)
 			args := this.parseExpList()
 			this.eatToken(TOKEN_RPAREN)
@@ -285,6 +319,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		log.Infof("适配变量ID->>%s", id)
 		return ast.Id_new(id, this.currentType, false, this.Linenum)
 	case TOKEN_STRING:
+		//FIXME 这里处理字符串字面值
 		log.Infof("解析 TOKEN_STRING")
 	case TOKEN_INT:
 		id := this.current.Lexeme
@@ -298,6 +333,12 @@ func (this *Parser) parseAtomExp() ast.Exp {
 
 		}
 		return ast.Id_new(id, this.currentType, false, this.Linenum)
+		//表达式里出现Map --eg: Map.class
+	case TOKEN_MAP:
+		id := this.current.Lexeme
+		this.eatToken(TOKEN_MAP)
+		return ast.Id_new(id, this.currentType, false, this.Linenum)
+
 	case TOKEN_NEW:
 		this.advance()
 		switch this.current.Kind {
@@ -309,6 +350,13 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			return ast.NewIntArray_new(exp, this.Linenum)
 		case TOKEN_HASHMAP:
 			this.eatToken(TOKEN_HASHMAP)
+			//非泛型
+			if this.current.Kind == TOKEN_LPAREN {
+				this.eatToken(TOKEN_LPAREN)
+				this.eatToken(TOKEN_RPAREN)
+				return ast.NewHash_new("string", "interface{}", this.Linenum)
+				//this.currentType = &ast.HashType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
+			}
 			this.eatToken(TOKEN_LT)
 			var key = ""
 			var ele = ""
@@ -356,7 +404,6 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			this.eatToken(TOKEN_RPAREN)
 			return ast.NewSet_new(ele, args, this.Linenum)
 			//带参数对象初始化
-
 		case TOKEN_ID:
 			s := this.current.Lexeme
 			this.advance()
@@ -369,11 +416,15 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			//数组
 			if this.current.Kind == TOKEN_LBRACK {
 				this.eatToken(TOKEN_LBRACK)
+				size := this.parseExp()
 				this.eatToken(TOKEN_RBRACK)
-				this.eatToken(TOKEN_LBRACE)
-				exp := this.parseExp()
-				this.eatToken(TOKEN_RBRACE)
-				return ast.NewObjectArray_new(exp, this.Linenum)
+				if this.current.Kind == TOKEN_LBRACE {
+					this.eatToken(TOKEN_LBRACE)
+					eles := this.parseExp()
+					this.eatToken(TOKEN_RBRACE)
+					return ast.NewObjectArray_new(eles, size, this.Linenum)
+				}
+				return ast.NewObjectArray_new(nil, size, this.Linenum)
 			}
 			this.eatToken(TOKEN_LPAREN)
 			args := this.parseExpList()
@@ -430,6 +481,11 @@ func (this *Parser) parseNotExp() ast.Exp {
 				this.advance()
 				return ast.Length_new(exp, this.Linenum)
 			}
+			if this.current.Kind == TOKEN_CLASS {
+				this.advance()
+				return ast.ClassExp_new(exp, this.Linenum)
+			}
+
 			//else ast.Call
 			exp = ast.SelectorExpr_new(exp, this.current.Lexeme, this.Linenum)
 			//点之后必须这个
@@ -591,13 +647,29 @@ func (this *Parser) parseOrExp() ast.Exp {
 
 //OrExp    -> OrExp || OrExp
 //          -> OrExp
-func (this *Parser) parseExp() ast.Exp {
+func (this *Parser) parseQuestionExp() ast.Exp {
 	left := this.parseOrExp()
 	for this.current.Kind == TOKEN_OR {
-		log.Infof("发现TOKEN_OR")
+		log.Infof("TOKEN_OR")
 		this.advance()
 		right := this.parseOrExp()
 		left = ast.Or_new(left, right, this.Linenum)
+	}
+
+	return left
+}
+
+//OrExp    -> OrExp || OrExp
+//          -> OrExp
+func (this *Parser) parseExp() ast.Exp {
+	left := this.parseQuestionExp()
+	for this.current.Kind == TOKEN_QUESTION {
+		log.Infof("发现TOKEN_QUESTION")
+		this.advance()
+		one := this.parseQuestionExp()
+		this.eatToken(TOKEN_COLON)
+		two := this.parseQuestionExp()
+		return ast.Question_new(left, one, two, this.Linenum)
 	}
 
 	return left
@@ -660,8 +732,8 @@ func (this *Parser) parseStatement() ast.Stm {
 	case TOKEN_ID:
 		id := this.current.Lexeme
 
-		fp := this.getFP()
-		cur := this.current
+		this.TestIn() //进入测试模式
+
 		tp := this.parseType()
 		switch this.current.Kind {
 		//处理声明临时变量和赋值语句
@@ -685,8 +757,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			fallthrough
 		case TOKEN_DOT:
 			log.Infof("*******解析函数调用*******")
-			this.resetFP(fp)
-			this.current = cur
+			this.TestOut() //恢复测试数据
 			exp := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			exprStm := ast.ExprStm_new(exp, this.Linenum)
@@ -708,8 +779,11 @@ func (this *Parser) parseStatement() ast.Stm {
 			exp := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.AssignArray_new(id, index, exp, nil, false, this.Linenum)
+		case TOKEN_LT:
+			this.eatToken(TOKEN_LT)
+			this.eatToken(TOKEN_LT)
 		default:
-			log.Infof("parseStatement:%v", this.current.Lexeme)
+			log.Infof("parseStatement-->%v", this.current.Lexeme)
 			panic("bug1")
 
 		}
@@ -761,8 +835,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Infof("********TOKEN_FOR***********")
 		this.eatToken(TOKEN_FOR)
 		this.eatToken(TOKEN_LPAREN)
-		//init := this.parseStatement()
+		this.TestIn()
+
 		exp := this.parseExp()
+		//说明是声明语句
+		if this.current.Kind == TOKEN_ID {
+			this.TestOut()
+			this.parseType()
+			exp = this.parseExp()
+		}
+
 		//for循环三段式
 		if this.current.Kind == TOKEN_ASSIGN {
 			log.Infof("********TOKEN_FOR--> 解析初始化语句 ***********")
@@ -894,7 +976,7 @@ func (this *Parser) parseClassContext() (decs []ast.Field, methods []ast.Method)
 		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
 		//处理 访问修饰符
 		if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
-			fmt.Println("处理访问修饰符:", this.current.ToString())
+			log.Info("处理访问修饰符:", this.current.ToString())
 			//1 扫描访问修饰符
 			tmp.Access = this.current.Kind
 			this.advance()

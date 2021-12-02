@@ -39,7 +39,7 @@ func (this *ClassBinding) putMethod(c string, ret Type, args []Dec, mtd_name str
 
 func (this *ClassBinding) dump() {
 	if this.extends != "" {
-		fmt.Println(" extends " + this.extends)
+		log.Info(" extends " + this.extends)
 	} else {
 		fmt.Println("")
 	}

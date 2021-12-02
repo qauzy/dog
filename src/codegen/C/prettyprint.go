@@ -612,7 +612,7 @@ func CodegenC(e Acceptable) {
 		case Vtable:
 			pp_Vtable(v)
 		default:
-			fmt.Println(v)
+			log.Info(v)
 			panic("impossible")
 		}
 	}

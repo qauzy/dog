@@ -201,6 +201,29 @@ func (this *AutoSub) accept(v Visitor) {
 func (this *AutoSub) _exp() {
 } /*}}}*/
 
+//Exp.Question /*{{{*/
+type Question struct {
+	E   Exp
+	One Exp
+	Two Exp
+	Exp_T
+}
+
+func Question_new(l Exp, one Exp, two Exp, line int) *Question {
+	n := new(Question)
+	n.E = l
+	n.One = one
+	n.Two = two
+	n.LineNum = line
+	return n
+}
+
+func (this *Question) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Question) _exp() {
+} /*}}}*/
+
 //Exp.Or /*{{{*/
 type Or struct {
 	Left  Exp
@@ -494,6 +517,24 @@ func (this *Id) _exp() {
 }
 
 /*}}}*/
+//Exp.Class /*{{{*/
+type ClassExp struct {
+	Name Exp
+	Exp_T
+}
+
+func ClassExp_new(Name Exp, line int) *ClassExp {
+	e := new(ClassExp)
+	e.Name = Name
+	e.LineNum = line
+	return e
+}
+
+func (this *ClassExp) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ClassExp) _exp() {
+}
 
 //Exp.len /*{{{*/
 //len(arrayref)
@@ -664,12 +705,14 @@ func (this *Neq) _exp() {
 //Exp.NewObjectArray   /*{{{*/
 type NewObjectArray struct {
 	Eles Exp
+	Size Exp
 	Exp_T
 }
 
-func NewObjectArray_new(eles Exp, line int) *NewObjectArray {
+func NewObjectArray_new(eles Exp, Size Exp, line int) *NewObjectArray {
 	e := new(NewObjectArray)
 	e.Eles = eles
+	e.Size = Size
 	e.LineNum = line
 	return e
 }
@@ -1242,10 +1285,12 @@ const (
 	TYPE_VOID
 	TYPE_INTARRAY
 	TYPE_CLASS
-	TOKEN_STRING
+	TYPE_STRING
 	TYPE_STRINGARRAY
 	TYPE_LIST
 	TYPE_MAP
+	TYPE_GENERIC
+	TYPE_OBJECT
 )
 
 type Int struct {
@@ -1383,6 +1428,44 @@ func (this *ClassType) Gettype() int {
 
 func (this *ClassType) String() string {
 	return "@" + this.Name
+}
+
+/*}}}*/
+
+//Type.GenericType    /*{{{*/
+type GenericType struct {
+	Name     string
+	T        Type
+	TypeKind int
+}
+
+func (this *GenericType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *GenericType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *GenericType) String() string {
+	return this.Name + this.T.String()
+}
+
+/*}}}*/
+
+//Type.ObjectType    /*{{{*/
+type ObjectType struct {
+	TypeKind int
+}
+
+func (this *ObjectType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ObjectType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *ObjectType) String() string {
+	return "@Object"
 }
 
 /*}}}*/

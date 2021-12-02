@@ -3,6 +3,7 @@ package parser
 import (
 	"dog/util"
 	"fmt"
+	log "github.com/corgi-kx/logcustom"
 	"os"
 )
 
@@ -14,7 +15,8 @@ type Lexer struct {
 	/**
 	 * the buf index, can increse or decrese to implements reset
 	 */
-	fp int
+	fp  int
+	fpp int //用于测试
 }
 
 func NewLexer(fname string, buf []byte) *Lexer {
@@ -136,11 +138,11 @@ func (this *Lexer) lex_Comments(c byte) {
 			}
 		}
 		if this.fp == len(this.buf) {
-			fmt.Println("error")
+			log.Info("error")
 			os.Exit(0)
 		}
 	} else {
-		fmt.Println("error")
+		log.Info("error")
 		os.Exit(0)
 	}
 }
@@ -215,9 +217,19 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
+	case '|':
+		if this.s == "" {
+			if this.expectKeyword("|") {
+				return newToken(TOKEN_OR, "||", this.lineNum)
+			} else {
+				panic("expect ||")
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
 	case '@':
-		//return newToken(TOKEN_AT, "@", this.lineNum)
-		this.lex_Annotation(c)
+		return newToken(TOKEN_AT, "@", this.lineNum)
+		//this.lex_Annotation(c)
 	case '+':
 		if this.s == "" {
 			if this.expectKeyword("+") {
@@ -280,6 +292,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 			return this.expectIdOrKey(c)
 		}
 	case ' ':
+		fallthrough
+	case '?':
 		fallthrough
 	case ',':
 		fallthrough

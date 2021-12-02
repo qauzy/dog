@@ -157,7 +157,7 @@ func PP(e interface{}) string {
 		default:
 			fmt.Printf("%T\n", v)
 			if vv, ok := v.(string); ok {
-				fmt.Println(vv)
+				log.Info(vv)
 			}
 			panic("impossible")
 		}
@@ -210,7 +210,7 @@ func Visualize(p Program) {
 				}
 			}
 			if control.Visualize_format != control.None {
-				fmt.Println("Visualize " + gname)
+				log.Info("Visualize " + gname)
 				graph.Visualize()
 			}
 
@@ -250,7 +250,7 @@ func Visualize(p Program) {
 				}
 			}
 			if control.Visualize_format != control.None {
-				fmt.Println("Visualize " + gname)
+				log.Info("Visualize " + gname)
 				graph.Visualize()
 			}
 		default:
