@@ -264,6 +264,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			if this.expectKeyword("-") {
 				return newToken(TOKEN_AUTOSUB, "--", this.lineNum)
+			} else if this.expectKeyword(">") {
+				return newToken(TOKEN_LAMBDA, "->", this.lineNum)
 			} else {
 				return this.expectIdOrKey(c)
 			}

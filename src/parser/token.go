@@ -88,6 +88,7 @@ func initTokenMap() {
 	tokenMap["-"] = TOKEN_SUB
 	tokenMap["--"] = TOKEN_AUTOSUB
 	tokenMap["System"] = TOKEN_SYSTEM
+	tokenMap["->"] = TOKEN_LAMBDA
 	tokenMap["this"] = TOKEN_THIS
 	tokenMap["*"] = TOKEN_MUL
 	tokenMap["/"] = TOKEN_QUO
@@ -170,6 +171,7 @@ func initTokenMap() {
 	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"
 	tMap[TOKEN_SUB] = "TOKEN_SUB"
 	tMap[TOKEN_SYSTEM] = "TOKEN_SYSTEM"
+	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"
 	tMap[TOKEN_TRUE] = "TOKEN_TRUE"
 	tMap[TOKEN_THIS] = "TOKEN_THIS"
 	tMap[TOKEN_MUL] = "TOKEN_MUL"
@@ -255,6 +257,7 @@ const (
 	TOKEN_STRING
 	TOKEN_SUB
 	TOKEN_AUTOSUB
+	TOKEN_LAMBDA
 	TOKEN_SYSTEM
 	TOKEN_THIS
 	TOKEN_MUL

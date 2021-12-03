@@ -316,7 +316,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			m := ast.Id_new(id, tp, false, this.Linenum)
 			return ast.CallExpr_new(m, args, this.Linenum)
 		}
-		log.Infof("适配变量ID->>%s", id)
+		log.Infof("适配变量ID->%s", id)
 		return ast.Id_new(id, this.currentType, false, this.Linenum)
 	case TOKEN_STRING:
 		//FIXME 这里处理字符串字面值
@@ -445,6 +445,15 @@ func (this *Parser) parseExpList() []ast.Exp {
 	args := []ast.Exp{}
 	if this.current.Kind == TOKEN_RPAREN {
 		return args
+	}
+	//判断是不是lambda是不是lambda表达式
+	//（exp）-> exp
+	// (exp) -> {exp}
+	this.TestIn()
+	this.eatToken(TOKEN_LPAREN)
+	//可能是lambda表达式
+	if this.current.Kind == TOKEN_LPAREN {
+
 	}
 
 	args = append(args, this.parseExp())
