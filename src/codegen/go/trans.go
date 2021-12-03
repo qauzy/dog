@@ -185,6 +185,10 @@ func transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 	return
 }
 
+// 带类型的变量声明
+//
+// param: fi
+// return:
 func transField(fi ast.Field) (gfi *gast.Field) {
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		//只处理成员变量
@@ -220,7 +224,7 @@ func transBlock(s ast.Stm) (block *gast.BlockStmt) {
 		}
 
 	} else {
-		log.Infof("transBlock-->%v", reflect.TypeOf(s).String())
+		log.Infof("transBlock-->%v--->%v", reflect.TypeOf(s).String(), s)
 		panic("bug")
 	}
 
@@ -516,9 +520,11 @@ func transExp(e ast.Exp) (expr gast.Expr) {
 		call.Args = append(call.Args, transExp(v.Arrayref))
 		return call
 	case *ast.ArraySelect:
+		panic("ArraySelect --> bug")
+	case *ast.NewObjectArray:
 
 	default:
-		log.Infof("%v", reflect.TypeOf(v).String())
+		log.Infof("%v --> %v", reflect.TypeOf(v).String(), v)
 		panic("bug")
 	}
 
@@ -556,6 +562,12 @@ func transType(t ast.Type) (Type gast.Expr) {
 			NamePos: 0,
 			Name:    v.Name,
 			Obj:     gast.NewObj(gast.Typ, v.Name),
+		}
+	case *ast.ObjectType:
+		return &gast.InterfaceType{
+			Interface:  0,
+			Methods:    nil,
+			Incomplete: false,
 		}
 	case *ast.Boolean:
 		return gast.NewIdent("bool")
@@ -612,7 +624,8 @@ func checkFileIsExist(filename string) bool {
 }
 
 func WriteFile(s string) (err error) {
-	var filename = "D:\\code\\dog\\src\\codegen\\go\\example\\test.go"
+	//var filename = "D:\\code\\dog\\src\\codegen\\go\\example\\test.go"
+	var filename = "/opt/google/code/dog-comp/src/codegen/go/example/test.go"
 	var f *os.File
 	/***************************** 第一种方式: 使用 io.WriteString 写入文件 ***********************************************/
 	if checkFileIsExist(filename) { //如果文件存在

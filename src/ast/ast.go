@@ -201,6 +201,28 @@ func (this *AutoSub) accept(v Visitor) {
 func (this *AutoSub) _exp() {
 } /*}}}*/
 
+//Exp.Lambda /*{{{*/
+type Lambda struct {
+	Formals []Field
+	Stms    []Stm
+	RetExp  Exp
+	Exp_T
+}
+
+func Lambda_new(Formals []Field, Stms []Stm, line int) *Lambda {
+	n := new(Lambda)
+	n.Formals = Formals
+	n.Stms = Stms
+	n.LineNum = line
+	return n
+}
+
+func (this *Lambda) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Lambda) _exp() {
+} /*}}}*/
+
 //Exp.Question /*{{{*/
 type Question struct {
 	E   Exp
@@ -704,13 +726,15 @@ func (this *Neq) _exp() {
 
 //Exp.NewObjectArray   /*{{{*/
 type NewObjectArray struct {
+	T    Type
 	Eles Exp
 	Size Exp
 	Exp_T
 }
 
-func NewObjectArray_new(eles Exp, Size Exp, line int) *NewObjectArray {
+func NewObjectArray_new(t Type, eles Exp, Size Exp, line int) *NewObjectArray {
 	e := new(NewObjectArray)
+	e.T = t
 	e.Eles = eles
 	e.Size = Size
 	e.LineNum = line
@@ -746,24 +770,45 @@ func (this *NewIntArray) _exp() {
 
 /*}}}*/
 
+//Exp.NewStringArray   /*{{{*/
+type NewStringArray struct {
+	Size Exp
+	Exp_T
+}
+
+func NewStringArray_new(size Exp, line int) *NewIntArray {
+	e := new(NewIntArray)
+	e.Size = size
+	e.LineNum = line
+	return e
+}
+
+func (this *NewStringArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewStringArray) _exp() {
+}
+
+/*}}}*/
+
 //Exp.NewObject /*{{{*/
 type NewObject struct {
-	Name     string
+	T        Type
 	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewObjectWithArgsList_new(name string, ArgsList []Exp, line int) *NewObject {
+func NewObjectWithArgsList_new(t Type, ArgsList []Exp, line int) *NewObject {
 	e := new(NewObject)
-	e.Name = name
+	e.T = t
 	e.LineNum = line
 	e.ArgsList = ArgsList
 	return e
 }
 
-func NewObject_new(name string, line int) *NewObject {
+func NewObject_new(t Type, line int) *NewObject {
 	e := new(NewObject)
-	e.Name = name
+	e.T = t
 	e.LineNum = line
 	return e
 }
