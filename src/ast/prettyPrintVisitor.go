@@ -207,7 +207,7 @@ func (this *PrettyPrintVisitor) visitExp(e Exp) {
 		v.Size.accept(this)
 		this.say("]")
 	case *NewObject:
-		this.say("new " + v.Name + "()")
+		this.say("new " + v.T.String() + "()")
 	case *Not:
 		this.say("!")
 		v.E.accept(this)

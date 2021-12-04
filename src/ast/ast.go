@@ -33,6 +33,7 @@ type File interface {
 }
 
 type Stm interface {
+	IsTriple() bool
 	accept(v Visitor)
 	_stm()
 }
@@ -776,8 +777,8 @@ type NewStringArray struct {
 	Exp_T
 }
 
-func NewStringArray_new(size Exp, line int) *NewIntArray {
-	e := new(NewIntArray)
+func NewStringArray_new(size Exp, line int) *NewStringArray {
+	e := new(NewStringArray)
 	e.Size = size
 	e.LineNum = line
 	return e
@@ -823,12 +824,12 @@ func (this *NewObject) _exp() {
 
 //Exp.NewHash /*{{{*/
 type NewHash struct {
-	Key string
-	Ele string
+	Key Type
+	Ele Type
 	Exp_T
 }
 
-func NewHash_new(key string, ele string, line int) *NewHash {
+func NewHash_new(key Type, ele Type, line int) *NewHash {
 	e := new(NewHash)
 	e.Key = key
 	e.Ele = ele
@@ -999,7 +1000,15 @@ func (this *This) _exp() {
 
 //Stm   /*{{{*/
 type Stm_T struct {
-	LineNum int
+	isTriple bool
+	LineNum  int
+}
+
+func (this *Stm_T) IsTriple() bool {
+	return this.isTriple
+}
+func (this *Stm_T) SetTriple() {
+	this.isTriple = true
 }
 
 //Stm.Decl    /*{{{*/
@@ -1336,7 +1345,22 @@ const (
 	TYPE_MAP
 	TYPE_GENERIC
 	TYPE_OBJECT
+	TYPE_FUNCTION
 )
+
+type Function struct {
+	TypeKind int
+}
+
+func (this *Function) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Function) Gettype() int {
+	return this.TypeKind
+}
+func (this *Function) String() string {
+	return "@Function"
+}
 
 type Int struct {
 	TypeKind int
