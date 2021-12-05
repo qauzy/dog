@@ -18,7 +18,7 @@ func elabMainClass(mc ast.MainClass) {
 		current_class = m.Name
 		elaborate(m.Stms)
 	default:
-		log.Infof("wrong type")
+		log.Debugf("wrong type")
 		panic("wrong type")
 	}
 }
@@ -353,7 +353,7 @@ func buildMainClass(c ast.MainClass) {
 	case *ast.MainClassSingle:
 		ct_put(v.Name, &ClassBinding{})
 	default:
-		log.Infof("wrong type")
+		log.Debugf("wrong type")
 		panic("wrong type")
 	}
 }
@@ -399,7 +399,7 @@ func elabProg(p ast.File) {
 			classTable_dump()
 		}
 	default:
-		log.Infof("wrong type")
+		log.Debugf("wrong type")
 		panic("wrong type")
 	}
 }
@@ -417,7 +417,7 @@ func elaborate(e ast.Acceptable) {
 	case ast.MainClass:
 		elabMainClass(v)
 	default:
-		log.Infof("wrong type")
+		log.Debugf("wrong type")
 		panic("wrong type")
 	}
 }
@@ -432,7 +432,7 @@ func Elaborate(e ast.Acceptable) {
 	case ast.File:
 		elabProg(v)
 	default:
-		log.Infof("wrong type")
+		log.Debugf("wrong type")
 		panic("wrong type")
 	}
 }

@@ -17,6 +17,7 @@ func dog_Parser(filename string, buf []byte) ast.File {
 }
 
 func main() {
+	//log.SetLogDiscardLevel(log.Levelwarn)
 	args := os.Args[1:len(os.Args)]
 	filename := control.Do_arg(args)
 	if filename == "" {
@@ -44,9 +45,9 @@ func main() {
 	control.Verbose("parser", func() {
 		Ast = dog_Parser(filename, buf)
 	}, control.VERBOSE_PASS)
-	if control.Ast_dumpAst == true {
-		ast.NewPP().DumpProg(Ast)
-	}
+	//if control.Ast_dumpAst == true {
+	//	ast.NewPP().DumpProg(Ast)
+	//}
 	//step2: elaborate -- 细化
 	control.Verbose("Elaborate", func() {
 		//elaborator.Elaborate(Ast)

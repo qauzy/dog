@@ -109,7 +109,7 @@ func (this *Lexer) lex_String(c byte) string {
 	//处理字符串末尾的"
 	this.fp++
 	ss = string(this.buf[st-1 : ed+1])
-	fmt.Println("字符串:", ss)
+	log.Debugf("字符串:%v", ss)
 	return ss
 }
 
@@ -227,9 +227,6 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
-	case '@':
-		return newToken(TOKEN_AT, "@", this.lineNum)
-		//this.lex_Annotation(c)
 	case '+':
 		if this.s == "" {
 			if this.expectKeyword("+") {
@@ -293,6 +290,9 @@ func (this *Lexer) nextTokenInternal() *Token {
 		} else {
 			return this.expectIdOrKey(c)
 		}
+	case '@':
+		//return newToken(TOKEN_AT, "@", this.lineNum)
+		fallthrough
 	case ' ':
 		fallthrough
 	case '?':

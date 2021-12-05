@@ -4,12 +4,19 @@ package ast
 type Class interface {
 	accept(v Visitor)
 	_class()
+	AddField(f Field)
+	AddMethod(m Method)
+	ListFields() []Field
+	GetField(name string) (f Field)
+	GetMethod(name string) (m Method)
+	ListMethods() []Method
 }
 
 type Field interface {
 	accept(v Visitor)
 	GetDecType() int
 	String() string
+	GetName() string
 }
 
 type Exp interface {
@@ -25,11 +32,14 @@ type MainClass interface {
 type Method interface {
 	accept(v Visitor)
 	_method()
+	GetName() string
 }
 
 type File interface {
 	accept(v Visitor)
 	_prog()
+	GetName() string
+	GetClasses() []Class
 }
 
 type Stm interface {
@@ -67,6 +77,10 @@ func (this *FieldSingle) String() string {
 	return s
 }
 
+func (this *FieldSingle) GetName() string {
+	return this.Name
+}
+
 /*}}}*/
 
 /* MainClass {{{*/
@@ -87,17 +101,63 @@ func (this *MainClassSingle) _mainclass() {
 
 /* ClassSingle {{{*/
 type ClassSingle struct {
-	Access  int
-	Name    string
-	Extends string
-	Fields  []Field
-	Methods []Method
+	Access     int
+	Name       string
+	Extends    string
+	Fields     []Field
+	FieldsMap  map[string]Field
+	Methods    []Method
+	MethodsMap map[string]Method
 }
 
 func (this *ClassSingle) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *ClassSingle) _class() {
+
+}
+func (this *ClassSingle) GetName() string {
+	return this.Name
+}
+
+func (this *ClassSingle) AddField(f Field) {
+	this.FieldsMap[f.GetName()] = f
+	this.Fields = append(this.Fields, f)
+}
+
+func (this *ClassSingle) GetField(name string) (f Field) {
+	f = this.FieldsMap[name]
+	return
+}
+
+func (this *ClassSingle) ListFields() []Field {
+	return this.Fields
+}
+
+func (this *ClassSingle) AddMethod(m Method) {
+	this.MethodsMap[m.GetName()] = m
+	this.Methods = append(this.Methods, m)
+}
+func (this *ClassSingle) GetMethod(name string) (m Method) {
+	m = this.MethodsMap[name]
+	return
+}
+
+func (this *ClassSingle) ListMethods() []Method {
+	return this.Methods
+}
+
+func NewClassSingle(Access int, Name string, Extends string) (cl *ClassSingle) {
+	cl = &ClassSingle{
+		Access:     Access,
+		Name:       Name,
+		Extends:    Extends,
+		Fields:     nil,
+		FieldsMap:  make(map[string]Field),
+		Methods:    nil,
+		MethodsMap: make(map[string]Method),
+	}
+	return
 }
 
 /*}}}*/
@@ -118,6 +178,10 @@ func (this *MethodSingle) accept(v Visitor) {
 func (this *MethodSingle) _method() {
 }
 
+func (this *MethodSingle) GetName() string {
+	return this.Name
+}
+
 /*}}}*/
 
 /*Prog*/ /*{{{*/
@@ -131,7 +195,16 @@ func (this *FileSingle) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *FileSingle) _prog() {
-} /*}}}*/
+}
+
+func (this *FileSingle) GetClasses() []Class {
+	return this.Classes
+}
+func (this *FileSingle) GetName() string {
+	return this.Name
+}
+
+/*}}}*/
 
 /*Exp*/ /*{{{*/
 
@@ -1345,6 +1418,7 @@ const (
 	TYPE_MAP
 	TYPE_GENERIC
 	TYPE_OBJECT
+	TYPE_OBJECTARRAY
 	TYPE_FUNCTION
 )
 
@@ -1440,6 +1514,24 @@ func (this *IntArray) Gettype() int {
 
 func (this *IntArray) String() string {
 	return "@int[]"
+}
+
+/*}}}*/
+
+//Type.ObjectArray /*{{{*/
+type ObjectArray struct {
+	TypeKind int
+}
+
+func (this *ObjectArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ObjectArray) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *ObjectArray) String() string {
+	return "@Object[]"
 }
 
 /*}}}*/
