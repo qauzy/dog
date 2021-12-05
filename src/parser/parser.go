@@ -1147,6 +1147,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			this.eatToken(TOKEN_TRANSIENT)
 		}
 
+		//TODO 兼容类构造函数
 		//类型
 		tmp.Tp = this.parseType()
 
