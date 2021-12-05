@@ -21,14 +21,14 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		expr = &gast.BinaryExpr{
 			X:     this.transExp(v.Left),
 			OpPos: 0,
-			Op:    token.OR,
+			Op:    token.LOR,
 			Y:     this.transExp(v.Right),
 		}
 	case *ast.And:
 		expr = &gast.BinaryExpr{
 			X:     this.transExp(v.Left),
 			OpPos: 0,
-			Op:    token.AND,
+			Op:    token.LAND,
 			Y:     this.transExp(v.Right),
 		}
 	case *ast.Lt:
