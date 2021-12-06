@@ -9,17 +9,19 @@ import (
 )
 
 type Parser struct {
-	lexer       *Lexer
-	current     *Token
-	pending     []*Token
-	currentNext *Token
-	currentType ast.Type
-	assignType  ast.Type
-	isSpecial   bool
-	isField     bool
-	fpBak       int    //用于记录测试前的指针
-	currentBak  *Token //用于记录测试前的token
-	Linenum     int
+	lexer         *Lexer
+	current       *Token
+	pending       []*Token
+	currentNext   *Token
+	currentType   ast.Type
+	assignType    ast.Type
+	isSpecial     bool
+	isField       bool
+	fpBak         int        //用于记录测试前的指针
+	currentBak    *Token     //用于记录测试前的token
+	currentClass  ast.Class  //当前解析的class
+	currentMethod ast.Method //当前解析的Method
+	Linenum       int
 }
 
 func NewParse(fname string, buf []byte) *Parser {
@@ -213,14 +215,24 @@ func (this *Parser) parseFormalList() (flist []ast.Field) {
 	var id string
 	var access int
 
-	if this.current.Kind == TOKEN_ID ||
-		this.current.Kind == TOKEN_INT ||
+	if this.current.Kind == TOKEN_INT ||
+		this.current.Kind == TOKEN_BYTE ||
+		this.current.Kind == TOKEN_SHORT ||
 		this.current.Kind == TOKEN_LONG ||
-		this.current.Kind == TOKEN_STRING ||
-		this.current.Kind == TOKEN_LIST ||
-		this.current.Kind == TOKEN_INTEGER ||
+		this.current.Kind == TOKEN_FLOAT ||
+		this.current.Kind == TOKEN_DOUBLE ||
+		this.current.Kind == TOKEN_CHAR ||
+		this.current.Kind == TOKEN_BOOLEAN ||
+		this.current.Kind == TOKEN_SET ||
+		this.current.Kind == TOKEN_HASHSET ||
 		this.current.Kind == TOKEN_MAP ||
-		this.current.Kind == TOKEN_BOOLEAN {
+		this.current.Kind == TOKEN_HASHMAP ||
+		this.current.Kind == TOKEN_LIST ||
+		this.current.Kind == TOKEN_ARRAYLIST ||
+		this.current.Kind == TOKEN_STRING ||
+		this.current.Kind == TOKEN_OBJECT ||
+		this.current.Kind == TOKEN_INTEGER ||
+		this.current.Kind == TOKEN_ID {
 		var nonType = false
 		pre := this.current.Lexeme
 
@@ -777,6 +789,13 @@ func (this *Parser) parseQuestionExp() ast.Exp {
 func (this *Parser) parseExp() ast.Exp {
 	log.Debugf("解析 parseExp")
 	left := this.parseQuestionExp()
+	//
+	if id, ok := left.(*ast.Id); ok {
+		//说明是成员变量或成员函数
+		if (nil != this.currentClass.GetField(id.Name) && nil == this.currentMethod.GetFormal(id.Name)) || nil != this.currentClass.GetMethod(id.Name) {
+			id.Name = "this." + Capitalize(id.Name)
+		}
+	}
 	for this.current.Kind == TOKEN_QUESTION {
 		log.Debugf("发现TOKEN_QUESTION")
 		this.advance()
@@ -848,8 +867,23 @@ func (this *Parser) parseStatement() ast.Stm {
 		return ast.Block_new(stms, this.Linenum)
 	case TOKEN_THIS:
 		exp := this.parseExp()
+		if this.current.Kind == TOKEN_ASSIGN {
+			this.eatToken(TOKEN_ASSIGN)
+			right := this.parseExp()
+			this.eatToken(TOKEN_SEMI)
+			assign := new(ast.Assign)
+			assign.Left = exp
+			assign.E = right
+			//三元表达式
+			if _, ok := right.(*ast.Question); ok {
+				assign.SetTriple()
+			}
+			return assign
+
+		}
 		this.eatToken(TOKEN_SEMI)
 		exprStm := ast.ExprStm_new(exp, this.Linenum)
+
 		return exprStm
 	case TOKEN_ID:
 		id := this.current.Lexeme
@@ -902,8 +936,12 @@ func (this *Parser) parseStatement() ast.Stm {
 			exp := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
+
+			//说明是成员变量
+			if this.currentClass.GetField(id) != nil {
+				id = "this." + id
+			}
 			assign.Left = ast.Id_new(id, nil, false, this.Linenum)
-			assign.Name = id
 			assign.E = exp
 			//三元表达式
 			if _, ok := exp.(*ast.Question); ok {
@@ -1102,7 +1140,7 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle) ast.Field {
 		e := this.parseExp()
 		this.isSpecial = false
 		assign := new(ast.Assign)
-		assign.Name = tmp.Name
+		assign.Left = nil
 		assign.E = e
 	}
 	dec = &ast.FieldSingle{tmp.Access, tmp.Tp, tmp.Name, true, assign}
@@ -1121,7 +1159,8 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		this.current.Kind == TOKEN_ID {
 		//
 		var tmp ast.FieldSingle
-
+		var IsConstruct = false
+		var prefix = false
 		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
 		//处理 访问修饰符
 		if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
@@ -1135,28 +1174,39 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 
 		//处理 其他修饰符(忽略)
 		if this.current.Kind == TOKEN_STATIC {
+			prefix = true
 			this.eatToken(TOKEN_STATIC)
 		}
 
 		if this.current.Kind == TOKEN_FINAL {
+			prefix = true
 			this.eatToken(TOKEN_FINAL)
 		}
 
 		if this.current.Kind == TOKEN_TRANSIENT {
+			prefix = true
 			this.eatToken(TOKEN_TRANSIENT)
 		}
 
-		//TODO 兼容类构造函数
-		//类型
-		tmp.Tp = this.parseType()
+		//处理类构造函数
+		if this.currentClass.GetName() == this.current.Lexeme && prefix == false {
+			log.Infof("处理构造函数-->%v", this.current.Lexeme)
+			IsConstruct = true
+			tmp.Tp = &ast.Void{ast.TYPE_VOID}
+			//变量/函数名
+			tmp.Name = "New" + this.current.Lexeme
+		} else {
+			//类型
+			tmp.Tp = this.parseType()
+			//变量/函数名
+			tmp.Name = this.current.Lexeme
+		}
 
-		//变量/函数名
-		tmp.Name = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 
 		//成员方法
 		if this.current.Kind == TOKEN_LPAREN {
-			classSingle.AddMethod(this.parseMemberMethod(&tmp))
+			classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct))
 			//成员变量
 		} else {
 			classSingle.AddField(this.parseMemberVarDecl(&tmp))
@@ -1166,12 +1216,15 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 	return
 }
 
-func (this *Parser) parseMemberMethod(dec *ast.FieldSingle) ast.Method {
+func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool) ast.Method {
+
 	log.Debugf("*******解析成员函数*******")
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
 	//解析参数
 	formals := this.parseFormalList()
+
+	this.currentMethod = ast.NewMethodSingle(dec.Tp, dec.Name, formals, nil, IsConstruct)
 	//右括号
 	this.eatToken(TOKEN_RPAREN)
 
@@ -1182,20 +1235,13 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle) ast.Method {
 	//做大括号
 	this.eatToken(TOKEN_LBRACE)
 	var stms []ast.Stm
-	var locals []ast.Field
 
 	//解析本地变量和表达式
 	stms = this.parseStatements()
-	var retExp ast.Exp
-	if this.current.Kind == TOKEN_RETURN {
-		this.eatToken(TOKEN_RETURN)
-		retExp = this.parseExp()
-		this.eatToken(TOKEN_SEMI)
-	}
 
 	this.eatToken(TOKEN_RBRACE)
 
-	return &ast.MethodSingle{dec.Tp, dec.Name, formals, locals, stms, retExp}
+	return ast.NewMethodSingle(dec.Tp, dec.Name, formals, stms, IsConstruct)
 }
 
 //解析类
@@ -1233,6 +1279,8 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(access, id, extends)
+	this.currentClass = classSingle
+
 	this.parseClassContext(classSingle)
 	this.eatToken(TOKEN_RBRACE)
 	return classSingle

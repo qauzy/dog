@@ -10,6 +10,7 @@ type Class interface {
 	GetField(name string) (f Field)
 	GetMethod(name string) (m Method)
 	ListMethods() []Method
+	GetName() string
 }
 
 type Field interface {
@@ -33,6 +34,9 @@ type Method interface {
 	accept(v Visitor)
 	_method()
 	GetName() string
+	//AddField(f Field)
+	GetFormal(name string) (f Field)
+	IsConstruct() bool
 }
 
 type File interface {
@@ -163,13 +167,32 @@ func NewClassSingle(Access int, Name string, Extends string) (cl *ClassSingle) {
 /*}}}*/
 
 //Method  /*{{{*/
+
+func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool) (f *MethodSingle) {
+
+	FormalsMap := make(map[string]Field)
+	for _, f := range Formals {
+		FormalsMap[f.GetName()] = f
+	}
+	f = &MethodSingle{
+		RetType:    RetType,
+		Name:       Name,
+		Formals:    Formals,
+		FormalsMap: FormalsMap,
+		Stms:       Stms,
+		Construct:  Construct,
+	}
+	return
+}
+
 type MethodSingle struct {
-	RetType Type
-	Name    string // the name of whitch class belong to
-	Formals []Field
-	Locals  []Field
-	Stms    []Stm
-	RetExp  Exp
+	RetType    Type
+	Name       string // the name of whitch class belong to
+	Formals    []Field
+	FormalsMap map[string]Field
+	Locals     []Field
+	Stms       []Stm
+	Construct  bool
 }
 
 func (this *MethodSingle) accept(v Visitor) {
@@ -180,6 +203,14 @@ func (this *MethodSingle) _method() {
 
 func (this *MethodSingle) GetName() string {
 	return this.Name
+}
+
+func (this *MethodSingle) IsConstruct() bool {
+	return this.Construct
+}
+func (this *MethodSingle) GetFormal(name string) (f Field) {
+	f = this.FormalsMap[name]
+	return
 }
 
 /*}}}*/
@@ -1111,7 +1142,6 @@ func (this *Decl) _stm() {
 
 //Stm.Assign    /*{{{*/
 type Assign struct {
-	Name    string
 	Left    Exp //左边可能是一个包含声明语句的
 	E       Exp
 	Tp      Type
@@ -1119,9 +1149,9 @@ type Assign struct {
 	Stm_T
 }
 
-func Assign_new(name string, exp Exp, tp Type, isField bool, line int) *Assign {
+func Assign_new(Left Exp, exp Exp, tp Type, isField bool, line int) *Assign {
 	s := new(Assign)
-	s.Name = name
+	s.Left = Left
 	s.E = exp
 	s.Tp = tp
 	s.IsField = isField

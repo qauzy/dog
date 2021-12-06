@@ -52,11 +52,8 @@ func (this *Translation) transBlock(s ast.Stm) (block *gast.BlockStmt) {
 				} else {
 					block.List = append(block.List, this.transStm(st))
 				}
-
 			}
-
 		}
-
 	} else {
 		log.Debugf("transBlock-->%v--->%v", reflect.TypeOf(s).String(), s)
 		panic("bug")
@@ -136,7 +133,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 				Body: &gast.BlockStmt{
 					Lbrace: 0,
 					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{gast.NewIdent(v.Name)},
+						Lhs:    []gast.Expr{this.transExp(v.Left)},
 						TokPos: 0,
 						Tok:    token.ASSIGN,
 						Rhs:    []gast.Expr{this.transExp(vv.One)}}},
@@ -145,7 +142,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 				Else: &gast.BlockStmt{
 					Lbrace: 0,
 					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{gast.NewIdent(v.Name)},
+						Lhs:    []gast.Expr{this.transExp(v.Left)},
 						TokPos: 0,
 						Tok:    token.ASSIGN,
 						Rhs:    []gast.Expr{this.transExp(vv.Two)}}},

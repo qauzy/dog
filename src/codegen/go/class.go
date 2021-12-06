@@ -47,28 +47,6 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		for _, m := range cc.Methods {
 			gmeth := this.transFunc(m)
 
-			//处理类接收
-			recv := &gast.FieldList{
-				Opening: 0,
-				List:    nil,
-				Closing: 0,
-			}
-
-			gfi := &gast.Field{
-				Doc:   nil,
-				Names: []*gast.Ident{gast.NewIdent("this")},
-				Type: &gast.StarExpr{X: &gast.Ident{
-					NamePos: 0,
-					Name:    cc.Name,
-					Obj:     gast.NewObj(gast.Typ, cc.Name),
-				}},
-				Tag:     nil,
-				Comment: nil,
-			}
-
-			recv.List = append(recv.List, gfi)
-
-			gmeth.Recv = recv
 			this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
 		}
 
