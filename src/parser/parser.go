@@ -1148,7 +1148,7 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle) ast.Field {
 	return dec
 }
 
-// 解析成员变量和成员方法
+// 解析类上下文
 //
 // return:
 func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
@@ -1216,7 +1216,12 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 	return
 }
 
-func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool) ast.Method {
+// 解析成员函数
+//
+// param: dec
+// param: IsConstruct
+// return:
+func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool) (meth ast.Method) {
 
 	log.Debugf("*******解析成员函数*******")
 	//左括号
@@ -1244,7 +1249,9 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool) as
 	return ast.NewMethodSingle(dec.Tp, dec.Name, formals, stms, IsConstruct)
 }
 
-//解析类
+// 解析类
+//
+// return:
 func (this *Parser) parseClassDecl() (cl ast.Class) {
 	var id, extends string
 
