@@ -793,7 +793,7 @@ func (this *Parser) parseExp() ast.Exp {
 //
 // return:
 func (this *Parser) parseStatement() ast.Stm {
-	log.Debugf("*******解析代码段*******")
+	log.Debugf("*******解析代码段******* --> %v", this.current.Lexeme)
 	switch this.current.Kind {
 	case TOKEN_OBJECT:
 		fallthrough
@@ -1089,7 +1089,6 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_HASHSET ||
 		this.current.Kind == TOKEN_THIS ||
 		this.current.Kind == TOKEN_SYSTEM {
-		log.Debugf(">>>>>>>>>>>>>>>>>>>>>>>>>解析代码段:%s", this.current.Lexeme)
 		stms = append(stms, this.parseStatement())
 	}
 	return stms
