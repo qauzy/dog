@@ -30,7 +30,7 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 		gfi = &gast.Field{
 			Doc:     nil,
 			Names:   []*gast.Ident{gast.NewIdent(name)},
-			Type:    transType(field.Tp),
+			Type:    this.transType(field.Tp),
 			Tag:     nil,
 			Comment: nil,
 		}
@@ -38,25 +38,19 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 	}
 	return
 }
-func (this *Translation) transBlock(s ast.Stm) (block *gast.BlockStmt) {
-	//log.Debugf("解析Block语句")
-	block = new(gast.BlockStmt)
-	if bl, ok := s.(*ast.Block); ok {
-		for _, st := range bl.Stms {
-			if st != nil {
-				if st.IsTriple() {
-					sss := this.transTriple(st)
-					if sss != nil && len(sss) > 0 {
-						block.List = append(block.List, sss...)
-					}
-				} else {
-					block.List = append(block.List, this.transStm(st))
-				}
-			}
-		}
-	} else {
-		log.Debugf("transBlock-->%v--->%v", reflect.TypeOf(s).String(), s)
-		panic("bug")
+
+// 带类型的变量声明
+//
+// param: fi
+// return:
+func (this *Translation) getErrRet() (gfi *gast.Field) {
+
+	gfi = &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{gast.NewIdent("err")},
+		Type:    gast.NewIdent("error"),
+		Tag:     nil,
+		Comment: nil,
 	}
 
 	return
@@ -85,7 +79,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 		sp := &gast.ValueSpec{
 			Doc:     nil,
 			Names:   []*gast.Ident{gast.NewIdent(v.Name)},
-			Type:    transType(v.Tp),
+			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
 		}
@@ -169,7 +163,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 
 }
 
-func transType(t ast.Type) (Type gast.Expr) {
+func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 	switch v := t.(type) {
 	case *ast.Void:
 		return nil
@@ -186,14 +180,14 @@ func transType(t ast.Type) (Type gast.Expr) {
 	case *ast.HashType:
 		return &gast.MapType{
 			Map:   0,
-			Key:   transType(v.Key),
-			Value: transType(v.Value),
+			Key:   this.transType(v.Key),
+			Value: this.transType(v.Value),
 		}
 	case *ast.ListType:
 		return &gast.ArrayType{
 			Lbrack: 0,
 			Len:    nil,
-			Elt:    transType(v.Ele),
+			Elt:    this.transType(v.Ele),
 		}
 	case *ast.ClassType:
 		return &gast.Ident{
@@ -212,6 +206,13 @@ func transType(t ast.Type) (Type gast.Expr) {
 			},
 			Incomplete: false,
 		}
+
+	case *ast.ObjectArray:
+		return &gast.ArrayType{
+			Lbrack: 0,
+			Len:    nil,
+			Elt:    gast.NewIdent("interface{}"),
+		}
 	case *ast.Boolean:
 		return gast.NewIdent("bool")
 		//泛型
@@ -227,9 +228,9 @@ func transType(t ast.Type) (Type gast.Expr) {
 			Incomplete: false,
 		}
 	default:
-
+		log.Info(v.String())
 		panic("impossible")
-		//log.Info(v.String())
+
 	}
 }
 

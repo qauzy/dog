@@ -12,6 +12,7 @@ import (
 // param: fi
 // return:
 func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
+	this.CurrentMethod = fi
 	if method, ok := fi.(*ast.MethodSingle); ok {
 		var recv *gast.FieldList
 
@@ -37,9 +38,8 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			List:   nil,
 			Rbrace: 0,
 		}
-
-		//构造函数处理
-		if !fi.IsConstruct() {
+		//处理类接收
+		if !fi.IsConstruct() && !fi.IsStatic() {
 			//处理类接收
 			recv = &gast.FieldList{
 				Opening: 0,
@@ -60,6 +60,10 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			}
 
 			recv.List = append(recv.List, gfi)
+		}
+
+		//处理类接收
+		if !fi.IsConstruct() {
 
 			//处理返回值
 			rel := &ast.FieldSingle{
@@ -73,7 +77,13 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			ret := this.transField(rel)
 			if ret.Type != nil {
 				results.List = append(results.List, ret)
-			} else {
+			}
+
+			if this.CurrentMethod.IsThrows() {
+				results.List = append(results.List, this.getErrRet())
+			}
+
+			if results.List == nil {
 				results = nil
 			}
 

@@ -33,10 +33,12 @@ type MainClass interface {
 type Method interface {
 	accept(v Visitor)
 	_method()
-	GetName() string
+	GetName() string //获取方法名
 	//AddField(f Field)
 	GetFormal(name string) (f Field)
-	IsConstruct() bool
+	IsConstruct() bool //是否构造方法
+	IsStatic() bool    //是否静态方法
+	IsThrows() bool    //是否抛出异常
 }
 
 type File interface {
@@ -168,7 +170,7 @@ func NewClassSingle(Access int, Name string, Extends string) (cl *ClassSingle) {
 
 //Method  /*{{{*/
 
-func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool) (f *MethodSingle) {
+func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool) (f *MethodSingle) {
 
 	FormalsMap := make(map[string]Field)
 	for _, f := range Formals {
@@ -181,6 +183,8 @@ func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Con
 		FormalsMap: FormalsMap,
 		Stms:       Stms,
 		Construct:  Construct,
+		Static:     Static,
+		Throws:     Throws,
 	}
 	return
 }
@@ -193,6 +197,8 @@ type MethodSingle struct {
 	Locals     []Field
 	Stms       []Stm
 	Construct  bool
+	Static     bool
+	Throws     bool
 }
 
 func (this *MethodSingle) accept(v Visitor) {
@@ -208,6 +214,15 @@ func (this *MethodSingle) GetName() string {
 func (this *MethodSingle) IsConstruct() bool {
 	return this.Construct
 }
+
+func (this *MethodSingle) IsStatic() bool {
+	return this.Static
+}
+
+func (this *MethodSingle) IsThrows() bool {
+	return this.Throws
+}
+
 func (this *MethodSingle) GetFormal(name string) (f Field) {
 	f = this.FormalsMap[name]
 	return
@@ -456,6 +471,29 @@ func (this *Times) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Times) _exp() {
+}
+
+/*}}}*/
+
+//Exp.Division  /*{{{*/
+type Division struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Division_new(l Exp, r Exp, line int) *Division {
+	n := new(Division)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *Division) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Division) _exp() {
 }
 
 /*}}}*/
@@ -1048,6 +1086,7 @@ type Cast struct {
 func Cast_new(Tp Type, r Exp, line int) *Cast {
 	e := new(Cast)
 	e.Tp = Tp
+	e.Right = r
 	e.LineNum = line
 	return e
 }
@@ -1163,6 +1202,31 @@ func (this *Assign) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Assign) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Binary    /*{{{*/
+type Binary struct {
+	Left  Exp //左边可能是一个包含声明语句的
+	Right Exp
+	Opt   string
+	Stm_T
+}
+
+func Binary_new(Left Exp, Right Exp, Opt string, line int) *Binary {
+	s := new(Binary)
+	s.Left = Left
+	s.Right = Right
+	s.Opt = Opt
+	s.LineNum = line
+	return s
+}
+
+func (this *Binary) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Binary) _stm() {
 }
 
 /*}}}*/
@@ -1374,6 +1438,50 @@ func (this *While) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *While) _stm() {
+}
+
+//Stm.Switch   /*{{{*/
+type Switch struct {
+	Stm_T
+	E     Exp
+	Cases Stm
+}
+
+func Switch_new(exp Exp, cases Stm, line int) *Switch {
+	s := new(Switch)
+	s.E = exp
+	s.Cases = cases
+	s.LineNum = line
+	return s
+}
+
+func (this *Switch) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Switch) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Case   /*{{{*/
+type Case struct {
+	Stm_T
+	E    Exp
+	Body Stm
+}
+
+func Case_new(exp Exp, Body Stm, line int) *Case {
+	s := new(Case)
+	s.E = exp
+	s.Body = Body
+	s.LineNum = line
+	return s
+}
+
+func (this *Case) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Case) _stm() {
 }
 
 /*}}}*/

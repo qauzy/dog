@@ -94,7 +94,14 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			Op:    token.MUL,
 			Y:     this.transExp(v.Right),
 		}
-
+	case *ast.Division:
+		expr = &gast.BinaryExpr{
+			X:     this.transExp(v.Left),
+			OpPos: 0,
+			Op:    token.QUO,
+			Y:     this.transExp(v.Right),
+		}
+		return expr
 	case *ast.This:
 		//log.Debugf("This表达式")
 		return gast.NewIdent("this")
@@ -111,7 +118,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		t := &gast.ArrayType{
 			Lbrack: 0,
 			Len:    nil,
-			Elt:    transType(v.Ele),
+			Elt:    this.transType(v.Ele),
 		}
 		call.Args = append(call.Args, t)
 
@@ -125,7 +132,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		//TODO 这里需要自己构造一个初始化函数
 	case *ast.NewObject:
 		call := &gast.CallExpr{
-			Fun:      transType(v.T),
+			Fun:      this.transType(v.T),
 			Lparen:   0,
 			Args:     nil,
 			Ellipsis: 0,
@@ -220,7 +227,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			t := &gast.ArrayType{
 				Lbrack: 0,
 				Len:    nil,
-				Elt:    transType(v.T),
+				Elt:    this.transType(v.T),
 			}
 			call.Args = append(call.Args, t)
 
@@ -251,8 +258,8 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 
 		t := &gast.MapType{
 			Map:   0,
-			Key:   transType(v.Key),
-			Value: transType(v.Ele),
+			Key:   this.transType(v.Key),
+			Value: this.transType(v.Ele),
 		}
 		call.Args = append(call.Args, t)
 		return call
@@ -304,6 +311,13 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		call.Args = append(call.Args, len)
 		return call
+	case *ast.Cast: //强制类型转换
+		expr = &gast.TypeAssertExpr{
+			X:      this.transExp(v.Right),
+			Lparen: 0,
+			Type:   this.transType(v.Tp),
+			Rparen: 0,
+		}
 	default:
 		log.Debugf("%v --> %v", reflect.TypeOf(v).String(), v)
 		panic("bug")

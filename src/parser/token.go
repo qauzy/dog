@@ -22,8 +22,10 @@ var tMap map[int]string
 func initTokenMap() {
 	tokenMap = make(map[string]int)
 	tokenMap["+"] = TOKEN_ADD
+	tokenMap["+="] = TOKEN_ADD_ASSIGN
 	tokenMap["++"] = TOKEN_AUTOADD
 	tokenMap["-"] = TOKEN_SUB
+	tokenMap["-="] = TOKEN_SUB_ASSIGN
 	tokenMap["--"] = TOKEN_AUTOSUB
 
 	tokenMap["&&"] = TOKEN_AND
@@ -48,7 +50,11 @@ func initTokenMap() {
 	tokenMap[")"] = TOKEN_RPAREN
 	tokenMap[";"] = TOKEN_SEMI
 	tokenMap["*"] = TOKEN_MUL
+	tokenMap["*="] = TOKEN_MUL_ASSIGN
 	tokenMap["/"] = TOKEN_QUO
+	tokenMap["/="] = TOKEN_QUO_ASSIGN
+	tokenMap["%"] = TOKEN_REM
+	tokenMap["%="] = TOKEN_REM_ASSIGN
 	tokenMap["@"] = TOKEN_AT
 	tokenMap["->"] = TOKEN_LAMBDA
 
@@ -58,6 +64,9 @@ func initTokenMap() {
 	tokenMap["for"] = TOKEN_FOR
 	tokenMap["throws"] = TOKEN_THROWS
 	tokenMap["throw"] = TOKEN_THROW
+
+	tokenMap["switch"] = TOKEN_SWITCH
+	tokenMap["case"] = TOKEN_CASE
 
 	tokenMap["try"] = TOKEN_TRY
 	tokenMap["catch"] = TOKEN_CATCH
@@ -116,35 +125,38 @@ func initTokenMap() {
 
 	tMap = make(map[int]string)
 
-	tMap[TOKEN_ADD] = "TOKEN_ADD"           // +
-	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD"   // ++
-	tMap[TOKEN_AND] = "TOKEN_AND"           // &&
-	tMap[TOKEN_OR] = "TOKEN_OR"             // ||
-	tMap[TOKEN_NE] = "TOKEN_NE"             // !=
-	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"     // =
-	tMap[TOKEN_COMMER] = "TOKEN_COMMER"     // ,
-	tMap[TOKEN_DOT] = "TOKEN_DOT"           // .
-	tMap[TOKEN_COLON] = "TOKEN_COLON"       // :
-	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION" // ?
-	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"   // --
-	tMap[TOKEN_SUB] = "TOKEN_SUB"           // -
-	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"     // ->
-	tMap[TOKEN_MUL] = "TOKEN_MUL"           // *
-	tMap[TOKEN_QUO] = "TOKEN_QUO"           // /
-	tMap[TOKEN_RBRACE] = "TOKEN_RBRACE"     // }
-	tMap[TOKEN_RBRACK] = "TOKEN_RBRACK"     // ]
-	tMap[TOKEN_RPAREN] = "TOKEN_RPAREN"     // )
-	tMap[TOKEN_SEMI] = "TOKEN_SEMI"         // ;
-	tMap[TOKEN_LBRACE] = "TOKEN_LBRACE"     // {
-	tMap[TOKEN_LBRACK] = "TOKEN_LBRACK"     // [
-	tMap[TOKEN_LPAREN] = "TOKEN_LPAREN"     // (
-	tMap[TOKEN_LT] = "TOKEN_LT"             // <
-	tMap[TOKEN_LE] = "TOKEN_LE"             // <=
-	tMap[TOKEN_GE] = "TOKEN_GE"             // >=
-	tMap[TOKEN_EQ] = "TOKEN_EQ"             // ==
-	tMap[TOKEN_GT] = "TOKEN_GT"             // >
-	tMap[TOKEN_NOT] = "TOKEN_NOT"           // !
-	tMap[TOKEN_AT] = "TOKEN_AT"             // @
+	tMap[TOKEN_ADD] = "TOKEN_ADD"               // +
+	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD"       // ++
+	tMap[TOKEN_AND] = "TOKEN_AND"               // &&
+	tMap[TOKEN_OR] = "TOKEN_OR"                 // ||
+	tMap[TOKEN_NE] = "TOKEN_NE"                 // !=
+	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"         // =
+	tMap[TOKEN_COMMER] = "TOKEN_COMMER"         // ,
+	tMap[TOKEN_DOT] = "TOKEN_DOT"               // .
+	tMap[TOKEN_COLON] = "TOKEN_COLON"           // :
+	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"     // ?
+	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"       // --
+	tMap[TOKEN_SUB] = "TOKEN_SUB"               // -
+	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"         // ->
+	tMap[TOKEN_MUL] = "TOKEN_MUL"               // *
+	tMap[TOKEN_QUO] = "TOKEN_QUO"               // /
+	tMap[TOKEN_QUO_ASSIGN] = "TOKEN_QUO_ASSIGN" // /=
+	tMap[TOKEN_REM] = "TOKEN_REM"               // %
+	tMap[TOKEN_REM_ASSIGN] = "TOKEN_REM_ASSIGN" // %=
+	tMap[TOKEN_RBRACE] = "TOKEN_RBRACE"         // }
+	tMap[TOKEN_RBRACK] = "TOKEN_RBRACK"         // ]
+	tMap[TOKEN_RPAREN] = "TOKEN_RPAREN"         // )
+	tMap[TOKEN_SEMI] = "TOKEN_SEMI"             // ;
+	tMap[TOKEN_LBRACE] = "TOKEN_LBRACE"         // {
+	tMap[TOKEN_LBRACK] = "TOKEN_LBRACK"         // [
+	tMap[TOKEN_LPAREN] = "TOKEN_LPAREN"         // (
+	tMap[TOKEN_LT] = "TOKEN_LT"                 // <
+	tMap[TOKEN_LE] = "TOKEN_LE"                 // <=
+	tMap[TOKEN_GE] = "TOKEN_GE"                 // >=
+	tMap[TOKEN_EQ] = "TOKEN_EQ"                 // ==
+	tMap[TOKEN_GT] = "TOKEN_GT"                 // >
+	tMap[TOKEN_NOT] = "TOKEN_NOT"               // !
+	tMap[TOKEN_AT] = "TOKEN_AT"                 // @
 
 	tMap[TOKEN_IF] = "TOKEN_IF"
 	tMap[TOKEN_ELSE] = "TOKEN_ELSE"
@@ -179,6 +191,9 @@ func initTokenMap() {
 	tMap[TOKEN_NEW] = "TOKEN_NEW"
 	tMap[TOKEN_THROWS] = "TOKEN_THROWS"
 	tMap[TOKEN_THROW] = "TOKEN_THROW"
+	tMap[TOKEN_SWITCH] = "TOKEN_SWITCH"
+	tMap[TOKEN_CASE] = "TOKEN_CASE"
+
 	tMap[TOKEN_NUM] = "TOKEN_NUM"
 	tMap[TOKEN_OUT] = "TOKEN_OUT"
 	tMap[TOKEN_PRINTLN] = "TOKEN_PRINTLN"
@@ -215,34 +230,40 @@ type Kind int
 
 const (
 	//运算符
-	TOKEN_ADD      = iota // +
-	TOKEN_AUTOADD         // ++
-	TOKEN_SUB             // -
-	TOKEN_AUTOSUB         // --
-	TOKEN_AND             // &&
-	TOKEN_ASSIGN          // =
-	TOKEN_COMMER          // ,
-	TOKEN_DOT             // .
-	TOKEN_COLON           // :
-	TOKEN_QUESTION        // ?
-	TOKEN_LBRACE          // {
-	TOKEN_RBRACE          // }
-	TOKEN_LBRACK          // [
-	TOKEN_RBRACK          // ]
-	TOKEN_LPAREN          // (
-	TOKEN_RPAREN          // )
-	TOKEN_LT              // <
-	TOKEN_LE              // <=
-	TOKEN_EQ              // ==
-	TOKEN_GT              // >
-	TOKEN_GE              // >=
-	TOKEN_OR              // ||
-	TOKEN_NE              // !=
-	TOKEN_NOT             // !
-	TOKEN_MUL             // *
-	TOKEN_QUO             // /
-	TOKEN_SEMI            // ;
-	TOKEN_AT              // @
+	TOKEN_ADD        = iota // +
+	TOKEN_ADD_ASSIGN        // +=
+	TOKEN_AUTOADD           // ++
+	TOKEN_SUB               // -
+	TOKEN_SUB_ASSIGN        // -=
+	TOKEN_AUTOSUB           // --
+	TOKEN_AND               // &&
+	TOKEN_ASSIGN            // =
+	TOKEN_COMMER            // ,
+	TOKEN_DOT               // .
+	TOKEN_COLON             // :
+	TOKEN_QUESTION          // ?
+	TOKEN_LBRACE            // {
+	TOKEN_RBRACE            // }
+	TOKEN_LBRACK            // [
+	TOKEN_RBRACK            // ]
+	TOKEN_LPAREN            // (
+	TOKEN_RPAREN            // )
+	TOKEN_LT                // <
+	TOKEN_LE                // <=
+	TOKEN_EQ                // ==
+	TOKEN_GT                // >
+	TOKEN_GE                // >=
+	TOKEN_OR                // ||
+	TOKEN_NE                // !=
+	TOKEN_NOT               // !
+	TOKEN_MUL               // *
+	TOKEN_MUL_ASSIGN        // *=
+	TOKEN_QUO               // /
+	TOKEN_QUO_ASSIGN        // /=
+	TOKEN_REM               // %
+	TOKEN_REM_ASSIGN        // %=
+	TOKEN_SEMI              // ;
+	TOKEN_AT                // @
 
 	//关键字
 
@@ -264,6 +285,8 @@ const (
 	TOKEN_THROWS  // throws
 	TOKEN_THROW   // throw
 
+	TOKEN_SWITCH // switch
+	TOKEN_CASE   // case
 	TOKEN_NULL   // null
 	TOKEN_LENGTH // length
 	TOKEN_SIZE   // size
