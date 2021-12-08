@@ -151,7 +151,7 @@ func (this *Lexer) lex_Comments(c byte) (comment string) {
 	}
 	ed = this.fp
 	if ed > st+1 {
-		comment = string(this.buf[st : ed-1])
+		comment = string(this.buf[st:ed])
 	}
 	return
 }

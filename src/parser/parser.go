@@ -1267,7 +1267,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 					return
 				}
 				log.Infof("注释-->%v", comment)
-				continue
 			}
 		} else {
 			var tmp ast.FieldSingle

@@ -55,11 +55,8 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 					Name:    this.CurrentClass.GetName(),
 					Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
 				}},
-				Tag: nil,
-				Comment: &gast.CommentGroup{[]*gast.Comment{&gast.Comment{
-					Slash: 0,
-					Text:  method.Comment,
-				}}},
+				Tag:     nil,
+				Comment: nil,
 			}
 
 			recv.List = append(recv.List, gfi)
@@ -155,9 +152,16 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			}
 			body.List = append(body.List, ret)
 		}
+		cm := &gast.CommentGroup{[]*gast.Comment{{
+			Slash: 0,
+			Text:  method.Comment,
+		}}}
 
+		if method.Comment == "" {
+			cm = nil
+		}
 		fn = &gast.FuncDecl{
-			Doc:  nil,
+			Doc:  cm,
 			Recv: recv,
 			Name: gast.NewIdent(Capitalize(method.Name)),
 			Type: &gast.FuncType{
