@@ -41,8 +41,11 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		sp.Type = Type
 
 		for _, fi := range cc.Fields {
-			gfi := this.transField(fi)
-			Type.Fields.List = append(Type.Fields.List, gfi)
+			//FIXME 是否排除static
+			if !fi.IsStatic() {
+				gfi := this.transField(fi)
+				Type.Fields.List = append(Type.Fields.List, gfi)
+			}
 		}
 		for _, m := range cc.Methods {
 			gmeth := this.transFunc(m)

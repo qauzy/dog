@@ -157,6 +157,7 @@ func initTokenMap() {
 	tMap[TOKEN_GT] = "TOKEN_GT"                 // >
 	tMap[TOKEN_NOT] = "TOKEN_NOT"               // !
 	tMap[TOKEN_AT] = "TOKEN_AT"                 // @
+	tMap[TOKEN_COMMENT] = "TOKEN_COMMENT"
 
 	tMap[TOKEN_IF] = "TOKEN_IF"
 	tMap[TOKEN_ELSE] = "TOKEN_ELSE"
@@ -265,6 +266,7 @@ const (
 	TOKEN_SEMI              // ;
 	TOKEN_AT                // @
 
+	TOKEN_COMMENT //注释
 	//关键字
 
 	TOKEN_IF    // if

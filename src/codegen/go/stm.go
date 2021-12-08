@@ -168,6 +168,8 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			cs.Body = append(cs.Body, body)
 		}
 		return cs
+	case *ast.Comment:
+		stmt = &gast.ExprStmt{X: gast.NewIdent(v.C)}
 	default:
 		log.Debugf("transBlock-->%v -->%v", reflect.TypeOf(s).String(), v)
 		panic("bug")

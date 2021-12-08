@@ -39,10 +39,51 @@ func NewTranslation(j ast.File) (translation *Translation) {
 }
 
 func (this *Translation) ParseClasses() {
-	for _, c := range this.CurrentFile.GetClasses() {
+
+	//处理全局变量
+	if this.CurrentFile.ListFields() != nil {
+		v := &gast.GenDecl{
+			Doc:    nil,
+			TokPos: 0,
+			Tok:    token.VAR,
+			Lparen: 0,
+			Specs:  nil,
+			Rparen: 0,
+		}
+		this.GolangFile.Decls = append(this.GolangFile.Decls, v)
+		for _, f := range this.CurrentFile.ListFields() {
+			v.Specs = append(v.Specs, this.transGlobalField(f))
+		}
+	}
+
+	for _, c := range this.CurrentFile.ListClasses() {
 		cl := this.transClass(c)
 		this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
 	}
+}
+
+// 带类型的变量声明
+//
+// param: fi
+// return:
+func (this *Translation) transGlobalField(fi ast.Field) (value *gast.ValueSpec) {
+	this.CurrentField = fi
+	if field, ok := fi.(*ast.FieldSingle); ok {
+		//只处理成员变量
+		var name = field.Name
+		if field.IsField {
+			name = Capitalize(field.Name)
+		}
+		value = &gast.ValueSpec{
+			Doc:     nil,
+			Names:   []*gast.Ident{gast.NewIdent(name)},
+			Type:    this.transType(field.Tp),
+			Values:  []gast.Expr{this.transExp(field.Value)},
+			Comment: nil,
+		}
+
+	}
+	return
 }
 
 func (this *Translation) astToGo(dst *bytes.Buffer, node interface{}) error {

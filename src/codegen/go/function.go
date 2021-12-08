@@ -55,8 +55,11 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 					Name:    this.CurrentClass.GetName(),
 					Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
 				}},
-				Tag:     nil,
-				Comment: nil,
+				Tag: nil,
+				Comment: &gast.CommentGroup{[]*gast.Comment{&gast.Comment{
+					Slash: 0,
+					Text:  method.Comment,
+				}}},
 			}
 
 			recv.List = append(recv.List, gfi)
@@ -71,7 +74,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Tp:      method.RetType,
 				Name:    "result",
 				IsField: false,
-				Stms:    nil,
+				Value:   nil,
 			}
 			//如果是void则没有返回值
 			ret := this.transField(rel)

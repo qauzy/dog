@@ -113,24 +113,28 @@ func (this *Lexer) lex_String(c byte) string {
 	return ss
 }
 
-func (this *Lexer) lex_Comments(c byte) (isComment bool) {
+func (this *Lexer) lex_Comments(c byte) (comment string) {
+
 	ex := this.buf[this.fp]
+	var st = this.fp - 1
+	var ed = 0
 	//行注释
 	if ex == '/' {
-		isComment = true
 		for ex != '\n' && this.fp < len(this.buf) {
 			this.fp++
 			ex = this.buf[this.fp]
 		}
 		if this.fp == len(this.buf) {
 			this.fp--
-			return
+
+			//换行符
 		} else {
-			this.lineNum++
+			//this.fp++
+			//this.lineNum++
 		}
 		//注释块
 	} else if ex == '*' {
-		isComment = true
+		comment = `/*`
 		ex = this.buf[this.fp]
 		for (c != '*' || ex != '/') && this.fp < len(this.buf) {
 			c = ex
@@ -144,10 +148,11 @@ func (this *Lexer) lex_Comments(c byte) (isComment bool) {
 			log.Info("error")
 			os.Exit(0)
 		}
-	} else {
-		isComment = false
 	}
-
+	ed = this.fp
+	if ed > st+1 {
+		comment = string(this.buf[st : ed-1])
+	}
 	return
 }
 
@@ -352,10 +357,14 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			if this.expectKeyword("=") {
 				return newToken(TOKEN_QUO_ASSIGN, "/=", this.lineNum)
-			} else if this.lex_Comments(c) {
-				this.lex_Comments(c)
 			} else {
-				return this.expectIdOrKey(c)
+				comment := this.lex_Comments(c)
+				if comment != "" {
+					//log.Infof("注释:%v", comment)
+					return newToken(TOKEN_COMMENT, comment, this.lineNum)
+				} else {
+					return this.expectIdOrKey(c)
+				}
 			}
 		} else {
 			return this.expectIdOrKey(c)
@@ -374,7 +383,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			return newToken(TOKEN_ID, this.lex_String(c), this.lineNum)
 		}
-		//字符串
+	//字符串
 	default:
 		this.s += string(c)
 	}

@@ -1,13 +1,24 @@
 package ast
 
 /*--------------------interface------------------*/
+type File interface {
+	accept(v Visitor)
+	_prog()
+	AddClass(cl Class)
+	AddField(f Field)
+	ListFields() []Field
+	GetField(name string) (f Field)
+	GetName() string
+	ListClasses() []Class
+}
+
 type Class interface {
 	accept(v Visitor)
 	_class()
 	AddField(f Field)
-	AddMethod(m Method)
 	ListFields() []Field
 	GetField(name string) (f Field)
+	AddMethod(m Method)
 	GetMethod(name string) (m Method)
 	ListMethods() []Method
 	GetName() string
@@ -18,6 +29,7 @@ type Field interface {
 	GetDecType() int
 	String() string
 	GetName() string
+	IsStatic() bool //是否静态方法
 }
 
 type Exp interface {
@@ -41,13 +53,6 @@ type Method interface {
 	IsThrows() bool    //是否抛出异常
 }
 
-type File interface {
-	accept(v Visitor)
-	_prog()
-	GetName() string
-	GetClasses() []Class
-}
-
 type Stm interface {
 	IsTriple() bool
 	accept(v Visitor)
@@ -61,32 +66,6 @@ type Type interface {
 }
 
 /*------------------ struct -----------------------*/
-
-/*Field*/ /*{{{*/
-type FieldSingle struct {
-	Access  int
-	Tp      Type
-	Name    string
-	IsField bool
-	Stms    Stm //处理声明变量时的初始化语句
-}
-
-func (this *FieldSingle) accept(v Visitor) {
-	v.visit(this)
-}
-
-func (this *FieldSingle) GetDecType() int {
-	return this.Tp.Gettype()
-}
-func (this *FieldSingle) String() string {
-	s := this.Name + " " + this.Tp.String()
-	return s
-}
-
-func (this *FieldSingle) GetName() string {
-	return this.Name
-}
-
 /*}}}*/
 
 /* MainClass {{{*/
@@ -102,8 +81,6 @@ func (this *MainClassSingle) accept(v Visitor) {
 
 func (this *MainClassSingle) _mainclass() {
 }
-
-/*}}}*/
 
 /* ClassSingle {{{*/
 type ClassSingle struct {
@@ -168,15 +145,59 @@ func NewClassSingle(Access int, Name string, Extends string) (cl *ClassSingle) {
 
 /*}}}*/
 
+/*Field*/ /*{{{*/
+type FieldSingle struct {
+	Access  int
+	Tp      Type
+	Name    string
+	Static  bool
+	IsField bool
+	Value   Exp //处理声明变量时的初始化语句
+}
+
+func (this *FieldSingle) accept(v Visitor) {
+	v.visit(this)
+}
+
+func (this *FieldSingle) GetDecType() int {
+	return this.Tp.Gettype()
+}
+func (this *FieldSingle) String() string {
+	s := this.Name + " " + this.Tp.String()
+	return s
+}
+
+func (this *FieldSingle) GetName() string {
+	return this.Name
+}
+
+func (this *FieldSingle) IsStatic() bool {
+	return this.Static
+}
+
+func NewFieldSingle(Access int, Tp Type, Name string, Value Exp, Static bool, IsField bool) (f *FieldSingle) {
+	f = &FieldSingle{
+		Access:  Access,
+		Tp:      Tp,
+		Name:    Name,
+		Static:  Static,
+		IsField: IsField,
+		Value:   Value,
+	}
+	return
+}
+
+/*}}}*/
+
 //Method  /*{{{*/
 
-func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool) (f *MethodSingle) {
+func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
 
 	FormalsMap := make(map[string]Field)
 	for _, f := range Formals {
 		FormalsMap[f.GetName()] = f
 	}
-	f = &MethodSingle{
+	m = &MethodSingle{
 		RetType:    RetType,
 		Name:       Name,
 		Formals:    Formals,
@@ -185,6 +206,7 @@ func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Con
 		Construct:  Construct,
 		Static:     Static,
 		Throws:     Throws,
+		Comment:    comment,
 	}
 	return
 }
@@ -196,6 +218,7 @@ type MethodSingle struct {
 	FormalsMap map[string]Field
 	Locals     []Field
 	Stms       []Stm
+	Comment    string
 	Construct  bool
 	Static     bool
 	Throws     bool
@@ -235,6 +258,8 @@ type FileSingle struct {
 	Name      string // identifier name
 	Mainclass MainClass
 	Classes   []Class
+	Fields    []Field
+	FieldsMap map[string]Field
 }
 
 func (this *FileSingle) accept(v Visitor) {
@@ -243,11 +268,39 @@ func (this *FileSingle) accept(v Visitor) {
 func (this *FileSingle) _prog() {
 }
 
-func (this *FileSingle) GetClasses() []Class {
+func (this *FileSingle) ListClasses() []Class {
 	return this.Classes
 }
 func (this *FileSingle) GetName() string {
 	return this.Name
+}
+
+func (this *FileSingle) AddClass(cl Class) {
+	this.Classes = append(this.Classes, cl)
+}
+
+func (this *FileSingle) AddField(f Field) {
+	this.FieldsMap[f.GetName()] = f
+	this.Fields = append(this.Fields, f)
+}
+
+func (this *FileSingle) GetField(name string) (f Field) {
+	f = this.FieldsMap[name]
+	return
+}
+
+func (this *FileSingle) ListFields() []Field {
+	return this.Fields
+}
+
+func NewFileSingle(Name string, classes []Class) (f *FileSingle) {
+	f = &FileSingle{
+		Name:      Name,
+		Classes:   classes,
+		Fields:    nil,
+		FieldsMap: make(map[string]Field),
+	}
+	return
 }
 
 /*}}}*/
@@ -1321,6 +1374,27 @@ func (this *Block) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Block) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Comment /*{{{*/
+type Comment struct {
+	C string
+	Stm_T
+}
+
+func Comment_new(c string, line int) *Comment {
+	s := new(Comment)
+	s.C = c
+	s.LineNum = line
+	return s
+}
+
+func (this *Comment) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Comment) _stm() {
 }
 
 /*}}}*/
