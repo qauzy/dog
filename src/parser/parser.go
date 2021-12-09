@@ -20,8 +20,8 @@ type Parser struct {
 	fpBak         int        //用于记录测试前的指针
 	currentBak    *Token     //用于记录测试前的token
 	currentFile   ast.File   //当前解析的File
-	currentClass  ast.Class  //当前解析的class
-	currentMethod ast.Method //当前解析的Method
+	currentClass  ast.Class  //当前解析的class TODO 类嵌套
+	currentMethod ast.Method //当前解析的Method	TODO 函数嵌套
 	Linenum       int
 }
 
@@ -33,12 +33,14 @@ func NewParse(fname string, buf []byte) *Parser {
 	return p
 }
 
+//进入测试模式，退出测试模式将还原解析状态
 func (this *Parser) TestIn() {
 	this.fpBak = this.lexer.fp
 	this.currentBak = this.current
 }
 
 func (this *Parser) TestOut() {
+	log.Infof("恢复状态")
 	this.lexer.fp = this.fpBak
 	this.current = this.currentBak
 }
@@ -197,13 +199,30 @@ func (this *Parser) parseType() ast.Type {
 		} else {
 			this.TestIn()
 			this.eatToken(TOKEN_LT)
-			tp := this.parseType()
+			tp := this.parseTypeList()
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.GenericType{name, tp, ast.TYPE_GENERIC}
 		}
 	}
 	log.Debugf("解析类型:%s", this.currentType.String())
 	return this.currentType
+}
+
+func (this *Parser) parseTypeList() (types []ast.Type) {
+	log.Infof("解析泛型参数列表")
+	types = []ast.Type{}
+	if this.current.Kind == TOKEN_GT {
+		return types
+	}
+	tp := this.parseType()
+	types = append(types, tp)
+
+	for this.current.Kind == TOKEN_COMMER {
+		this.advance()
+		tp := this.parseType()
+		types = append(types, tp)
+	}
+	return types
 }
 
 //
@@ -224,6 +243,7 @@ func (this *Parser) parseFormalList() (flist []ast.Field) {
 		this.current.Kind == TOKEN_DOUBLE ||
 		this.current.Kind == TOKEN_CHAR ||
 		this.current.Kind == TOKEN_BOOLEAN ||
+
 		this.current.Kind == TOKEN_SET ||
 		this.current.Kind == TOKEN_HASHSET ||
 		this.current.Kind == TOKEN_MAP ||
@@ -547,53 +567,63 @@ func (this *Parser) parseExpList() (args []ast.Exp) {
 	//（exp）-> exp
 	// (exp) -> {exp}
 	//可能是lambda表达式
-	if this.current.Kind == TOKEN_LPAREN {
-		args = append(args, this.parseLambdaExp())
-	} else {
-		a := this.parseExp()
-		log.Infof("-------------------------> 解析参数 --> %v", a)
-		args = append(args, a)
-	}
+	args = append(args, this.parseLambdaExp())
 
 	for this.current.Kind == TOKEN_COMMER {
 
 		this.advance()
-		if this.current.Kind == TOKEN_LPAREN {
-			a := this.parseLambdaExp()
-			log.Infof("-------------------------> 解析参数 --> %v", a)
-			args = append(args, a)
-
-		} else {
-			a := this.parseExp()
-			log.Infof("-------------------------> 解析参数 --> %v", a)
-			args = append(args, a)
-		}
+		args = append(args, this.parseLambdaExp())
 	}
 	return args
 }
 
 func (this *Parser) parseLambdaExp() (exp ast.Exp) {
-	log.Debugf("解析 --> Lambda")
+	log.Debugf("尝试解析 --> Lambda")
 	this.TestIn()
-	this.eatToken(TOKEN_LPAREN)
-	args := this.parseFormalList()
-	this.eatToken(TOKEN_RPAREN)
-	if this.current.Kind == TOKEN_LAMBDA {
-		this.eatToken(TOKEN_LAMBDA)
-		if this.current.Kind == TOKEN_LBRACE {
-			this.eatToken(TOKEN_LBRACE)
-			stms := this.parseStatements()
-			this.eatToken(TOKEN_RBRACE)
-			return ast.Lambda_new(args, stms, this.Linenum)
+	//可能多个参数的lambda表达式
+	if this.current.Kind == TOKEN_LPAREN {
+		this.eatToken(TOKEN_LPAREN)
+		args := this.parseFormalList()
+		this.eatToken(TOKEN_RPAREN)
+		if this.current.Kind == TOKEN_LAMBDA {
+			this.eatToken(TOKEN_LAMBDA)
+			if this.current.Kind == TOKEN_LBRACE {
+				this.eatToken(TOKEN_LBRACE)
+				stms := this.parseStatements()
+				this.eatToken(TOKEN_RBRACE)
+				return ast.Lambda_new(args, stms, this.Linenum)
+			} else {
+				stm := &ast.ExprStm{
+					E: this.parseExp(),
+				}
+				return ast.Lambda_new(args, []ast.Stm{stm}, this.Linenum)
+			}
 		} else {
-			stm := this.parseStatement()
-			return ast.Lambda_new(args, []ast.Stm{stm}, this.Linenum)
+			this.TestOut()
+			return this.parseCastExp()
 		}
+		//可能单个参数的lambda表达式或者，单存是参数
 	} else {
-		this.TestOut()
-		return this.parseCastExp()
-	}
+		args := this.parseFormalList()
+		if this.current.Kind == TOKEN_LAMBDA {
+			this.eatToken(TOKEN_LAMBDA)
+			if this.current.Kind == TOKEN_LBRACE {
+				this.eatToken(TOKEN_LBRACE)
+				stms := this.parseStatements()
+				this.eatToken(TOKEN_RBRACE)
+				return ast.Lambda_new(args, stms, this.Linenum)
+			} else {
+				stm := &ast.ExprStm{
+					E: this.parseExp(),
+				}
+				return ast.Lambda_new(args, []ast.Stm{stm}, this.Linenum)
+			}
+		} else {
+			this.TestOut()
+			return this.parseExp()
+		}
 
+	}
 	return
 }
 

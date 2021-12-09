@@ -1808,7 +1808,7 @@ func (this *ClassType) String() string {
 //Type.GenericType    /*{{{*/
 type GenericType struct {
 	Name     string
-	T        Type
+	T        []Type
 	TypeKind int
 }
 
@@ -1820,7 +1820,7 @@ func (this *GenericType) Gettype() int {
 }
 
 func (this *GenericType) String() string {
-	return this.Name + this.T.String()
+	return this.Name
 }
 
 /*}}}*/
