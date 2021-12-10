@@ -228,7 +228,7 @@ func (this *Parser) parseTypeList() (types []ast.Type) {
 //
 //
 // return:
-func (this *Parser) parseFormalList() (flist []ast.Field) {
+func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 	log.Debugf("解析函数参数")
 	flist = []ast.Field{}
 	var tp ast.Type
@@ -243,7 +243,6 @@ func (this *Parser) parseFormalList() (flist []ast.Field) {
 		this.current.Kind == TOKEN_DOUBLE ||
 		this.current.Kind == TOKEN_CHAR ||
 		this.current.Kind == TOKEN_BOOLEAN ||
-
 		this.current.Kind == TOKEN_SET ||
 		this.current.Kind == TOKEN_HASHSET ||
 		this.current.Kind == TOKEN_MAP ||
@@ -275,7 +274,7 @@ func (this *Parser) parseFormalList() (flist []ast.Field) {
 
 		}
 
-		for this.current.Kind == TOKEN_COMMER {
+		for this.current.Kind == TOKEN_COMMER && !isSingle {
 			this.eatToken(TOKEN_COMMER)
 			if nonType {
 				log.Debugf("解析函数 --> 需要类型推断")
@@ -398,6 +397,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			return ast.Id_new(id, tp, false, this.Linenum)
 			//函数调用
 		} else if this.current.Kind == TOKEN_LPAREN {
+			log.Infof("------------->函数调用-->%v", id)
 			this.eatToken(TOKEN_LPAREN)
 			args := this.parseExpList()
 			this.eatToken(TOKEN_RPAREN)
@@ -419,7 +419,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		tp := this.parseType()
 		//声明一个临时变量的语句
 		if this.current.Kind == TOKEN_ID {
-			log.Debugf("parseAtomExp->TOKEN_INT")
+			log.Infof("parseAtomExp->TOKEN_INT")
 			id := this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			return ast.Id_new(id, tp, false, this.Linenum)
@@ -583,7 +583,8 @@ func (this *Parser) parseLambdaExp() (exp ast.Exp) {
 	//可能多个参数的lambda表达式
 	if this.current.Kind == TOKEN_LPAREN {
 		this.eatToken(TOKEN_LPAREN)
-		args := this.parseFormalList()
+		log.Debugf("尝试解析 --> Lambda -- >解析参数")
+		args := this.parseFormalList(false)
 		this.eatToken(TOKEN_RPAREN)
 		if this.current.Kind == TOKEN_LAMBDA {
 			this.eatToken(TOKEN_LAMBDA)
@@ -599,12 +600,14 @@ func (this *Parser) parseLambdaExp() (exp ast.Exp) {
 				return ast.Lambda_new(args, []ast.Stm{stm}, this.Linenum)
 			}
 		} else {
+			log.Infof("尝试解析失败 --> Lambda")
 			this.TestOut()
 			return this.parseCastExp()
 		}
 		//可能单个参数的lambda表达式或者，单存是参数
 	} else {
-		args := this.parseFormalList()
+		log.Debugf("尝试解析 --> Lambda -- >解析单个参数")
+		args := this.parseFormalList(true)
 		if this.current.Kind == TOKEN_LAMBDA {
 			this.eatToken(TOKEN_LAMBDA)
 			if this.current.Kind == TOKEN_LBRACE {
@@ -619,6 +622,7 @@ func (this *Parser) parseLambdaExp() (exp ast.Exp) {
 				return ast.Lambda_new(args, []ast.Stm{stm}, this.Linenum)
 			}
 		} else {
+			log.Infof("尝试解析失败 --> Lambda")
 			this.TestOut()
 			return this.parseExp()
 		}
@@ -678,6 +682,7 @@ func (this *Parser) parseNotExp() ast.Exp {
 				exp = ast.CallExpr_new(exp, args, this.Linenum)
 				//成员变量
 			}
+
 			//数组索引操作
 		case TOKEN_LBRACK: //[exp]
 			this.advance()
@@ -884,7 +889,6 @@ func (this *Parser) parseStatement() ast.Stm {
 	case TOKEN_COMMENT:
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()
-		this.advance()
 		return stm
 	case TOKEN_OBJECT:
 		fallthrough
@@ -984,25 +988,44 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 			this.eatToken(TOKEN_SEMI)
 			return decl
-			//都统一为赋值语句
+
 		case TOKEN_LPAREN:
+			//直接函数调用语句
 			fallthrough
 		case TOKEN_DOT:
 			log.Debugf("*******解析函数调用*******")
 			this.TestOut() //恢复测试数据
 			exp := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
-			exprStm := ast.ExprStm_new(exp, this.Linenum)
-			//检查表达式是不是三元表达式
-			if fn, ok := exp.(*ast.CallExpr); ok {
-				for _, v := range fn.ArgsList {
-					//输入参数有三元表达式
-					if _, ok := v.(*ast.Question); ok {
-						exprStm.SetTriple()
+			//有赋值语句
+			if this.current.Kind == TOKEN_ASSIGN {
+
+				//临时变量类型
+				log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
+				this.eatToken(TOKEN_ASSIGN)
+				right := this.parseExp()
+				this.eatToken(TOKEN_SEMI)
+				assign := ast.Assign_new(exp, right, nil, false, this.Linenum)
+				//三元表达式
+				if _, ok := right.(*ast.Question); ok {
+					assign.SetTriple()
+				}
+				return assign
+			} else {
+				this.eatToken(TOKEN_SEMI)
+				exprStm := ast.ExprStm_new(exp, this.Linenum)
+				//检查表达式是不是三元表达式
+				if fn, ok := exp.(*ast.CallExpr); ok {
+					for _, v := range fn.ArgsList {
+						//输入参数有三元表达式
+						if _, ok := v.(*ast.Question); ok {
+							exprStm.SetTriple()
+						}
 					}
 				}
+				return exprStm
+
 			}
-			return exprStm
+
 		case TOKEN_ASSIGN:
 			this.eatToken(TOKEN_ASSIGN)
 			exp := this.parseExp()
@@ -1220,11 +1243,12 @@ func (this *Parser) parseStatement() ast.Stm {
 		return ast.Throw_new(e, this.Linenum)
 	case TOKEN_RETURN:
 		this.eatToken(TOKEN_RETURN)
+		//空return
 		if this.current.Kind == TOKEN_SEMI {
 			this.eatToken(TOKEN_SEMI)
 			return ast.Return_new(nil, this.Linenum)
 		}
-		log.Debugf("<<<>>>解析return,%v", this.current.Lexeme)
+		log.Debugf("------>解析return,%v", this.current.Lexeme)
 		e := this.parseExp()
 		this.eatToken(TOKEN_SEMI)
 		return ast.Return_new(e, this.Linenum)
@@ -1261,7 +1285,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_SWITCH ||
 		this.current.Kind == TOKEN_CASE ||
 		this.current.Kind == TOKEN_SYSTEM {
-		log.Infof("****************************************-->%v", this.current.Lexeme)
+		log.Infof("****************** parseStatements **********************-->%v", this.current.Lexeme)
 		stms = append(stms, this.parseStatement())
 	}
 	return stms
@@ -1281,45 +1305,58 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle, IsStatic bool) (dec
 //
 // return:
 func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
-	var comment string
+
 	//每次循环解析一个成员变量或一个成员函数
-	for this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PROTECTED || this.current.Kind == TOKEN_COMMENT {
+	for this.current.Kind == TOKEN_PRIVATE ||
+		this.current.Kind == TOKEN_PUBLIC ||
+		this.current.Kind == TOKEN_PROTECTED ||
+		this.current.Kind == TOKEN_FINAL ||
+		this.current.Kind == TOKEN_COMMENT ||
+		this.current.Kind == TOKEN_STATIC {
 
+		log.Infof("解析类上下文......")
+		var comment string
+		//处理注释
 		if this.current.Kind == TOKEN_COMMENT {
-			//处理注释
-			if this.current.Kind == TOKEN_COMMENT {
-				comment = ""
-				for this.current.Kind == TOKEN_COMMENT {
-					comment += this.current.Lexeme
-					this.advance()
-				}
-				if this.current.Kind == TOKEN_EOF {
-					return
-				}
-				log.Infof("注释-->%v", comment)
-			}
-		} else {
-			var tmp ast.FieldSingle
-			var IsConstruct = false
-			var IsStatic = false
-			var prefix = false
-
-			//访问修饰符 [其他修饰符] 类型 变量名 = 值;
-			//处理 访问修饰符
-			if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
-				log.Infof("处理访问修饰符:%v\n", this.current.ToString())
-				//1 扫描访问修饰符
-				tmp.Access = this.current.Kind
+			comment = ""
+			for this.current.Kind == TOKEN_COMMENT {
+				comment += "\n" + this.current.Lexeme
 				this.advance()
-			} else {
-				tmp.Access = TOKEN_DEFAULT
 			}
+			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
+				return
+			}
+			//log.Infof("注释-->%v", comment)
+		}
+		var tmp ast.FieldSingle
+		var IsConstruct = false
+		var IsStatic = false
+		var IsBlock = false
+		var prefix = false
+
+		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
+		//处理 访问修饰符
+		if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
+			log.Infof("处理访问修饰符:%v\n", this.current.ToString())
+			//1 扫描访问修饰符
+			tmp.Access = this.current.Kind
+			this.advance()
+		} else {
+			tmp.Access = TOKEN_DEFAULT
+		}
+		//处理成员修饰符
+		for this.current.Kind == TOKEN_STATIC ||
+			this.current.Kind == TOKEN_TRANSIENT ||
+			this.current.Kind == TOKEN_FINAL {
 
 			//处理 其他修饰符(忽略)
 			if this.current.Kind == TOKEN_STATIC {
 				IsStatic = true
 				prefix = true
 				this.eatToken(TOKEN_STATIC)
+				if this.current.Kind == TOKEN_LBRACE {
+					IsBlock = true
+				}
 			}
 
 			if this.current.Kind == TOKEN_FINAL {
@@ -1331,6 +1368,15 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				prefix = true
 				this.eatToken(TOKEN_TRANSIENT)
 			}
+
+		}
+
+		//类静态语句
+		if (this.current.Kind == TOKEN_LBRACE) && IsBlock {
+
+			classSingle.AddMethod(this.parseMemberStatic(comment))
+
+		} else {
 
 			//处理类构造函数
 			if this.currentClass.GetName() == this.current.Lexeme && prefix == false {
@@ -1352,6 +1398,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			if this.current.Kind == TOKEN_LPAREN {
 				classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, IsStatic, comment))
 				//成员变量
+
 			} else {
 				if IsStatic {
 					this.currentFile.AddField(this.parseMemberVarDecl(&tmp, IsStatic))
@@ -1360,8 +1407,8 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				}
 
 			}
-
 		}
+
 	}
 	return
 }
@@ -1377,7 +1424,7 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
 	//解析参数
-	formals := this.parseFormalList()
+	formals := this.parseFormalList(false)
 
 	this.currentMethod = ast.NewMethodSingle(dec.Tp, dec.Name, formals, nil, IsConstruct, IsStatic, IsThrows, comment)
 	//右括号
@@ -1388,7 +1435,7 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 		this.eatToken(TOKEN_ID)
 		IsThrows = true
 	}
-	//做大括号
+	//左大括号
 	this.eatToken(TOKEN_LBRACE)
 	var stms []ast.Stm
 
@@ -1398,6 +1445,24 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 	this.eatToken(TOKEN_RBRACE)
 
 	return ast.NewMethodSingle(dec.Tp, dec.Name, formals, stms, IsConstruct, IsStatic, IsThrows, comment)
+}
+
+// 类静态语句
+//
+// param: comment
+// return:
+func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
+
+	this.currentMethod = ast.NewMethodSingle(&ast.Void{}, "init", nil, nil, false, true, false, comment)
+
+	var stms []ast.Stm
+	this.eatToken(TOKEN_LBRACE)
+	//解析本地变量和表达式
+	stms = this.parseStatements()
+
+	this.eatToken(TOKEN_RBRACE)
+
+	return ast.NewMethodSingle(&ast.Void{}, "init", nil, stms, false, true, false, comment)
 }
 
 // 解析类
@@ -1449,21 +1514,25 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 // return:
 func (this *Parser) parseClassDecls() {
 
-	var comment string
 	for this.current.Kind == TOKEN_CLASS || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PROTECTED || this.current.Kind == TOKEN_COMMENT {
+		var comment string
 		if this.current.Kind == TOKEN_COMMENT {
 			comment = ""
 			//处理注释
 			for this.current.Kind == TOKEN_COMMENT {
-				comment += this.current.Lexeme
+				comment += "\n" + this.current.Lexeme
 				this.advance()
 			}
-		} else {
-			if this.currentFile != nil {
-				this.currentFile.AddClass(this.parseClassDecl())
-			} else {
-				panic("currentFile is nil")
+			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
+				return
 			}
+
+		}
+
+		if this.currentFile != nil {
+			this.currentFile.AddClass(this.parseClassDecl())
+		} else {
+			panic("currentFile is nil")
 		}
 
 	}
@@ -1517,6 +1586,19 @@ func (this *Parser) parseProgram() ast.File {
 			this.advance()
 		}
 		this.advance()
+	}
+	var comment string
+	if this.current.Kind == TOKEN_COMMENT {
+		comment = ""
+		//处理注释
+		for this.current.Kind == TOKEN_COMMENT {
+			comment += "\n" + this.current.Lexeme
+			this.advance()
+		}
+		if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_CLASS && this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
+			return this.currentFile
+		}
+
 	}
 
 	this.parseClassDecls()

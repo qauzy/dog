@@ -78,10 +78,12 @@ func (this *Translation) transGlobalField(fi ast.Field) (value *gast.ValueSpec) 
 			Doc:     nil,
 			Names:   []*gast.Ident{gast.NewIdent(name)},
 			Type:    this.transType(field.Tp),
-			Values:  []gast.Expr{this.transExp(field.Value)},
+			Values:  nil,
 			Comment: nil,
 		}
-
+		if field.Value != nil {
+			value.Values = append(value.Values, this.transExp(field.Value))
+		}
 	}
 	return
 }

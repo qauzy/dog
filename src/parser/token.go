@@ -110,6 +110,7 @@ func initTokenMap() {
 	tokenMap["double"] = TOKEN_DOUBLE
 	tokenMap["char"] = TOKEN_CHAR
 	tokenMap["boolean"] = TOKEN_BOOLEAN
+	tokenMap["Boolean"] = TOKEN_BOOLEAN
 	tokenMap["void"] = TOKEN_VOID
 
 	tokenMap["String"] = TOKEN_STRING
