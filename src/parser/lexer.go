@@ -173,13 +173,13 @@ func (this *Lexer) lex_Num(c byte) string {
 		}
 
 		//999abc is not number
-		if (next == '_') || (next >= 'a' && next <= 'z') ||
+		if (next == '_') || (next >= 'a' && next <= 'z' && (next != 'f')) ||
 			(next >= 'A' && next <= 'Z' && next != 'L') {
-			fmt.Println("ilegal number")
+			log.Errorf("ilegal number,%v", string(next))
 			os.Exit(0)
 		}
 
-		if next == 'L' {
+		if next == 'L' || next == 'f' {
 			this.fp++
 		}
 		break

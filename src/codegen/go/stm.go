@@ -34,12 +34,15 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Comment: nil,
 		}
 		//临时变量初值
-		val := this.transExp(v.Value)
-		if val != nil {
-			sp.Values = append(sp.Values, val)
-		} else {
-			log.Debugf("初值为空")
+		if v.Value != nil {
+			val := this.transExp(v.Value)
+			if val != nil {
+				sp.Values = append(sp.Values, val)
+			} else {
+				log.Debugf("初值为空")
+			}
 		}
+
 		d.Specs = append(d.Specs, sp)
 		stmt = &gast.DeclStmt{Decl: d}
 		//赋值语句
@@ -73,7 +76,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			For:  0,
 			Init: this.transStm(v.Init),
 			Cond: this.transExp(v.Cond),
-			Post: nil,
+			Post: this.transStm(v.Post),
 			Body: this.transBlock(v.Body),
 		}
 

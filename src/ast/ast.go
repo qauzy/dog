@@ -6,6 +6,8 @@ type File interface {
 	_prog()
 	AddClass(cl Class)
 	AddField(f Field)
+	AddImport(im string)
+	GetImport(name string) (im string)
 	ListFields() []Field
 	GetField(name string) (f Field)
 	GetName() string
@@ -259,6 +261,7 @@ type FileSingle struct {
 	Mainclass MainClass
 	Classes   []Class
 	Fields    []Field
+	Imports   map[string]string
 	FieldsMap map[string]Field
 }
 
@@ -283,9 +286,16 @@ func (this *FileSingle) AddField(f Field) {
 	this.FieldsMap[f.GetName()] = f
 	this.Fields = append(this.Fields, f)
 }
+func (this *FileSingle) AddImport(im string) {
+	this.Imports[im] = im
+}
 
 func (this *FileSingle) GetField(name string) (f Field) {
 	f = this.FieldsMap[name]
+	return
+}
+func (this *FileSingle) GetImport(name string) (im string) {
+	im = this.Imports[name]
 	return
 }
 
@@ -299,6 +309,7 @@ func NewFileSingle(Name string, classes []Class) (f *FileSingle) {
 		Classes:   classes,
 		Fields:    nil,
 		FieldsMap: make(map[string]Field),
+		Imports:   make(map[string]string),
 	}
 	return
 }
@@ -331,48 +342,48 @@ func (this *Add) accept(v Visitor) {
 }
 func (this *Add) _exp() {
 } /*}}}*/
-
-//Exp.AutoAdd /*{{{*/
-type AutoAdd struct {
-	Left  Exp
-	Right Exp
-	Exp_T
-}
-
-func AutoAdd_new(l Exp, r Exp, line int) *AutoAdd {
-	e := new(AutoAdd)
-	e.Left = l
-	e.Right = r
-	e.LineNum = line
-	return e
-}
-
-func (this *AutoAdd) accept(v Visitor) {
-	v.visit(this)
-}
-func (this *AutoAdd) _exp() {
-} /*}}}*/
-
-//Exp.AutoSub /*{{{*/
-type AutoSub struct {
-	Left  Exp
-	Right Exp
-	Exp_T
-}
-
-func AutoSub_new(l Exp, r Exp, line int) *AutoSub {
-	e := new(AutoSub)
-	e.Left = l
-	e.Right = r
-	e.LineNum = line
-	return e
-}
-
-func (this *AutoSub) accept(v Visitor) {
-	v.visit(this)
-}
-func (this *AutoSub) _exp() {
-} /*}}}*/
+//
+////Exp.AutoAdd /*{{{*/
+//type AutoAdd struct {
+//	Left  Exp
+//	Right Exp
+//	Exp_T
+//}
+//
+//func AutoAdd_new(l Exp, r Exp, line int) *AutoAdd {
+//	e := new(AutoAdd)
+//	e.Left = l
+//	e.Right = r
+//	e.LineNum = line
+//	return e
+//}
+//
+//func (this *AutoAdd) accept(v Visitor) {
+//	v.visit(this)
+//}
+//func (this *AutoAdd) _exp() {
+//} /*}}}*/
+//
+////Exp.AutoSub /*{{{*/
+//type AutoSub struct {
+//	Left  Exp
+//	Right Exp
+//	Exp_T
+//}
+//
+//func AutoSub_new(l Exp, r Exp, line int) *AutoSub {
+//	e := new(AutoSub)
+//	e.Left = l
+//	e.Right = r
+//	e.LineNum = line
+//	return e
+//}
+//
+//func (this *AutoSub) accept(v Visitor) {
+//	v.visit(this)
+//}
+//func (this *AutoSub) _exp() {
+//} /*}}}*/
 
 //Exp.Lambda /*{{{*/
 type Lambda struct {
@@ -1565,11 +1576,11 @@ type For struct {
 	Init Stm
 	Stm_T
 	Cond Exp
-	Post Exp
+	Post Stm
 	Body Stm
 }
 
-func For_new(Init Stm, Condition Exp, Post Exp, body Stm, line int) *For {
+func For_new(Init Stm, Condition Exp, Post Stm, body Stm, line int) *For {
 	s := new(For)
 	s.Init = Init
 	s.Cond = Condition
@@ -1623,6 +1634,8 @@ const (
 	TYPE_BOOLEAN
 	TYPE_VOID
 	TYPE_INTARRAY
+	TYPE_BYTE
+	TYPE_BYTEARRAY
 	TYPE_CLASS
 	TYPE_STRING
 	TYPE_STRINGARRAY
@@ -1676,6 +1689,20 @@ func (this *Integer) String() string {
 	return "@Integer"
 }
 
+type Byte struct {
+	TypeKind int
+}
+
+func (this *Byte) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Byte) Gettype() int {
+	return this.TypeKind
+}
+func (this *Byte) String() string {
+	return "@byte"
+}
+
 /*}}}*/
 
 //Type.Bool /*{{{*/
@@ -1726,6 +1753,24 @@ func (this *IntArray) Gettype() int {
 
 func (this *IntArray) String() string {
 	return "@int[]"
+}
+
+/*}}}*/
+
+//Type.ByteArray /*{{{*/
+type ByteArray struct {
+	TypeKind int
+}
+
+func (this *ByteArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ByteArray) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *ByteArray) String() string {
+	return "@byte[]"
 }
 
 /*}}}*/

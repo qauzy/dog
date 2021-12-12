@@ -215,6 +215,10 @@ func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 		}
 	case *ast.Boolean:
 		return gast.NewIdent("bool")
+	case *ast.Byte:
+		return gast.NewIdent("byte")
+	case *ast.ByteArray:
+		return gast.NewIdent("[]byte")
 		//泛型
 		//TODO 先用接口替代
 	case *ast.GenericType:
