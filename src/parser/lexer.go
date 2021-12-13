@@ -191,7 +191,7 @@ func (this *Lexer) lex_Num(c byte) string {
 }
 
 func (this *Lexer) nextTokenInternal() *Token {
-	if this.fp == len(this.buf) {
+	if this.fp >= len(this.buf) {
 		return newToken(TOKEN_EOF, "EOF", this.lineNum)
 	}
 
@@ -201,7 +201,13 @@ func (this *Lexer) nextTokenInternal() *Token {
 	//换行处理
 	for c == '\t' || '\n' == c || '\r' == c {
 		if c == '\n' {
+			if this.s != "" {
+				if (this.s[0] >= 'a' && this.s[0] <= 'z') || (this.s[0] >= 'A' && this.s[0] <= 'Z') || this.s[0] == '_' {
+					return this.expectIdOrKey(c)
+				}
+			}
 			this.lineNum++
+
 		}
 		if this.fp >= len(this.buf) {
 			return newToken(TOKEN_EOF, "EOF", this.lineNum)
@@ -209,11 +215,10 @@ func (this *Lexer) nextTokenInternal() *Token {
 		c = this.buf[this.fp]
 		this.fp++
 	}
-
-	//文档末尾
-	if this.fp >= len(this.buf) {
-		return newToken(TOKEN_EOF, "EOF", this.lineNum)
-	}
+	////文档末尾
+	//if this.fp > len(this.buf) {
+	//	return newToken(TOKEN_EOF, "EOF", this.lineNum)
+	//}
 	//fallthrough强制执行后面的case代码
 	switch c {
 	case '&':
@@ -316,7 +321,6 @@ func (this *Lexer) nextTokenInternal() *Token {
 		fallthrough
 	case '(':
 		fallthrough
-
 	case ':':
 		fallthrough
 	case '}':
@@ -352,7 +356,6 @@ func (this *Lexer) nextTokenInternal() *Token {
 			return newToken(TOKEN_NUM, this.lex_Num(c), this.lineNum)
 		}
 		this.s += string(c)
-
 	case '/':
 		if this.s == "" {
 			if this.expectKeyword("=") {

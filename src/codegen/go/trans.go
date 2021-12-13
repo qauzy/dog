@@ -5,13 +5,22 @@ import (
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
+	"path"
 	"reflect"
+	"strings"
 )
 
-func TransGo(p ast.File) (f *gast.File) {
+func TransGo(p ast.File, file string) (f *gast.File) {
 	trans := NewTranslation(p)
 	trans.ParseClasses()
-	trans.WriteFile()
+	fileNameWithSuffix := path.Base(file)
+	//获取文件的后缀(文件类型)
+	fileType := path.Ext(fileNameWithSuffix)
+	//获取文件名称(不带后缀)
+	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
+
+	trans.WriteFile(fileNameOnly)
+
 	return trans.GolangFile
 }
 
@@ -66,7 +75,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 	}
 	switch v := s.(type) {
 	//变量声明
-	case *ast.Decl:
+	case *ast.DeclStmt:
 		//log.Info("变量声明:", v.Name, "行:", v.LineNum)
 		d := &gast.GenDecl{
 			Doc:    nil,
@@ -163,6 +172,83 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 
 }
 
+func (this *Translation) transTypeExpr(t ast.Exp) (Type gast.Expr) {
+	switch v := t.(type) {
+	case *ast.Ident:
+		return gast.NewIdent(v.Name)
+	//case *ast.Void:
+	//	return nil
+	//case *ast.String:
+	//	return gast.NewIdent("string")
+	//case *ast.StringArray:
+	//	return gast.NewIdent("[]string")
+	//case *ast.Integer:
+	//	return gast.NewIdent("int64")
+	//case *ast.Int:
+	//	return gast.NewIdent("int")
+	//case *ast.IntArray:
+	//	return gast.NewIdent("[]int")
+	//case *ast.HashType:
+	//	return &gast.MapType{
+	//		Map:   0,
+	//		Key:   this.transType(v.Key),
+	//		Value: this.transType(v.Value),
+	//	}
+	//case *ast.ListType:
+	//	return &gast.ArrayType{
+	//		Lbrack: 0,
+	//		Len:    nil,
+	//		Elt:    this.transType(v.Ele),
+	//	}
+	//case *ast.ClassType:
+	//	return &gast.Ident{
+	//		NamePos: 0,
+	//		Name:    v.Name,
+	//		Obj:     gast.NewObj(gast.Typ, v.Name),
+	//	}
+	//case *ast.ObjectType:
+	//	//return gast.NewIdent("interface{}")
+	//	return &gast.InterfaceType{
+	//		Interface: 0,
+	//		Methods: &gast.FieldList{
+	//			Opening: 0,
+	//			List:    nil,
+	//			Closing: 0,
+	//		},
+	//		Incomplete: false,
+	//	}
+	//
+	//case *ast.ObjectArray:
+	//	return &gast.ArrayType{
+	//		Lbrack: 0,
+	//		Len:    nil,
+	//		Elt:    gast.NewIdent("interface{}"),
+	//	}
+	//case *ast.Boolean:
+	//	return gast.NewIdent("bool")
+	//case *ast.Byte:
+	//	return gast.NewIdent("byte")
+	//case *ast.ByteArray:
+	//	return gast.NewIdent("[]byte")
+	//	//泛型
+	//	//TODO 先用接口替代
+	//case *ast.GenericType:
+	//	return &gast.InterfaceType{
+	//		Interface: 0,
+	//		Methods: &gast.FieldList{
+	//			Opening: 0,
+	//			List:    nil,
+	//			Closing: 0,
+	//		},
+	//		Incomplete: false,
+	//	}
+	default:
+		log.Info(v)
+		panic("impossible")
+
+	}
+}
+
 func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 	switch v := t.(type) {
 	case *ast.Void:
@@ -231,6 +317,8 @@ func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 			},
 			Incomplete: false,
 		}
+	case *ast.Float:
+		return gast.NewIdent("float64")
 	default:
 		log.Info(v.String())
 		panic("impossible")

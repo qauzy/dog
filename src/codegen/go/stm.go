@@ -15,7 +15,7 @@ import (
 func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	switch v := s.(type) {
 	//变量声明
-	case *ast.Decl:
+	case *ast.DeclStmt:
 
 		//log.Info("变量声明:", v.Name, "行:", v.LineNum)
 		d := &gast.GenDecl{
@@ -117,7 +117,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		return result
 	case *ast.Try:
-		return this.transStm(v.Test)
+		return this.transStm(v.Body)
 	case *ast.While:
 		stmt = &gast.ForStmt{
 			For:  0,

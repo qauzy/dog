@@ -108,7 +108,7 @@ func (this *Translation) astToGo(dst *bytes.Buffer, node interface{}) error {
 	return nil
 }
 
-func (this *Translation) WriteFile() (err error) {
+func (this *Translation) WriteFile(fileName string) (err error) {
 	header := ""
 	buffer := bytes.NewBufferString(header)
 
@@ -124,7 +124,13 @@ func (this *Translation) WriteFile() (err error) {
 	//	return true
 	//})
 	//var filename = "D:\\code\\dog\\src\\codegen\\go\\example\\test.go"
-	var filename = "/opt/google/code/dog-comp/src/codegen/go/example/test.go"
+
+	var dir = "/opt/google/code/bitrade/" + this.GolangFile.Name.Name
+	if !checkFileIsExist(dir) {
+		os.MkdirAll(dir, os.ModePerm)
+	}
+
+	var filename = dir + "/" + fileName + ".go"
 	var f *os.File
 	/***************************** 第一种方式: 使用 io.WriteString 写入文件 ***********************************************/
 	if checkFileIsExist(filename) { //如果文件存在

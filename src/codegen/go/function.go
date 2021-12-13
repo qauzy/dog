@@ -7,6 +7,105 @@ import (
 	"go/token"
 )
 
+func (this *Translation) buildFieldFunc(fi ast.Field) {
+	if field, ok := fi.(*ast.FieldSingle); ok {
+		var recv *gast.FieldList
+		//处理类接收
+		recv = &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		}
+
+		gfi := &gast.Field{
+			Doc:   nil,
+			Names: []*gast.Ident{gast.NewIdent("this")},
+			Type: &gast.StarExpr{X: &gast.Ident{
+				NamePos: 0,
+				Name:    this.CurrentClass.GetName(),
+				Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			}},
+			Tag:     nil,
+			Comment: nil,
+		}
+
+		recv.List = append(recv.List, gfi)
+
+		//成员值设置函数
+		params := &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		}
+		field.IsField = false
+		params.List = append(params.List, this.transField(field))
+		var setBody = &gast.BlockStmt{
+			Lbrace: 0,
+			List:   nil,
+			Rbrace: 0,
+		}
+
+		setStm := &gast.AssignStmt{
+			Lhs:    []gast.Expr{gast.NewIdent("this." + Capitalize(field.Name))},
+			TokPos: 0,
+			Tok:    token.ASSIGN,
+			Rhs:    []gast.Expr{gast.NewIdent(field.Name)},
+		}
+
+		setBody.List = append(setBody.List, setStm)
+
+		setFun := &gast.FuncDecl{
+			Doc:  nil,
+			Recv: recv,
+			Name: gast.NewIdent("Set" + Capitalize(field.Name)),
+			Type: &gast.FuncType{
+				Func:    0,
+				Params:  params,
+				Results: nil,
+			},
+			Body: setBody,
+		}
+
+		this.GolangFile.Decls = append(this.GolangFile.Decls, setFun)
+
+		//成员值获取函数
+		var getBody = &gast.BlockStmt{
+			Lbrace: 0,
+			List:   nil,
+			Rbrace: 0,
+		}
+
+		getStm := &gast.ReturnStmt{
+			Return:  0,
+			Results: []gast.Expr{gast.NewIdent("this." + Capitalize(field.Name))},
+		}
+
+		getBody.List = append(getBody.List, getStm)
+
+		//处理返回值
+		results := &gast.FieldList{
+			Opening: 0,
+			List:    []*gast.Field{this.transField(fi)},
+			Closing: 0,
+		}
+
+		getFun := &gast.FuncDecl{
+			Doc:  nil,
+			Recv: recv,
+			Name: gast.NewIdent("Get" + Capitalize(field.Name)),
+			Type: &gast.FuncType{
+				Func:    0,
+				Params:  nil,
+				Results: results,
+			},
+			Body: getBody,
+		}
+
+		this.GolangFile.Decls = append(this.GolangFile.Decls, getFun)
+	}
+	return
+}
+
 // 翻译函数抽象语法树
 //
 // param: fi

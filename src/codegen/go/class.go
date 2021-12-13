@@ -45,6 +45,7 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 			if !fi.IsStatic() {
 				gfi := this.transField(fi)
 				Type.Fields.List = append(Type.Fields.List, gfi)
+				this.buildFieldFunc(fi)
 			}
 		}
 		for _, m := range cc.Methods {

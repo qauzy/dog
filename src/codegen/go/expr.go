@@ -11,6 +11,9 @@ import (
 
 func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
+	case *ast.Ident:
+		//是类型标识符,可能需要转换
+		expr = gast.NewIdent(v.Name)
 	case *ast.Not:
 		expr = &gast.UnaryExpr{
 			OpPos: 0,

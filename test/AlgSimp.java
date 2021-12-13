@@ -1,4 +1,4 @@
-class AlgSimp { 
+class AlgSimp {
 	public static void main(String[] a) {
         System.out.println(new Doit().doit());
     }

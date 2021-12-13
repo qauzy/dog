@@ -746,6 +746,29 @@ func (this *Id) _exp() {
 }
 
 /*}}}*/
+
+//Exp.Ident /*{{{*/
+type Ident struct {
+	Name string // identifier name
+	Obj  Exp    // denoted object; or nil
+	Exp_T
+}
+
+func NewIdent(name string, line int) *Ident {
+	e := new(Ident)
+	e.Name = name
+	e.LineNum = line
+	return e
+}
+
+func (this *Ident) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Ident) _exp() {
+}
+
+/*}}}*/
+
 //Exp.Class /*{{{*/
 type ClassExp struct {
 	Name Exp
@@ -1218,16 +1241,16 @@ func (this *Stm_T) SetTriple() {
 	this.isTriple = true
 }
 
-//Stm.Decl    /*{{{*/
-type Decl struct {
+//Stm.DeclStmt    /*{{{*/
+type DeclStmt struct {
 	Name  string
 	Tp    Type
 	Value Exp
 	Stm_T
 }
 
-func Decl_new(name string, tp Type, Value Exp, line int) *Decl {
-	s := new(Decl)
+func DeclStmt_new(name string, tp Type, Value Exp, line int) *DeclStmt {
+	s := new(DeclStmt)
 	s.Name = name
 	s.Tp = tp
 	s.Value = Value
@@ -1235,10 +1258,10 @@ func Decl_new(name string, tp Type, Value Exp, line int) *Decl {
 	return s
 }
 
-func (this *Decl) accept(v Visitor) {
+func (this *DeclStmt) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *Decl) _stm() {
+func (this *DeclStmt) _stm() {
 }
 
 /*}}}*/
@@ -1413,16 +1436,15 @@ func (this *Comment) _stm() {
 //Stm.Try    /*{{{*/
 type Try struct {
 	Stm_T
-	Test      Stm
+	Body      Stm
 	Condition []Exp
-	Catches   []Stm
+	Catches   []*Catch
 	Finally   Stm
 }
 
-func Try_new(test Stm, cond []Exp, catches []Stm, Finally Stm, line int) *Try {
+func Try_new(Body Stm, catches []*Catch, Finally Stm, line int) *Try {
 	s := new(Try)
-	s.Condition = cond
-	s.Test = test
+	s.Body = Body
 	s.Catches = catches
 	s.Finally = Finally
 	s.LineNum = line
@@ -1433,6 +1455,28 @@ func (this *Try) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Try) _stm() {
+}
+
+/*}}}*/
+//Stm.Catch    /*{{{*/
+type Catch struct {
+	Stm_T
+	Test []Field
+	Body Stm
+}
+
+func Catch_new(test []Field, Body Stm, line int) *Catch {
+	s := new(Catch)
+	s.Test = test
+	s.Body = Body
+	s.LineNum = line
+	return s
+}
+
+func (this *Catch) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Catch) _stm() {
 }
 
 /*}}}*/
@@ -1645,6 +1689,7 @@ const (
 	TYPE_OBJECT
 	TYPE_OBJECTARRAY
 	TYPE_FUNCTION
+	TYPE_FLOAT
 )
 
 type Function struct {
@@ -1673,6 +1718,20 @@ func (this *Int) Gettype() int {
 }
 func (this *Int) String() string {
 	return "@int"
+}
+
+type Float struct {
+	TypeKind int
+}
+
+func (this *Float) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Float) Gettype() int {
+	return this.TypeKind
+}
+func (this *Float) String() string {
+	return "@float"
 }
 
 type Integer struct {
