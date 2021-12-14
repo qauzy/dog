@@ -123,6 +123,8 @@ func initTokenMap() {
 	tokenMap["HashMap"] = TOKEN_HASHMAP
 	tokenMap["List"] = TOKEN_LIST
 	tokenMap["ArrayList"] = TOKEN_ARRAYLIST
+	tokenMap["Date"] = TOKEN_DATE
+	tokenMap["enum"] = TOKEN_ENUM
 
 	tMap = make(map[int]string)
 
@@ -225,6 +227,8 @@ func initTokenMap() {
 	tMap[TOKEN_HASHMAP] = "TOKEN_HASHMAP"
 	tMap[TOKEN_LIST] = "TOKEN_LIST"
 	tMap[TOKEN_ARRAYLIST] = "TOKEN_ARRAYLIST"
+	tMap[TOKEN_DATE] = "TOKEN_DATE"
+	tMap[TOKEN_ENUM] = "TOKEN_ENUM"
 
 }
 
@@ -335,6 +339,8 @@ const (
 	TOKEN_HASHMAP
 	TOKEN_LIST
 	TOKEN_ARRAYLIST
+	TOKEN_DATE
+	TOKEN_ENUM
 
 	TOKEN_STRING
 	TOKEN_OBJECT

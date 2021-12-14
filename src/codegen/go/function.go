@@ -49,7 +49,7 @@ func (this *Translation) buildFieldFunc(fi ast.Field) {
 			Lhs:    []gast.Expr{gast.NewIdent("this." + Capitalize(field.Name))},
 			TokPos: 0,
 			Tok:    token.ASSIGN,
-			Rhs:    []gast.Expr{gast.NewIdent(field.Name)},
+			Rhs:    []gast.Expr{gast.NewIdent(GetNewId(field.Name))},
 		}
 
 		setBody.List = append(setBody.List, setStm)
@@ -395,5 +395,16 @@ func (this *Translation) transLambda(fi ast.Exp) (fn *gast.FuncLit) {
 		}
 
 	}
+	return
+}
+func GetNewId(id string) (nId string) {
+	if id == "map" {
+		nId = "oMap"
+	} else if id == "type" {
+		nId = "oType"
+	} else {
+		nId = id
+	}
+
 	return
 }

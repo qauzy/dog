@@ -24,6 +24,7 @@ type Class interface {
 	GetMethod(name string) (m Method)
 	ListMethods() []Method
 	GetName() string
+	IsEnum() bool
 }
 
 type Field interface {
@@ -93,6 +94,7 @@ type ClassSingle struct {
 	FieldsMap  map[string]Field
 	Methods    []Method
 	MethodsMap map[string]Method
+	Enum       bool //枚举类型
 }
 
 func (this *ClassSingle) accept(v Visitor) {
@@ -132,12 +134,17 @@ func (this *ClassSingle) ListMethods() []Method {
 	return this.Methods
 }
 
-func NewClassSingle(Access int, Name string, Extends string) (cl *ClassSingle) {
+func (this *ClassSingle) IsEnum() bool {
+	return this.Enum
+}
+
+func NewClassSingle(Access int, Name string, Extends string, IsEnum bool) (cl *ClassSingle) {
 	cl = &ClassSingle{
 		Access:     Access,
 		Name:       Name,
 		Extends:    Extends,
 		Fields:     nil,
+		Enum:       IsEnum,
 		FieldsMap:  make(map[string]Field),
 		Methods:    nil,
 		MethodsMap: make(map[string]Method),
@@ -1690,6 +1697,7 @@ const (
 	TYPE_OBJECTARRAY
 	TYPE_FUNCTION
 	TYPE_FLOAT
+	TYPE_DATE
 )
 
 type Function struct {
@@ -1778,6 +1786,22 @@ func (this *Boolean) Gettype() int {
 
 func (this *Boolean) String() string {
 	return "@boolean"
+}
+
+//Type.Date /*{{{*/
+type Date struct {
+	TypeKind int
+}
+
+func (this *Date) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Date) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *Date) String() string {
+	return "@Date"
 }
 
 //Type.Bool /*{{{*/

@@ -5,21 +5,14 @@ import (
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
-	"path"
 	"reflect"
-	"strings"
 )
 
 func TransGo(p ast.File, file string) (f *gast.File) {
 	trans := NewTranslation(p)
 	trans.ParseClasses()
-	fileNameWithSuffix := path.Base(file)
-	//获取文件的后缀(文件类型)
-	fileType := path.Ext(fileNameWithSuffix)
-	//获取文件名称(不带后缀)
-	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
 
-	trans.WriteFile(fileNameOnly)
+	trans.WriteFile(file)
 
 	return trans.GolangFile
 }
@@ -38,7 +31,7 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 		}
 		gfi = &gast.Field{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(name)},
+			Names:   []*gast.Ident{gast.NewIdent(GetNewId(name))},
 			Type:    this.transType(field.Tp),
 			Tag:     nil,
 			Comment: nil,
@@ -48,7 +41,7 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 	return
 }
 
-// 带类型的变量声明
+// 添加错误返回
 //
 // param: fi
 // return:
@@ -76,7 +69,6 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 	switch v := s.(type) {
 	//变量声明
 	case *ast.DeclStmt:
-		//log.Info("变量声明:", v.Name, "行:", v.LineNum)
 		d := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
@@ -319,9 +311,12 @@ func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 		}
 	case *ast.Float:
 		return gast.NewIdent("float64")
+	case *ast.Date:
+		return gast.NewIdent("time.Time")
 	default:
-		log.Info(v.String())
-		panic("impossible")
+		return nil
+		//log.Info(v.String())
+		//panic("impossible")
 
 	}
 }

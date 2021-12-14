@@ -16,7 +16,6 @@ type Parser struct {
 	assignType    ast.Type
 	isSpecial     bool
 	isField       bool
-	stack         *Stack
 	fpBak         int        //用于记录测试前的指针
 	currentBak    *Token     //用于记录测试前的token
 	currentFile   ast.File   //当前解析的File
@@ -29,7 +28,6 @@ func NewParse(fname string, buf []byte) *Parser {
 	lexer := NewLexer(fname, buf)
 	p := new(Parser)
 	p.lexer = lexer
-	p.stack = InitStack()
 	p.current = p.lexer.NextToken()
 	return p
 }
@@ -81,8 +79,10 @@ func (this *Parser) parseType() ast.Type {
 	case TOKEN_DOUBLE:
 		this.advance()
 		this.currentType = &ast.Float{}
+	case TOKEN_SHORT:
+		fallthrough
 	case TOKEN_INT:
-		this.eatToken(TOKEN_INT)
+		this.advance()
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
@@ -125,6 +125,9 @@ func (this *Parser) parseType() ast.Type {
 	case TOKEN_BOOLEAN:
 		this.eatToken(TOKEN_BOOLEAN)
 		this.currentType = &ast.Boolean{ast.TYPE_BOOLEAN}
+	case TOKEN_DATE:
+		this.eatToken(TOKEN_DATE)
+		this.currentType = &ast.Date{ast.TYPE_DATE}
 	case TOKEN_STRING:
 		this.eatToken(TOKEN_STRING)
 		if this.current.Kind == TOKEN_LBRACK {
@@ -1408,7 +1411,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		this.current.Kind == TOKEN_COMMENT ||
 		this.current.Kind == TOKEN_STATIC {
 
-		log.Infof("解析类上下文...... -- >%v", this.current.Lexeme)
+		log.Debugf("解析类上下文...... -- >%v", this.current.Lexeme)
 		var comment string
 		//处理注释
 		if this.current.Kind == TOKEN_COMMENT {
@@ -1431,7 +1434,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		//访问修饰符 [其他修饰符] 类型 变量名 = 值;
 		//处理 访问修饰符
 		if this.current.Kind == TOKEN_PUBLIC || this.current.Kind == TOKEN_PRIVATE || this.current.Kind == TOKEN_PROTECTED {
-			log.Infof("处理访问修饰符:%v\n", this.current.ToString())
 			//1 扫描访问修饰符
 			tmp.Access = this.current.Kind
 			this.advance()
@@ -1558,6 +1560,69 @@ func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
 
 	return ast.NewMethodSingle(&ast.Void{}, "init", nil, stms, false, true, false, comment)
 }
+func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
+	var id, extends string
+
+	this.eatToken(TOKEN_ENUM)
+	id = this.current.Lexeme
+	this.eatToken(TOKEN_ID)
+	//处理implements
+	if this.current.Kind == TOKEN_IMPLEMENTS {
+		this.eatToken(TOKEN_IMPLEMENTS)
+		extends = this.current.Lexeme
+		this.eatToken(TOKEN_ID)
+	}
+	this.eatToken(TOKEN_LBRACE)
+	classSingle := ast.NewClassSingle(access, id, extends, true)
+	this.currentClass = classSingle
+	//处理枚举变量
+	for {
+		var comment string
+		//处理注释
+		if this.current.Kind == TOKEN_COMMENT {
+			comment = ""
+			for this.current.Kind == TOKEN_COMMENT {
+				comment += "\n" + this.current.Lexeme
+				this.advance()
+			}
+			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED && this.current.Kind != TOKEN_ID) {
+				return
+			}
+			log.Infof("注释-->%v", comment)
+		}
+
+		id = this.current.Lexeme
+		this.eatToken(TOKEN_ID)
+		//FIXME 只支持一个值枚举
+		if this.current.Kind == TOKEN_LPAREN {
+			this.eatToken(TOKEN_LPAREN)
+			l := this.parseExpList()
+			value := l[0]
+			classSingle.AddField(ast.NewFieldSingle(access, nil, id, value, false, true))
+			this.eatToken(TOKEN_RPAREN)
+		} else {
+			classSingle.AddField(ast.NewFieldSingle(access, nil, id, nil, false, true))
+		}
+
+		for this.current.Kind == TOKEN_COMMENT {
+			this.advance()
+		}
+		if this.current.Kind == TOKEN_SEMI {
+			this.eatToken(TOKEN_SEMI)
+			break
+		} else {
+
+			this.eatToken(TOKEN_COMMER)
+		}
+
+	}
+	//
+	this.parseClassContext(ast.NewClassSingle(access, id, extends, false))
+
+	this.eatToken(TOKEN_RBRACE)
+
+	return classSingle
+}
 
 // 解析类
 //
@@ -1571,11 +1636,16 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 		access = this.current.Kind
 		this.advance()
 	}
+	//枚举类型
+	if this.current.Kind == TOKEN_ENUM {
+
+		return this.parseEnumDecl(access)
+	}
+
 	//处理abstract
 	if this.current.Kind == TOKEN_ABSTRACT {
 		this.advance()
 	}
-
 	this.eatToken(TOKEN_CLASS)
 	id = this.current.Lexeme
 	this.eatToken(TOKEN_ID)
@@ -1595,7 +1665,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	}
 
 	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends)
+	classSingle := ast.NewClassSingle(access, id, extends, false)
 	this.currentClass = classSingle
 
 	this.parseClassContext(classSingle)
@@ -1622,7 +1692,6 @@ func (this *Parser) parseClassDecls() {
 			}
 
 		}
-
 		if this.currentFile != nil {
 			this.currentFile.AddClass(this.parseClassDecl())
 		} else {
@@ -1701,7 +1770,6 @@ func (this *Parser) parseProgram() ast.File {
 		}
 
 	}
-
 	this.parseClassDecls()
 	this.eatToken(TOKEN_EOF)
 	return this.currentFile

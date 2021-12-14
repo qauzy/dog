@@ -9,6 +9,8 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"path"
+	"strings"
 )
 
 type Translation struct {
@@ -57,8 +59,13 @@ func (this *Translation) ParseClasses() {
 	}
 
 	for _, c := range this.CurrentFile.ListClasses() {
-		cl := this.transClass(c)
-		this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
+		if c.IsEnum() {
+			this.transEnum(c)
+		} else {
+			cl := this.transClass(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
+		}
+
 	}
 }
 
@@ -108,7 +115,7 @@ func (this *Translation) astToGo(dst *bytes.Buffer, node interface{}) error {
 	return nil
 }
 
-func (this *Translation) WriteFile(fileName string) (err error) {
+func (this *Translation) WriteFile(file string) (err error) {
 	header := ""
 	buffer := bytes.NewBufferString(header)
 
@@ -125,12 +132,21 @@ func (this *Translation) WriteFile(fileName string) (err error) {
 	//})
 	//var filename = "D:\\code\\dog\\src\\codegen\\go\\example\\test.go"
 
-	var dir = "/opt/google/code/bitrade/" + this.GolangFile.Name.Name
+	fileNameWithSuffix := path.Base(file)
+	//获取文件的后缀(文件类型)
+	fileType := path.Ext(fileNameWithSuffix)
+	//获取文件名称(不带后缀)
+	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
+	var suffix = strings.Replace(path.Dir(file), "/opt/code/abc/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/", "", -1)
+
+	var dir = "/opt/google/code/bitrade/" + suffix
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}
 
-	var filename = dir + "/" + fileName + ".go"
+	var filename = dir + "/" + fileNameOnly + ".go"
+
+	log.Warnf("写入:%v", filename)
 	var f *os.File
 	/***************************** 第一种方式: 使用 io.WriteString 写入文件 ***********************************************/
 	if checkFileIsExist(filename) { //如果文件存在
