@@ -115,7 +115,7 @@ package cfg
 //		case *codegen_c.Call:
 //			trans(e.RetType)
 //			dst := genVarT(f_tp)
-//			trans(e.E)
+//			trans(e.Value)
 //			var obj string
 //			operand := f_operand
 //			if v, ok := operand.(*Var); ok {
@@ -151,7 +151,7 @@ package cfg
 //			emit(&Lt{dst, nil, left, right})
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.NewIntArray:
-//			trans(e.E) //new int[E] -> a=E, b=new int[a];
+//			trans(e.Value) //new int[Value] -> a=Value, b=new int[a];
 //			size := f_operand
 //			dst := genVarT(&IntArrayType{}) //int *array;
 //			emit(&NewIntArray{dst, size})
@@ -164,7 +164,7 @@ package cfg
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.Not:
 //			dst := genVar()
-//			trans(e.E)
+//			trans(e.Value)
 //			exp := f_operand
 //			emit(&Not{dst, exp})
 //			f_operand = &Var{dst, false}
@@ -196,12 +196,12 @@ package cfg
 //	trans_Stm := func(ss codegen_c.Stm) {
 //		switch s := ss.(type) {
 //		case *codegen_c.Assign:
-//			trans(s.E)
+//			trans(s.Value)
 //			emit(&Move{s.Name, f_tp, f_operand, s.IsField})
 //		case *codegen_c.AssignArray:
 //			trans(s.Index)
 //			index := f_operand
-//			trans(s.E)
+//			trans(s.Value)
 //			exp := f_operand
 //			//AssignArray's dst must be frame.dst, no need tp
 //			emit(&AssignArray{s.Name, index, exp, s.IsField})
@@ -223,7 +223,7 @@ package cfg
 //			emit(&Goto{e})
 //			emit(e)
 //		case *codegen_c.Print:
-//			trans(s.E)
+//			trans(s.Value)
 //			emit(&Print{f_operand})
 //		case *codegen_c.While:
 //			start := util.Label_new()

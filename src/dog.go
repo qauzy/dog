@@ -5,7 +5,6 @@ import (
 	codegen_go "dog/codegen/go"
 	"dog/control"
 	"dog/parser"
-	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"io/ioutil"
@@ -20,12 +19,12 @@ func dog_Parser(filename string, buf []byte) ast.File {
 func main() {
 	//log.SetLogDiscardLevel(log.Levelwarn)
 	args := os.Args[1:len(os.Args)]
-	filename := control.Do_arg(args)
-	if filename == "" {
+	base := control.Do_arg(args)
+	if base == "" {
 		control.Usage()
 		os.Exit(0)
 	}
-	filepath.Walk(filename, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(base, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -49,7 +48,7 @@ func main() {
 		var Ast ast.File
 		//setp1: lexer&&parser
 		control.Verbose("parser", func() {
-			Ast = dog_Parser(filename, buf)
+			Ast = dog_Parser(path, buf)
 		}, control.VERBOSE_PASS)
 
 		//set3: trans -- 翻译
@@ -57,25 +56,13 @@ func main() {
 		control.Verbose("Transaction", func() {
 			switch control.CodeGen_codegen {
 			case control.Go:
-				Ast_go = codegen_go.TransGo(Ast, path)
+				Ast_go = codegen_go.TransGo(Ast, base, path)
 			case control.C:
 				//Ast_c = codegen_c.TransC(Ast)
-			case control.Bytecode:
-				util.Todo()
-			case control.Dalvik:
-				util.Todo()
-			case control.X86:
-				util.Todo()
 			default:
 				panic("impossible")
 			}
 		}, control.VERBOSE_PASS)
-		//step4: codegen -- 代码生成
-		if control.Optimization_Level <= 1 {
-			control.Verbose("CodeGen", func() {
-				//codegen_go.TransGo(Ast_go)
-			}, control.VERBOSE_PASS)
-		}
 		return nil
 	})
 

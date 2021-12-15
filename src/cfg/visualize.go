@@ -5,6 +5,7 @@ import (
 	"dog/control"
 	"dog/util"
 	"fmt"
+	log "github.com/corgi-kx/logcustom"
 	"strconv"
 )
 

@@ -28,7 +28,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		sp := &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(v.Name)},
+			Names:   []*gast.Ident{this.transNameExp(v.Name)},
 			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
@@ -51,7 +51,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Lhs:    []gast.Expr{this.transExp(v.Left)},
 			TokPos: 0,
 			Tok:    token.ASSIGN,
-			Rhs:    []gast.Expr{this.transExp(v.E)},
+			Rhs:    []gast.Expr{this.transExp(v.Value)},
 		}
 	case *ast.If:
 		var el gast.Stmt

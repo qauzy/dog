@@ -115,7 +115,7 @@ func (this *Translation) astToGo(dst *bytes.Buffer, node interface{}) error {
 	return nil
 }
 
-func (this *Translation) WriteFile(file string) (err error) {
+func (this *Translation) WriteFile(base string, file string) (err error) {
 	header := ""
 	buffer := bytes.NewBufferString(header)
 
@@ -137,9 +137,11 @@ func (this *Translation) WriteFile(file string) (err error) {
 	fileType := path.Ext(fileNameWithSuffix)
 	//获取文件名称(不带后缀)
 	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
-	var suffix = strings.Replace(path.Dir(file), "/opt/code/abc/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/", "", -1)
 
-	var dir = "/opt/google/code/bitrade/" + suffix
+	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
+	//var suffix = path.Base(base)
+	log.Warnf("------%v", suffix)
+	var dir = "./out/" + path.Base(base) + "/" + suffix
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}

@@ -6,8 +6,8 @@ type File interface {
 	_prog()
 	AddClass(cl Class)
 	AddField(f Field)
-	AddImport(im string)
-	GetImport(name string) (im string)
+	AddImport(im ImportSingle)
+	GetImport(name string) (im ImportSingle)
 	ListFields() []Field
 	GetField(name string) (f Field)
 	GetName() string
@@ -29,8 +29,8 @@ type Class interface {
 
 type Field interface {
 	accept(v Visitor)
-	GetDecType() int
-	String() string
+	//GetDecType() int
+	//String() string
 	GetName() string
 	IsStatic() bool //是否静态方法
 }
@@ -49,7 +49,6 @@ type Method interface {
 	accept(v Visitor)
 	_method()
 	GetName() string //获取方法名
-	//AddField(f Field)
 	GetFormal(name string) (f Field)
 	IsConstruct() bool //是否构造方法
 	IsStatic() bool    //是否静态方法
@@ -64,8 +63,9 @@ type Stm interface {
 
 type Type interface {
 	accept(v Visitor)
-	Gettype() int
-	String() string
+
+	//Gettype() int
+	//String() string
 }
 
 /*------------------ struct -----------------------*/
@@ -157,7 +157,7 @@ func NewClassSingle(Access int, Name string, Extends string, IsEnum bool) (cl *C
 /*Field*/ /*{{{*/
 type FieldSingle struct {
 	Access  int
-	Tp      Type
+	Tp      Exp
 	Name    string
 	Static  bool
 	IsField bool
@@ -168,13 +168,13 @@ func (this *FieldSingle) accept(v Visitor) {
 	v.visit(this)
 }
 
-func (this *FieldSingle) GetDecType() int {
-	return this.Tp.Gettype()
-}
-func (this *FieldSingle) String() string {
-	s := this.Name + " " + this.Tp.String()
-	return s
-}
+//func (this *FieldSingle) GetDecType() int {
+//	return this.Tp.Gettype()
+//}
+//func (this *FieldSingle) String() string {
+//	s := this.Name + " " + this.Tp.String()
+//	return s
+//}
 
 func (this *FieldSingle) GetName() string {
 	return this.Name
@@ -184,7 +184,7 @@ func (this *FieldSingle) IsStatic() bool {
 	return this.Static
 }
 
-func NewFieldSingle(Access int, Tp Type, Name string, Value Exp, Static bool, IsField bool) (f *FieldSingle) {
+func NewFieldSingle(Access int, Tp Exp, Name string, Value Exp, Static bool, IsField bool) (f *FieldSingle) {
 	f = &FieldSingle{
 		Access:  Access,
 		Tp:      Tp,
@@ -200,7 +200,7 @@ func NewFieldSingle(Access int, Tp Type, Name string, Value Exp, Static bool, Is
 
 //Method  /*{{{*/
 
-func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
+func NewMethodSingle(RetType Exp, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
 
 	FormalsMap := make(map[string]Field)
 	for _, f := range Formals {
@@ -221,7 +221,7 @@ func NewMethodSingle(RetType Type, Name string, Formals []Field, Stms []Stm, Con
 }
 
 type MethodSingle struct {
-	RetType    Type
+	RetType    Exp
 	Name       string // the name of whitch class belong to
 	Formals    []Field
 	FormalsMap map[string]Field
@@ -262,13 +262,19 @@ func (this *MethodSingle) GetFormal(name string) (f Field) {
 
 /*}}}*/
 
+//描述包导入
+type ImportSingle struct {
+	Name string // identifier name
+	Path string // identifier name
+}
+
 /*Prog*/ /*{{{*/
 type FileSingle struct {
 	Name      string // identifier name
 	Mainclass MainClass
 	Classes   []Class
 	Fields    []Field
-	Imports   map[string]string
+	Imports   map[string]ImportSingle
 	FieldsMap map[string]Field
 }
 
@@ -293,15 +299,15 @@ func (this *FileSingle) AddField(f Field) {
 	this.FieldsMap[f.GetName()] = f
 	this.Fields = append(this.Fields, f)
 }
-func (this *FileSingle) AddImport(im string) {
-	this.Imports[im] = im
+func (this *FileSingle) AddImport(im ImportSingle) {
+	this.Imports[im.Name] = im
 }
 
 func (this *FileSingle) GetField(name string) (f Field) {
 	f = this.FieldsMap[name]
 	return
 }
-func (this *FileSingle) GetImport(name string) (im string) {
+func (this *FileSingle) GetImport(name string) (im ImportSingle) {
 	im = this.Imports[name]
 	return
 }
@@ -316,7 +322,7 @@ func NewFileSingle(Name string, classes []Class) (f *FileSingle) {
 		Classes:   classes,
 		Fields:    nil,
 		FieldsMap: make(map[string]Field),
-		Imports:   make(map[string]string),
+		Imports:   make(map[string]ImportSingle),
 	}
 	return
 }
@@ -963,13 +969,13 @@ func (this *Neq) _exp() {
 
 //Exp.NewObjectArray   /*{{{*/
 type NewObjectArray struct {
-	T    Type
+	T    Exp
 	Eles Exp
 	Size Exp
 	Exp_T
 }
 
-func NewObjectArray_new(t Type, eles Exp, Size Exp, line int) *NewObjectArray {
+func NewObjectArray_new(t Exp, eles Exp, Size Exp, line int) *NewObjectArray {
 	e := new(NewObjectArray)
 	e.T = t
 	e.Eles = eles
@@ -1030,12 +1036,12 @@ func (this *NewStringArray) _exp() {
 
 //Exp.NewObject /*{{{*/
 type NewObject struct {
-	T        Type
+	T        Exp
 	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewObjectWithArgsList_new(t Type, ArgsList []Exp, line int) *NewObject {
+func NewObjectWithArgsList_new(t Exp, ArgsList []Exp, line int) *NewObject {
 	e := new(NewObject)
 	e.T = t
 	e.LineNum = line
@@ -1043,7 +1049,7 @@ func NewObjectWithArgsList_new(t Type, ArgsList []Exp, line int) *NewObject {
 	return e
 }
 
-func NewObject_new(t Type, line int) *NewObject {
+func NewObject_new(t Exp, line int) *NewObject {
 	e := new(NewObject)
 	e.T = t
 	e.LineNum = line
@@ -1060,12 +1066,12 @@ func (this *NewObject) _exp() {
 
 //Exp.NewHash /*{{{*/
 type NewHash struct {
-	Key Type
-	Ele Type
+	Key Exp
+	Ele Exp
 	Exp_T
 }
 
-func NewHash_new(key Type, ele Type, line int) *NewHash {
+func NewHash_new(key Exp, ele Exp, line int) *NewHash {
 	e := new(NewHash)
 	e.Key = key
 	e.Ele = ele
@@ -1083,12 +1089,12 @@ func (this *NewHash) _exp() {
 
 //Exp.NewList /*{{{*/
 type NewList struct {
-	Ele      Type
+	Ele      Exp
 	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewList_new(Ele Type, ArgsList []Exp, line int) *NewList {
+func NewList_new(Ele Exp, ArgsList []Exp, line int) *NewList {
 	e := new(NewList)
 	e.Ele = Ele
 	e.ArgsList = ArgsList
@@ -1106,12 +1112,12 @@ func (this *NewList) _exp() {
 
 //Exp.NewList /*{{{*/
 type NewSet struct {
-	Ele      Type
+	Ele      Exp
 	ArgsList []Exp //带初值的初始化
 	Exp_T
 }
 
-func NewSet_new(Ele Type, ArgsList []Exp, line int) *NewSet {
+func NewSet_new(Ele Exp, ArgsList []Exp, line int) *NewSet {
 	e := new(NewSet)
 	e.Ele = Ele
 	e.ArgsList = ArgsList
@@ -1172,12 +1178,12 @@ func (this *Num) _exp() {
 
 //Exp.Cast   /*{{{*/
 type Cast struct {
-	Tp    Type
+	Tp    Exp
 	Right Exp
 	Exp_T
 }
 
-func Cast_new(Tp Type, r Exp, line int) *Cast {
+func Cast_new(Tp Exp, r Exp, line int) *Cast {
 	e := new(Cast)
 	e.Tp = Tp
 	e.Right = r
@@ -1250,13 +1256,13 @@ func (this *Stm_T) SetTriple() {
 
 //Stm.DeclStmt    /*{{{*/
 type DeclStmt struct {
-	Name  string
-	Tp    Type
+	Name  Exp
+	Tp    Exp
 	Value Exp
 	Stm_T
 }
 
-func DeclStmt_new(name string, tp Type, Value Exp, line int) *DeclStmt {
+func DeclStmt_new(name Exp, tp Exp, Value Exp, line int) *DeclStmt {
 	s := new(DeclStmt)
 	s.Name = name
 	s.Tp = tp
@@ -1276,17 +1282,15 @@ func (this *DeclStmt) _stm() {
 //Stm.Assign    /*{{{*/
 type Assign struct {
 	Left    Exp //左边可能是一个包含声明语句的
-	E       Exp
-	Tp      Type
+	Value   Exp
 	IsField bool
 	Stm_T
 }
 
-func Assign_new(Left Exp, exp Exp, tp Type, isField bool, line int) *Assign {
+func Assign_new(Left Exp, exp Exp, isField bool, line int) *Assign {
 	s := new(Assign)
 	s.Left = Left
-	s.E = exp
-	s.Tp = tp
+	s.Value = exp
 	s.IsField = isField
 	s.LineNum = line
 	return s
@@ -1372,13 +1376,13 @@ type AssignArray struct {
 	Name    string
 	Index   Exp
 	E       Exp
-	Tp      Type
+	Tp      Exp
 	IsField bool
 	Stm_T
 }
 
 func AssignArray_new(name string,
-	index Exp, exp Exp, tp Type,
+	index Exp, exp Exp, tp Exp,
 	isField bool, line int) *AssignArray {
 	s := new(AssignArray)
 	s.Name = name
@@ -1713,6 +1717,8 @@ func (this *Function) Gettype() int {
 func (this *Function) String() string {
 	return "@Function"
 }
+func (this *Function) _exp() {
+}
 
 type Int struct {
 	TypeKind int
@@ -1726,6 +1732,8 @@ func (this *Int) Gettype() int {
 }
 func (this *Int) String() string {
 	return "@int"
+}
+func (this *Int) _exp() {
 }
 
 type Float struct {
@@ -1741,6 +1749,8 @@ func (this *Float) Gettype() int {
 func (this *Float) String() string {
 	return "@float"
 }
+func (this *Float) _exp() {
+}
 
 type Integer struct {
 	TypeKind int
@@ -1755,6 +1765,8 @@ func (this *Integer) Gettype() int {
 func (this *Integer) String() string {
 	return "@Integer"
 }
+func (this *Integer) _exp() {
+}
 
 type Byte struct {
 	TypeKind int
@@ -1768,6 +1780,8 @@ func (this *Byte) Gettype() int {
 }
 func (this *Byte) String() string {
 	return "@byte"
+}
+func (this *Byte) _exp() {
 }
 
 /*}}}*/
@@ -1787,6 +1801,8 @@ func (this *Boolean) Gettype() int {
 func (this *Boolean) String() string {
 	return "@boolean"
 }
+func (this *Boolean) _exp() {
+}
 
 //Type.Date /*{{{*/
 type Date struct {
@@ -1802,6 +1818,8 @@ func (this *Date) Gettype() int {
 
 func (this *Date) String() string {
 	return "@Date"
+}
+func (this *Date) _exp() {
 }
 
 //Type.Bool /*{{{*/
@@ -1821,6 +1839,8 @@ func (this *Void) Gettype() int {
 func (this *Void) String() string {
 	return "@void"
 }
+func (this *Void) _exp() {
+}
 
 //Type.IntArray /*{{{*/
 type IntArray struct {
@@ -1836,6 +1856,8 @@ func (this *IntArray) Gettype() int {
 
 func (this *IntArray) String() string {
 	return "@int[]"
+}
+func (this *IntArray) _exp() {
 }
 
 /*}}}*/
@@ -1855,6 +1877,8 @@ func (this *ByteArray) Gettype() int {
 func (this *ByteArray) String() string {
 	return "@byte[]"
 }
+func (this *ByteArray) _exp() {
+}
 
 /*}}}*/
 
@@ -1872,6 +1896,8 @@ func (this *ObjectArray) Gettype() int {
 
 func (this *ObjectArray) String() string {
 	return "@Object[]"
+}
+func (this *ObjectArray) _exp() {
 }
 
 /*}}}*/
@@ -1892,6 +1918,8 @@ func (this *String) Gettype() int {
 func (this *String) String() string {
 	return "@String"
 }
+func (this *String) _exp() {
+}
 
 /*}}}*/
 
@@ -1911,6 +1939,8 @@ func (this *StringArray) Gettype() int {
 func (this *StringArray) String() string {
 	return "@String[]"
 }
+func (this *StringArray) _exp() {
+}
 
 /*}}}*/
 
@@ -1929,6 +1959,8 @@ func (this *ClassType) Gettype() int {
 
 func (this *ClassType) String() string {
 	return "@" + this.Name
+}
+func (this *ClassType) _exp() {
 }
 
 /*}}}*/
@@ -1950,6 +1982,8 @@ func (this *GenericType) Gettype() int {
 func (this *GenericType) String() string {
 	return this.Name
 }
+func (this *GenericType) _exp() {
+}
 
 /*}}}*/
 
@@ -1968,6 +2002,8 @@ func (this *ObjectType) Gettype() int {
 func (this *ObjectType) String() string {
 	return "@Object"
 }
+func (this *ObjectType) _exp() {
+}
 
 /*}}}*/
 
@@ -1976,7 +2012,7 @@ func (this *ObjectType) String() string {
 //泛型
 type ListType struct {
 	Name     string
-	Ele      Type
+	Ele      Exp
 	TypeKind int
 }
 
@@ -1990,11 +2026,13 @@ func (this *ListType) Gettype() int {
 func (this *ListType) String() string {
 	return "@" + this.Name
 }
+func (this *ListType) _exp() {
+}
 
 type HashType struct {
 	Name     string
-	Key      Type
-	Value    Type
+	Key      Exp
+	Value    Exp
 	TypeKind int
 }
 
@@ -2007,4 +2045,6 @@ func (this *HashType) Gettype() int {
 
 func (this *HashType) String() string {
 	return "@" + this.Name
+}
+func (this *HashType) _exp() {
 }

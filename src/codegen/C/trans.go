@@ -140,7 +140,7 @@ package codegen_c
 //}
 //
 //func trans_Exp_Not(e *ast.Not) {
-//	trans(e.E)
+//	trans(e.Value)
 //	t := exp_c
 //	exp_c = &Not{t}
 //}
@@ -214,7 +214,7 @@ package codegen_c
 //
 //func trans_Stm_Assign(s *ast.Assign) {
 //	isField := s.IsField
-//	trans(s.E)
+//	trans(s.Value)
 //	stm_c = &Assign{s.Name, exp_c, isField}
 //}
 //
@@ -222,7 +222,7 @@ package codegen_c
 //	isField := s.IsField
 //	trans(s.Index)
 //	index := exp_c
-//	trans(s.E)
+//	trans(s.Value)
 //	stm_c = &AssignArray{s.Name, index, exp_c, isField}
 //}
 //
@@ -246,12 +246,12 @@ package codegen_c
 //}
 //
 //func trans_Stm_Print(s *ast.Print) {
-//	trans(s.E)
+//	trans(s.Value)
 //	stm_c = &Print{exp_c}
 //}
 //
 //func trans_Stm_While(s *ast.While) {
-//	trans(s.E)
+//	trans(s.Value)
 //	cond := exp_c
 //	trans(s.Body)
 //	body := stm_c

@@ -67,7 +67,7 @@ func Statistics_Ast(prog ast.File) int {
 	do_Stm := func(ss ast.Stm) {
 		switch s := ss.(type) {
 		case *ast.Assign:
-			do(s.E)
+			do(s.Value)
 			size++
 		case *ast.AssignArray:
 			do(s.E)

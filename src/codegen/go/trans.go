@@ -8,11 +8,11 @@ import (
 	"reflect"
 )
 
-func TransGo(p ast.File, file string) (f *gast.File) {
+func TransGo(p ast.File, base string, file string) (f *gast.File) {
 	trans := NewTranslation(p)
 	trans.ParseClasses()
 
-	trans.WriteFile(file)
+	trans.WriteFile(base, file)
 
 	return trans.GolangFile
 }
@@ -79,7 +79,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 		}
 		sp := &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(v.Name)},
+			Names:   []*gast.Ident{this.transNameExp(v.Name)},
 			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
@@ -96,7 +96,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 				Body: &gast.BlockStmt{
 					Lbrace: 0,
 					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{gast.NewIdent(v.Name)},
+						Lhs:    []gast.Expr{this.transExp(v.Name)},
 						TokPos: 0,
 						Tok:    token.ASSIGN,
 						Rhs:    []gast.Expr{this.transExp(vv.One)}}},
@@ -105,7 +105,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 				Else: &gast.BlockStmt{
 					Lbrace: 0,
 					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{gast.NewIdent(v.Name)},
+						Lhs:    []gast.Expr{this.transExp(v.Name)},
 						TokPos: 0,
 						Tok:    token.ASSIGN,
 						Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
@@ -120,7 +120,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 
 		//赋值语句
 	case *ast.Assign:
-		if vv, ok := v.E.(*ast.Question); ok {
+		if vv, ok := v.Value.(*ast.Question); ok {
 			q := &gast.IfStmt{
 				If:   0,
 				Init: nil,
@@ -164,85 +164,17 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 
 }
 
-func (this *Translation) transTypeExpr(t ast.Exp) (Type gast.Expr) {
+func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	switch v := t.(type) {
+	case *ast.SelectorExpr:
+		return &gast.SelectorExpr{
+			X:   this.transExp(v.X),
+			Sel: gast.NewIdent(v.Sel),
+		}
+	case *ast.Id:
+		return gast.NewIdent(v.Name)
 	case *ast.Ident:
 		return gast.NewIdent(v.Name)
-	//case *ast.Void:
-	//	return nil
-	//case *ast.String:
-	//	return gast.NewIdent("string")
-	//case *ast.StringArray:
-	//	return gast.NewIdent("[]string")
-	//case *ast.Integer:
-	//	return gast.NewIdent("int64")
-	//case *ast.Int:
-	//	return gast.NewIdent("int")
-	//case *ast.IntArray:
-	//	return gast.NewIdent("[]int")
-	//case *ast.HashType:
-	//	return &gast.MapType{
-	//		Map:   0,
-	//		Key:   this.transType(v.Key),
-	//		Value: this.transType(v.Value),
-	//	}
-	//case *ast.ListType:
-	//	return &gast.ArrayType{
-	//		Lbrack: 0,
-	//		Len:    nil,
-	//		Elt:    this.transType(v.Ele),
-	//	}
-	//case *ast.ClassType:
-	//	return &gast.Ident{
-	//		NamePos: 0,
-	//		Name:    v.Name,
-	//		Obj:     gast.NewObj(gast.Typ, v.Name),
-	//	}
-	//case *ast.ObjectType:
-	//	//return gast.NewIdent("interface{}")
-	//	return &gast.InterfaceType{
-	//		Interface: 0,
-	//		Methods: &gast.FieldList{
-	//			Opening: 0,
-	//			List:    nil,
-	//			Closing: 0,
-	//		},
-	//		Incomplete: false,
-	//	}
-	//
-	//case *ast.ObjectArray:
-	//	return &gast.ArrayType{
-	//		Lbrack: 0,
-	//		Len:    nil,
-	//		Elt:    gast.NewIdent("interface{}"),
-	//	}
-	//case *ast.Boolean:
-	//	return gast.NewIdent("bool")
-	//case *ast.Byte:
-	//	return gast.NewIdent("byte")
-	//case *ast.ByteArray:
-	//	return gast.NewIdent("[]byte")
-	//	//泛型
-	//	//TODO 先用接口替代
-	//case *ast.GenericType:
-	//	return &gast.InterfaceType{
-	//		Interface: 0,
-	//		Methods: &gast.FieldList{
-	//			Opening: 0,
-	//			List:    nil,
-	//			Closing: 0,
-	//		},
-	//		Incomplete: false,
-	//	}
-	default:
-		log.Info(v)
-		panic("impossible")
-
-	}
-}
-
-func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
-	switch v := t.(type) {
 	case *ast.Void:
 		return nil
 	case *ast.String:
@@ -314,9 +246,9 @@ func (this *Translation) transType(t ast.Type) (Type gast.Expr) {
 	case *ast.Date:
 		return gast.NewIdent("time.Time")
 	default:
-		return nil
-		//log.Info(v.String())
-		//panic("impossible")
+		//return nil
+		log.Info(v)
+		panic("impossible")
 
 	}
 }

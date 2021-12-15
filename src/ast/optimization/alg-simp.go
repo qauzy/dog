@@ -101,7 +101,7 @@ package ast_opt
 //			exp = e
 //		case *ast.Not:
 //			is_0 = false
-//			opt(e.E)
+//			opt(e.Value)
 //			new_exp := exp
 //			exp = ast.Not_new(new_exp, e.LineNum)
 //		case *ast.Num:
@@ -180,10 +180,10 @@ package ast_opt
 //	opt_Stm := func(ss ast.Stm) {
 //		switch s := ss.(type) {
 //		case *ast.Assign:
-//			opt_Exp(s.E)
+//			opt_Exp(s.Value)
 //			stm = ast.Assign_new(s.Name, exp, s.Tp, s.IsField, s.LineNum)
 //		case *ast.AssignArray:
-//			opt(s.E)
+//			opt(s.Value)
 //			ee := exp
 //			opt(s.Index)
 //			index := exp
@@ -204,10 +204,10 @@ package ast_opt
 //			elsee := stm
 //			stm = ast.If_new(cond, thenn, elsee, s.LineNum)
 //		case *ast.Print:
-//			opt(s.E)
+//			opt(s.Value)
 //			stm = ast.Print_new(exp, s.LineNum)
 //		case *ast.While:
-//			opt(s.E)
+//			opt(s.Value)
 //			cond := exp
 //			opt(s.Body)
 //			body := stm

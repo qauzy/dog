@@ -344,20 +344,7 @@ func (this *Translation) transLambda(fi ast.Exp) (fn *gast.FuncLit) {
 			List:    nil,
 			Closing: 0,
 		}
-		//rel := &ast.FieldSingle{
-		//	Access:  0,
-		//	Tp:      method.RetType,
-		//	Name:    "result",
-		//	IsField: false,
-		//	Stms:    nil,
-		//}
-		////如果是void则没有返回值
-		//ret := transField(rel)
-		//if ret.Type != nil {
-		//	results.List = append(results.List, ret)
-		//} else {
-		//	results = nil
-		//}
+
 		var body = &gast.BlockStmt{
 			Lbrace: 0,
 			List:   nil,

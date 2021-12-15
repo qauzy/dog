@@ -68,7 +68,7 @@ func (this *DeadClass) opt_Exp(e ast.Exp) {
 func (this *DeadClass) opt_Stm(stm ast.Stm) {
 	switch s := stm.(type) {
 	case *ast.Assign:
-		this.opt(s.E)
+		this.opt(s.Value)
 	case *ast.AssignArray:
 		this.opt(s.Index)
 		this.opt(s.E)

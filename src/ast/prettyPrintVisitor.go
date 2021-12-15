@@ -211,7 +211,7 @@ package ast
 //		this.say("new " + v.T.String() + "()")
 //	case *Not:
 //		this.say("!")
-//		v.E.accept(this)
+//		v.Value.accept(this)
 //	case *Num:
 //		this.say(strconv.Itoa(v.Value))
 //	case *Sub:
@@ -233,14 +233,14 @@ package ast
 //		this.printSpeaces()
 //		this.say(v.Name)
 //		this.say(" = ")
-//		v.E.accept(this)
+//		v.Value.accept(this)
 //		this.sayln(";")
 //	case *AssignArray:
 //		this.printSpeaces()
 //		this.say(v.Name + "[")
 //		v.Index.accept(this)
 //		this.say("] = ")
-//		v.E.accept(this)
+//		v.Value.accept(this)
 //		this.sayln(";")
 //	case *Block:
 //		this.printSpeaces()
@@ -270,13 +270,13 @@ package ast
 //	case *Print:
 //		this.printSpeaces()
 //		this.say("System.out.println(")
-//		v.E.accept(this)
+//		v.Value.accept(this)
 //		this.say(")")
 //		this.sayln(";")
 //	case *While:
 //		this.printSpeaces()
 //		this.say("while (")
-//		v.E.accept(this)
+//		v.Value.accept(this)
 //		this.sayln(")")
 //		this.indent()
 //		v.Body.accept(this)

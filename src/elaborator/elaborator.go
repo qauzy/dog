@@ -67,7 +67,7 @@ package elaborator
 //		elab_error(UNDECL)
 //	}
 //	s.Tp = tp
-//	elaborate(s.E)
+//	elaborate(s.Value)
 //}
 //
 //func elabStm_AssignArray(s *ast.AssignArray) {
@@ -84,7 +84,7 @@ package elaborator
 //	if _, ok := current_type.(*ast.Int); !ok {
 //		elab_error(MISTYPE)
 //	}
-//	elaborate(s.E)
+//	elaborate(s.Value)
 //	//TODO
 //}
 //
@@ -104,14 +104,14 @@ package elaborator
 //}
 //
 //func elabStm_Print(s *ast.Print) {
-//	elaborate(s.E)
+//	elaborate(s.Value)
 //	if _, ok := current_type.(*ast.Int); !ok {
 //		elab_error(MISTYPE)
 //	}
 //}
 //
 //func elabStm_While(s *ast.While) {
-//	elaborate(s.E)
+//	elaborate(s.Value)
 //	if _, ok := current_type.(*ast.Boolean); !ok {
 //		elab_error(MISTYPE)
 //	}
@@ -327,7 +327,7 @@ package elaborator
 //		current_type = &ast.ClassType{e.Name, ast.TYPE_CLASS}
 //	case *ast.Not:
 //		linenum = e.LineNum
-//		elaborate(e.E)
+//		elaborate(e.Value)
 //		current_type = &ast.Boolean{ast.TYPE_BOOLEAN}
 //	case *ast.Num:
 //		linenum = e.LineNum
