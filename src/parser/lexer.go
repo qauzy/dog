@@ -103,7 +103,7 @@ func (this *Lexer) lex_String(c byte) string {
 
 	}
 	if c != '"' && this.fp >= len(this.buf) {
-		util.ParserError("\"", "", this.lineNum)
+		util.ParserError("\"", "", this.lineNum, this.fname)
 	}
 	var ed = this.fp
 	//处理字符串末尾的"

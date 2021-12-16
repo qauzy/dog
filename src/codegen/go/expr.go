@@ -2,9 +2,12 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
+	"os"
+	"path"
 	"reflect"
 	"strconv"
 )
@@ -335,9 +338,15 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			Type:   this.transType(v.Tp),
 			Rparen: 0,
 		}
+	case *ast.Integer:
+		return gast.NewIdent("int64")
+	case *ast.NewDate:
+		return gast.NewIdent("time.Now()")
+	case *ast.String:
+		return gast.NewIdent("string")
 	default:
-		log.Debugf("%v --> %v", reflect.TypeOf(v).String(), v)
-		panic("bug")
+		log.Errorf("ERROR> %s:%d:%s\n", path.Base(this.file), 0, fmt.Sprintf("未处理：%v", reflect.TypeOf(v).String()))
+		os.Exit(0)
 	}
 
 	return

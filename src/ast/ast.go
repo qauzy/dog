@@ -1012,6 +1012,24 @@ func (this *NewIntArray) _exp() {
 }
 
 /*}}}*/
+//Exp.NewDate   /*{{{*/
+type NewDate struct {
+	Exp_T
+}
+
+func NewDate_new(line int) *NewDate {
+	e := new(NewDate)
+	e.LineNum = line
+	return e
+}
+
+func (this *NewDate) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewDate) _exp() {
+}
+
+/*}}}*/
 
 //Exp.NewStringArray   /*{{{*/
 type NewStringArray struct {

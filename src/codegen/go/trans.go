@@ -9,7 +9,7 @@ import (
 )
 
 func TransGo(p ast.File, base string, file string) (f *gast.File) {
-	trans := NewTranslation(p)
+	trans := NewTranslation(file, p)
 	trans.ParseClasses()
 
 	trans.WriteFile(base, file)
