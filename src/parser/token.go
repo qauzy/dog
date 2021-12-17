@@ -107,15 +107,18 @@ func initTokenMap() {
 	tokenMap["byte"] = TOKEN_BYTE
 	tokenMap["short"] = TOKEN_SHORT
 	tokenMap["long"] = TOKEN_LONG
+	tokenMap["Long"] = TOKEN_LONG
 	tokenMap["float"] = TOKEN_FLOAT
 	tokenMap["double"] = TOKEN_DOUBLE
+	tokenMap["Double"] = TOKEN_DOUBLE
 	tokenMap["char"] = TOKEN_CHAR
 	tokenMap["boolean"] = TOKEN_BOOLEAN
 	tokenMap["Boolean"] = TOKEN_BOOLEAN
 	tokenMap["void"] = TOKEN_VOID
 
 	tokenMap["String"] = TOKEN_STRING
-	tokenMap["Long"] = TOKEN_LONG
+	tokenMap["string"] = TOKEN_STRING
+
 	tokenMap["Object"] = TOKEN_OBJECT
 	tokenMap["Integer"] = TOKEN_INTEGER
 	tokenMap["Set"] = TOKEN_SET

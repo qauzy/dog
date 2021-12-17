@@ -174,7 +174,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	case *ast.Comment:
 		stmt = &gast.ExprStmt{X: gast.NewIdent(v.C)}
 	case *ast.Print:
-		stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
+		//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
 	default:
 		log.Debugf("transBlock-->%v -->%v", reflect.TypeOf(s).String(), v)
 		panic("bug")

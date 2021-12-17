@@ -24,6 +24,9 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
+		if this.CurrentClass != nil && this.CurrentClass.GetMethod(v.Name) != nil {
+			v.Name = "this." + Capitalize(v.Name)
+		}
 		//是类型标识符,可能需要转换
 		expr = gast.NewIdent(v.Name)
 	case *ast.Not:
