@@ -225,9 +225,9 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '&':
 		if this.s == "" {
 			if this.expectKeyword("&") {
-				return newToken(TOKEN_AND, "&&", this.lineNum)
+				return newToken(TOKEN_LAND, "&&", this.lineNum)
 			} else {
-				panic("expect &&")
+				return this.expectIdOrKey(c)
 			}
 		} else {
 			return this.expectIdOrKey(c)
@@ -235,9 +235,9 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '|':
 		if this.s == "" {
 			if this.expectKeyword("|") {
-				return newToken(TOKEN_OR, "||", this.lineNum)
+				return newToken(TOKEN_LOR, "||", this.lineNum)
 			} else {
-				this.LexerBug("expect ||")
+				return this.expectIdOrKey(c)
 			}
 		} else {
 			return this.expectIdOrKey(c)

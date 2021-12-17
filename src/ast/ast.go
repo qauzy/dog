@@ -473,7 +473,27 @@ func (this *Instanceof) accept(v Visitor) {
 func (this *Instanceof) _exp() {
 } /*}}}*/
 
-//Exp.Or /*{{{*/
+//Exp.LOr /*{{{*/
+type LOr struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func LOr_new(l Exp, r Exp, line int) *LOr {
+	n := new(LOr)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+func (this *LOr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *LOr) _exp() {
+} /*}}}*/
+
+//Exp.LOr /*{{{*/
 type Or struct {
 	Left  Exp
 	Right Exp
@@ -487,14 +507,34 @@ func Or_new(l Exp, r Exp, line int) *Or {
 	n.LineNum = line
 	return n
 }
-
 func (this *Or) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Or) _exp() {
 } /*}}}*/
 
-//Exp.And /*{{{*/
+//Exp.LAnd /*{{{*/
+type LAnd struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func LAnd_new(l Exp, r Exp, line int) *LAnd {
+	n := new(LAnd)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *LAnd) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *LAnd) _exp() {
+} /*}}}*/
+
+//Exp.LAnd /*{{{*/
 type And struct {
 	Left  Exp
 	Right Exp
@@ -522,8 +562,8 @@ type Enum struct {
 	Exp_T
 }
 
-func Enum_new(l Exp, r Exp, line int) *And {
-	n := new(And)
+func Enum_new(l Exp, r Exp, line int) *LAnd {
+	n := new(LAnd)
 	n.Left = l
 	n.Right = r
 	n.LineNum = line
@@ -1520,13 +1560,15 @@ func (this *Try) _stm() {
 //Stm.Catch    /*{{{*/
 type Catch struct {
 	Stm_T
-	Test []Field
+	Test []Exp
+	Name string
 	Body Stm
 }
 
-func Catch_new(test []Field, Body Stm, line int) *Catch {
+func Catch_new(test []Exp, name string, Body Stm, line int) *Catch {
 	s := new(Catch)
 	s.Test = test
+	s.Name = name
 	s.Body = Body
 	s.LineNum = line
 	return s

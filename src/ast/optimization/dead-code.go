@@ -29,7 +29,7 @@ func (this *DeadCode) opt_Exp(exp ast.Exp) {
 	switch e := exp.(type) {
 	case *ast.Add:
 		this.is_bool = false
-	case *ast.And:
+	case *ast.LAnd:
 		this.opt(e.Left)
 		left_isBool := this.is_bool
 		left := this.is_true

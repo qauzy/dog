@@ -23,7 +23,7 @@ func (this *DeadClass) opt_Exp(e ast.Exp) {
 	case *ast.Add:
 		this.opt(v.Left)
 		this.opt(v.Right)
-	case *ast.And:
+	case *ast.LAnd:
 		this.opt(v.Left)
 		this.opt(v.Right)
 	case *ast.ArraySelect:

@@ -167,7 +167,7 @@ package ast
 //		v.Left.accept(this)
 //		this.say(" + ")
 //		v.Right.accept(this)
-//	case *And:
+//	case *LAnd:
 //		v.Left.accept(this)
 //		this.say(" && ")
 //		v.Right.accept(this)

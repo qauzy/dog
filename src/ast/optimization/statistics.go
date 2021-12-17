@@ -15,7 +15,7 @@ func Statistics_Ast(prog ast.File) int {
 			do(e.Left)
 			do(e.Right)
 			size++
-		case *ast.And:
+		case *ast.LAnd:
 			do(e.Left)
 			do(e.Right)
 			size++

@@ -28,7 +28,8 @@ func initTokenMap() {
 	tokenMap["-="] = TOKEN_SUB_ASSIGN
 	tokenMap["--"] = TOKEN_AUTOSUB
 
-	tokenMap["&&"] = TOKEN_AND
+	tokenMap["&&"] = TOKEN_LAND
+	tokenMap["&"] = TOKEN_AND
 	tokenMap["="] = TOKEN_ASSIGN
 	tokenMap[","] = TOKEN_COMMER
 	tokenMap["."] = TOKEN_DOT
@@ -42,7 +43,8 @@ func initTokenMap() {
 	tokenMap["=="] = TOKEN_EQ
 	tokenMap[">"] = TOKEN_GT
 	tokenMap[">="] = TOKEN_GE
-	tokenMap["||"] = TOKEN_OR
+	tokenMap["||"] = TOKEN_LOR
+	tokenMap["|"] = TOKEN_OR
 	tokenMap["!="] = TOKEN_NE
 	tokenMap["!"] = TOKEN_NOT
 	tokenMap["}"] = TOKEN_RBRACE
@@ -132,10 +134,13 @@ func initTokenMap() {
 
 	tMap = make(map[int]string)
 
-	tMap[TOKEN_ADD] = "TOKEN_ADD"               // +
-	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD"       // ++
-	tMap[TOKEN_AND] = "TOKEN_AND"               // &&
-	tMap[TOKEN_OR] = "TOKEN_OR"                 // ||
+	tMap[TOKEN_ADD] = "TOKEN_ADD"         // +
+	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD" // ++
+	tMap[TOKEN_LAND] = "TOKEN_LAND"       // &&
+	tMap[TOKEN_AND] = "TOKEN_AND"         // &
+	tMap[TOKEN_LOR] = "TOKEN_LOR"         // ||
+	tMap[TOKEN_OR] = "TOKEN_OR"           // |
+
 	tMap[TOKEN_NE] = "TOKEN_NE"                 // !=
 	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"         // =
 	tMap[TOKEN_COMMER] = "TOKEN_COMMER"         // ,
@@ -247,7 +252,8 @@ const (
 	TOKEN_SUB               // -
 	TOKEN_SUB_ASSIGN        // -=
 	TOKEN_AUTOSUB           // --
-	TOKEN_AND               // &&
+	TOKEN_LAND              // &&
+	TOKEN_AND               // &
 	TOKEN_ASSIGN            // =
 	TOKEN_COMMER            // ,
 	TOKEN_DOT               // .
@@ -264,7 +270,8 @@ const (
 	TOKEN_EQ                // ==
 	TOKEN_GT                // >
 	TOKEN_GE                // >=
-	TOKEN_OR                // ||
+	TOKEN_LOR               // ||
+	TOKEN_OR                // |
 	TOKEN_NE                // !=
 	TOKEN_NOT               // !
 	TOKEN_MUL               // *

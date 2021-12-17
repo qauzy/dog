@@ -35,7 +35,7 @@ func NewParse(fname string, buf []byte) *Parser {
 
 func (this *Parser) advance() {
 	if control.Lexer_dump == true {
-		log.Debugf(this.current.ToString())
+		util.Debug(this.current.ToString())
 	}
 	this.Linenum = this.current.LineNum
 	this.current = this.lexer.NextToken()
@@ -864,7 +864,7 @@ func (this *Parser) parseAndExp() ast.Exp {
 	return left
 }
 
-//Exp -> AndExp && AndExp
+//Exp -> AndExp & AndExp
 //    -> AndExp
 func (this *Parser) parseOrExp() ast.Exp {
 	log.Debugf("解析 parseOrExp")
@@ -877,16 +877,43 @@ func (this *Parser) parseOrExp() ast.Exp {
 	return left
 }
 
+//AndExp    -> EqExp == EqExp  EqExp != EqExp
+//          -> EqExp
+func (this *Parser) parseLAndExp() ast.Exp {
+	log.Debugf("解析 parseLAndExp")
+	left := this.parseOrExp()
+	log.Debugf("解析 parseLAndExp --> %v", this.current.Lexeme)
+	for this.current.Kind == TOKEN_OR {
+		this.advance()
+		right := this.parseOrExp()
+		left = ast.Or_new(left, right, this.Linenum)
+	}
+	return left
+}
+
+//Exp -> AndExp && AndExp
+//    -> AndExp
+func (this *Parser) parseLOrExp() ast.Exp {
+	log.Debugf("解析 parseLOrExp")
+	left := this.parseLAndExp()
+	for this.current.Kind == TOKEN_LAND {
+		this.advance()
+		right := this.parseLAndExp()
+		left = ast.LAnd_new(left, right, this.Linenum)
+	}
+	return left
+}
+
 //OrExp    -> OrExp || OrExp
 //          -> OrExp
 func (this *Parser) parseQuestionExp() ast.Exp {
 	log.Debugf("解析 parseQuestionExp")
-	left := this.parseOrExp()
-	for this.current.Kind == TOKEN_OR {
-		log.Debugf("TOKEN_OR")
+	left := this.parseLOrExp()
+	for this.current.Kind == TOKEN_LOR {
+		log.Debugf("TOKEN_LOR")
 		this.advance()
-		right := this.parseOrExp()
-		left = ast.Or_new(left, right, this.Linenum)
+		right := this.parseLOrExp()
+		left = ast.LOr_new(left, right, this.Linenum)
 	}
 
 	return left
@@ -1171,10 +1198,22 @@ func (this *Parser) parseStatement() ast.Stm {
 		for this.current.Kind == TOKEN_CATCH {
 			this.eatToken(TOKEN_CATCH)
 			this.eatToken(TOKEN_LPAREN)
-			test := this.parseFormalList(false)
+			var excepts []ast.Exp
+			e := this.parseNotExp()
+			excepts = append(excepts, e)
+
+			//处理多个异常共用一个处理方法的表达式
+			for this.current.Kind == TOKEN_OR {
+				this.advance()
+				e := this.parseNotExp()
+				excepts = append(excepts, e)
+			}
+			id := this.current.Lexeme
+			this.eatToken(TOKEN_ID)
+
 			this.eatToken(TOKEN_RPAREN)
 			catchBody := this.parseStatement()
-			catch := ast.Catch_new(test, catchBody, this.Linenum)
+			catch := ast.Catch_new(excepts, id, catchBody, this.Linenum)
 			catches = append(catches, catch)
 		}
 
@@ -1260,7 +1299,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			if this.current.Kind == TOKEN_LPAREN {
 				right = this.parseCastExp()
 			} else {
-				right = this.parseOrExp()
+				right = this.parseLOrExp()
 			}
 			this.eatToken(TOKEN_RPAREN)
 
