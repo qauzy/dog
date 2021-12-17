@@ -4,6 +4,7 @@ import (
 	"dog/ast"
 	gast "go/ast"
 	"go/token"
+	"strings"
 )
 
 //
@@ -99,7 +100,7 @@ func (this *Translation) transEnum(c ast.Class) {
 		for idx, fi := range cc.Fields {
 			value := &gast.ValueSpec{
 				Doc:     nil,
-				Names:   []*gast.Ident{gast.NewIdent(fi.GetName())},
+				Names:   []*gast.Ident{gast.NewIdent(strings.ToUpper(cc.GetName()) + "_" + fi.GetName())},
 				Type:    nil,
 				Values:  nil,
 				Comment: nil,
@@ -171,7 +172,7 @@ func (this *Translation) transEnum(c ast.Class) {
 					Results: []gast.Expr{this.transExp(sf.Value)},
 				}
 
-				cause.List = append(cause.List, gast.NewIdent(sf.Name))
+				cause.List = append(cause.List, gast.NewIdent(strings.ToUpper(cc.GetName())+"_"+sf.Name))
 				cause.Body = append(cause.Body, getStm)
 
 				swBlock.List = append(swBlock.List, cause)

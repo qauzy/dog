@@ -153,7 +153,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 			this.eatToken(TOKEN_LT)
 			tp := this.parseTypeList()
 			this.eatToken(TOKEN_GT)
-			this.currentType = &ast.GenericType{name, tp, ast.TYPE_GENERIC}
+			this.currentType = &ast.GenericType{&ast.Ident{Name: name}, tp, ast.TYPE_GENERIC}
 		}
 	}
 	log.Debugf("解析类型:%s", this.currentType)

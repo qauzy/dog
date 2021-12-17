@@ -2,9 +2,12 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/util"
+	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
+	"path"
 	"reflect"
 )
 
@@ -56,6 +59,10 @@ func (this *Translation) getErrRet() (gfi *gast.Field) {
 	}
 
 	return
+}
+func (this *Translation) TranslationBug(v interface{}) {
+	var msg = fmt.Sprintf("未处理 [%v] %s\n", reflect.TypeOf(v).String(), path.Base(this.file))
+	util.Bug(msg)
 }
 
 // 三元表达式

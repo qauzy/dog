@@ -2,13 +2,8 @@ package codegen_go
 
 import (
 	"dog/ast"
-	"fmt"
-	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
-	"os"
-	"path"
-	"reflect"
 	"strconv"
 )
 
@@ -344,9 +339,25 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return gast.NewIdent("time.Now()")
 	case *ast.String:
 		return gast.NewIdent("string")
+	case *ast.Instanceof:
+		x := &gast.CallExpr{
+			Fun: &gast.SelectorExpr{
+				X:   gast.NewIdent("reflect"),
+				Sel: gast.NewIdent("TypeOf"),
+			},
+			Lparen:   0,
+			Args:     []gast.Expr{this.transExp(v.Left)},
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+		return &gast.BinaryExpr{
+			X:     x,
+			OpPos: 0,
+			Op:    token.EQL,
+			Y:     this.transExp(v.Right),
+		}
 	default:
-		log.Errorf("ERROR> %s:%d:%s\n", path.Base(this.file), 0, fmt.Sprintf("未处理：%v", reflect.TypeOf(v).String()))
-		os.Exit(0)
+		this.TranslationBug(v)
 	}
 
 	return

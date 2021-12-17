@@ -6,14 +6,17 @@ type File interface {
 	_prog()
 	AddClass(cl Class)
 	AddField(f Field)
-	AddImport(im ImportSingle)
-	GetImport(name string) (im ImportSingle)
+	AddImport(im Import)
+	GetImport(name string) (im Import)
 	ListFields() []Field
 	GetField(name string) (f Field)
 	GetName() string
 	ListClasses() []Class
 }
-
+type Import interface {
+	GetName() string
+	accept(v Visitor)
+}
 type Class interface {
 	accept(v Visitor)
 	_class()
@@ -63,9 +66,8 @@ type Stm interface {
 
 type Type interface {
 	accept(v Visitor)
-
-	//Gettype() int
-	//String() string
+	Gettype() int
+	String() string
 }
 
 /*------------------ struct -----------------------*/
@@ -268,13 +270,20 @@ type ImportSingle struct {
 	Path string // identifier name
 }
 
+func (this *ImportSingle) GetName() string {
+	return this.Name
+}
+func (this *ImportSingle) accept(v Visitor) {
+	v.visit(this)
+}
+
 /*Prog*/ /*{{{*/
 type FileSingle struct {
 	Name      string // identifier name
 	Mainclass MainClass
 	Classes   []Class
 	Fields    []Field
-	Imports   map[string]ImportSingle
+	Imports   map[string]Import
 	FieldsMap map[string]Field
 }
 
@@ -299,15 +308,15 @@ func (this *FileSingle) AddField(f Field) {
 	this.FieldsMap[f.GetName()] = f
 	this.Fields = append(this.Fields, f)
 }
-func (this *FileSingle) AddImport(im ImportSingle) {
-	this.Imports[im.Name] = im
+func (this *FileSingle) AddImport(im Import) {
+	this.Imports[im.GetName()] = im
 }
 
 func (this *FileSingle) GetField(name string) (f Field) {
 	f = this.FieldsMap[name]
 	return
 }
-func (this *FileSingle) GetImport(name string) (im ImportSingle) {
+func (this *FileSingle) GetImport(name string) (im Import) {
 	im = this.Imports[name]
 	return
 }
@@ -322,7 +331,7 @@ func NewFileSingle(Name string, classes []Class) (f *FileSingle) {
 		Classes:   classes,
 		Fields:    nil,
 		FieldsMap: make(map[string]Field),
-		Imports:   make(map[string]ImportSingle),
+		Imports:   make(map[string]Import),
 	}
 	return
 }
@@ -441,6 +450,27 @@ func (this *Question) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Question) _exp() {
+} /*}}}*/
+
+//Exp.Instanceof /*{{{*/
+type Instanceof struct {
+	Right Exp
+	Left  Exp
+	Exp_T
+}
+
+func Instanceof_new(l Exp, r Exp, line int) *Instanceof {
+	n := new(Instanceof)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *Instanceof) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Instanceof) _exp() {
 } /*}}}*/
 
 //Exp.Or /*{{{*/
@@ -1880,6 +1910,27 @@ func (this *IntArray) _exp() {
 
 /*}}}*/
 
+//Type.ArrayType /*{{{*/
+type ArrayType struct {
+	Ele      Exp //数组元素类型
+	TypeKind int
+}
+
+func (this *ArrayType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ArrayType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *ArrayType) String() string {
+	return "@int[]"
+}
+func (this *ArrayType) _exp() {
+}
+
+/*}}}*/
+
 //Type.ByteArray /*{{{*/
 type ByteArray struct {
 	TypeKind int
@@ -1985,20 +2036,13 @@ func (this *ClassType) _exp() {
 
 //Type.GenericType    /*{{{*/
 type GenericType struct {
-	Name     string
-	T        []Type
+	Name     Exp
+	T        []Exp
 	TypeKind int
 }
 
 func (this *GenericType) accept(v Visitor) {
 	v.visit(this)
-}
-func (this *GenericType) Gettype() int {
-	return this.TypeKind
-}
-
-func (this *GenericType) String() string {
-	return this.Name
 }
 func (this *GenericType) _exp() {
 }

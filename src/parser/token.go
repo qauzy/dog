@@ -57,6 +57,7 @@ func initTokenMap() {
 	tokenMap["%="] = TOKEN_REM_ASSIGN
 	tokenMap["@"] = TOKEN_AT
 	tokenMap["->"] = TOKEN_LAMBDA
+	tokenMap["instanceof"] = TOKEN_INSTANCEOF
 
 	tokenMap["if"] = TOKEN_IF
 	tokenMap["else"] = TOKEN_ELSE
@@ -141,6 +142,7 @@ func initTokenMap() {
 	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"       // --
 	tMap[TOKEN_SUB] = "TOKEN_SUB"               // -
 	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"         // ->
+	tMap[TOKEN_INSTANCEOF] = "TOKEN_INSTANCEOF" // instanceof
 	tMap[TOKEN_MUL] = "TOKEN_MUL"               // *
 	tMap[TOKEN_QUO] = "TOKEN_QUO"               // /
 	tMap[TOKEN_QUO_ASSIGN] = "TOKEN_QUO_ASSIGN" // /=
@@ -309,6 +311,7 @@ const (
 	TOKEN_RETURN // return
 	TOKEN_STATIC // static
 	TOKEN_LAMBDA
+	TOKEN_INSTANCEOF
 	TOKEN_SYSTEM
 	TOKEN_THIS // this
 

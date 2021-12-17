@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"os"
+	"path"
 )
 
 type Lexer struct {
@@ -236,7 +237,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 			if this.expectKeyword("|") {
 				return newToken(TOKEN_OR, "||", this.lineNum)
 			} else {
-				panic("expect ||")
+				this.LexerBug("expect ||")
 			}
 		} else {
 			return this.expectIdOrKey(c)
@@ -393,4 +394,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 
 	return nil
 
+}
+func (this *Lexer) LexerBug(info string) {
+	var msg = fmt.Sprintf("[%v] %d:%s\n", path.Base(this.fname), this.lineNum, info)
+	util.Bug(msg)
 }
