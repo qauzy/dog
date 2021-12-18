@@ -16,7 +16,7 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 		//是类型标识符,可能需要转换
 		expr = gast.NewIdent(v.Name)
 	default:
-		panic("transNameExp")
+		this.TranslationBug("transNameExp")
 	}
 	return
 }
@@ -117,6 +117,14 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			X:     this.transExp(v.Left),
 			OpPos: 0,
 			Op:    token.QUO,
+			Y:     this.transExp(v.Right),
+		}
+		return expr
+	case *ast.Remainder:
+		expr = &gast.BinaryExpr{
+			X:     this.transExp(v.Left),
+			OpPos: 0,
+			Op:    token.REM,
 			Y:     this.transExp(v.Right),
 		}
 		return expr
@@ -338,6 +346,8 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 	case *ast.Integer:
 		return gast.NewIdent("int64")
+	case *ast.Float:
+		return gast.NewIdent("float64")
 	case *ast.NewDate:
 		return gast.NewIdent("time.Now()")
 	case *ast.String:

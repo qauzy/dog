@@ -16,7 +16,7 @@ package elaborator
 //func elabMainClass(mc ast.MainClass) {
 //	switch m := mc.(type) {
 //	case *ast.MainClassSingle:
-//		current_class = m.Name
+//		current_class = m.Names
 //		elaborate(m.Stms)
 //	default:
 //		log.Debugf("wrong type")
@@ -27,7 +27,7 @@ package elaborator
 //func elabClass(class ast.Class) {
 //	switch c := class.(type) {
 //	case *ast.ClassSingle:
-//		current_class = c.Name
+//		current_class = c.Names
 //		for _, m := range c.Methods {
 //			elaborate(m)
 //		}
@@ -41,13 +41,13 @@ package elaborator
 //		initMethodTable()
 //		mt_put(m.Formals, m.Locals)
 //		if control.Elab_methodTable == true {
-//			methodTable_dump(m.Name)
+//			methodTable_dump(m.Names)
 //		}
 //		for _, stm := range m.Stms {
 //			elaborate(stm)
 //		}
 //		cb := ct_get(current_class)
-//		mtd_type := cb.methods[m.Name]
+//		mtd_type := cb.methods[m.Names]
 //		elaborate(m.RetExp) //modify current_type
 //		if mtd_type.retType.Gettype() != current_type.Gettype() {
 //			elab_error(RET)
@@ -58,22 +58,22 @@ package elaborator
 //}
 //
 //func elabStm_Assign(s *ast.Assign) {
-//	tp := mt_get(s.Name)
+//	tp := mt_get(s.Names)
 //	if tp == nil {
-//		tp = ct_getFieldType(current_class, s.Name)
+//		tp = ct_getFieldType(current_class, s.Names)
 //		s.IsField = true
 //	}
 //	if tp == nil {
 //		elab_error(UNDECL)
 //	}
 //	s.Tp = tp
-//	elaborate(s.Value)
+//	elaborate(s.Values)
 //}
 //
 //func elabStm_AssignArray(s *ast.AssignArray) {
-//	tp := mt_get(s.Name)
+//	tp := mt_get(s.Names)
 //	if tp == nil {
-//		tp = ct_getFieldType(current_class, s.Name)
+//		tp = ct_getFieldType(current_class, s.Names)
 //		s.IsField = true
 //	}
 //	if tp == nil {
@@ -84,7 +84,7 @@ package elaborator
 //	if _, ok := current_type.(*ast.Int); !ok {
 //		elab_error(MISTYPE)
 //	}
-//	elaborate(s.Value)
+//	elaborate(s.Values)
 //	//TODO
 //}
 //
@@ -104,14 +104,14 @@ package elaborator
 //}
 //
 //func elabStm_Print(s *ast.Print) {
-//	elaborate(s.Value)
+//	elaborate(s.Values)
 //	if _, ok := current_type.(*ast.Int); !ok {
 //		elab_error(MISTYPE)
 //	}
 //}
 //
 //func elabStm_While(s *ast.While) {
-//	elaborate(s.Value)
+//	elaborate(s.Values)
 //	if _, ok := current_type.(*ast.Boolean); !ok {
 //		elab_error(MISTYPE)
 //	}
@@ -164,11 +164,11 @@ package elaborator
 //	left_type := current_type
 //	if t, ok := left_type.(*ast.ClassType); ok {
 //		ty = t
-//		e.Firsttype = t.Name
+//		e.Firsttype = t.Names
 //	} else {
 //		elab_error(MISTYPE)
 //	}
-//	mtd_type := ct_getMethodType(ty.Name, e.MethodName)
+//	mtd_type := ct_getMethodType(ty.Names, e.MethodName)
 //	var args_ty []ast.Type
 //	for _, a := range e.ArgsList {
 //		elaborate(a)
@@ -186,7 +186,7 @@ package elaborator
 //		if dec, ok := mtd_type.argsType[i].(*ast.FieldSingle); ok {
 //			if t1, ok := arg.(*ast.ClassType); ok {
 //				if t2, ok2 := dec.Tp.(*ast.ClassType); ok2 {
-//					if !compareClass(t2.Name, t1.Name) {
+//					if !compareClass(t2.Names, t1.Names) {
 //						elab_error(MISTYPE)
 //					}
 //					//setp 3:rewirte ast.Call.ArgsType
@@ -269,9 +269,9 @@ package elaborator
 //}
 //
 //func elabExp_Id(e *ast.Id) {
-//	tp := mt_get(e.Name)
+//	tp := mt_get(e.Names)
 //	if tp == nil {
-//		tp = ct_getFieldType(current_class, e.Name)
+//		tp = ct_getFieldType(current_class, e.Names)
 //		e.IsField = true
 //	}
 //	if tp == nil {
@@ -324,10 +324,10 @@ package elaborator
 //		elabExp_NewIntArray(e)
 //	case *ast.NewObject:
 //		linenum = e.LineNum
-//		current_type = &ast.ClassType{e.Name, ast.TYPE_CLASS}
+//		current_type = &ast.ClassType{e.Names, ast.TYPE_CLASS}
 //	case *ast.Not:
 //		linenum = e.LineNum
-//		elaborate(e.Value)
+//		elaborate(e.Values)
 //		current_type = &ast.Boolean{ast.TYPE_BOOLEAN}
 //	case *ast.Num:
 //		linenum = e.LineNum
@@ -352,7 +352,7 @@ package elaborator
 //func buildMainClass(c ast.MainClass) {
 //	switch v := c.(type) {
 //	case *ast.MainClassSingle:
-//		ct_put(v.Name, &ClassBinding{})
+//		ct_put(v.Names, &ClassBinding{})
 //	default:
 //		log.Debugf("wrong type")
 //		panic("wrong type")
@@ -362,11 +362,11 @@ package elaborator
 //func buildClass(c ast.Class) {
 //	switch v := c.(type) {
 //	case *ast.ClassSingle:
-//		ct_put(v.Name, ClassBinding_new(v.Extends))
+//		ct_put(v.Names, ClassBinding_new(v.Extends))
 //		for _, dec := range v.Fields {
 //			switch d := dec.(type) {
 //			case *ast.FieldSingle:
-//				ct_putFieldType(v.Name, d.Name, d.Tp)
+//				ct_putFieldType(v.Names, d.Names, d.Tp)
 //			default:
 //				panic("wrong type")
 //			}
@@ -374,7 +374,7 @@ package elaborator
 //		for _, mtd := range v.Methods {
 //			switch m := mtd.(type) {
 //			case *ast.MethodSingle:
-//				ct_putMethodType(v.Name, m.Name, &MethodType{m.RetType, m.Formals})
+//				ct_putMethodType(v.Names, m.Names, &MethodType{m.RetType, m.Formals})
 //			default:
 //				panic("wrong type")
 //			}

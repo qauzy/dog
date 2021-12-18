@@ -60,6 +60,7 @@ func initTokenMap() {
 	tokenMap["@"] = TOKEN_AT
 	tokenMap["->"] = TOKEN_LAMBDA
 	tokenMap["instanceof"] = TOKEN_INSTANCEOF
+	tokenMap["synchronized"] = TOKEN_SYNCHRONIZED
 
 	tokenMap["if"] = TOKEN_IF
 	tokenMap["else"] = TOKEN_ELSE
@@ -144,16 +145,18 @@ func initTokenMap() {
 	tMap[TOKEN_LOR] = "TOKEN_LOR"         // ||
 	tMap[TOKEN_OR] = "TOKEN_OR"           // |
 
-	tMap[TOKEN_NE] = "TOKEN_NE"                 // !=
-	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"         // =
-	tMap[TOKEN_COMMER] = "TOKEN_COMMER"         // ,
-	tMap[TOKEN_DOT] = "TOKEN_DOT"               // .
-	tMap[TOKEN_COLON] = "TOKEN_COLON"           // :
-	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"     // ?
-	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"       // --
-	tMap[TOKEN_SUB] = "TOKEN_SUB"               // -
-	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"         // ->
-	tMap[TOKEN_INSTANCEOF] = "TOKEN_INSTANCEOF" // instanceof
+	tMap[TOKEN_NE] = "TOKEN_NE"                     // !=
+	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"             // =
+	tMap[TOKEN_COMMER] = "TOKEN_COMMER"             // ,
+	tMap[TOKEN_DOT] = "TOKEN_DOT"                   // .
+	tMap[TOKEN_COLON] = "TOKEN_COLON"               // :
+	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"         // ?
+	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"           // --
+	tMap[TOKEN_SUB] = "TOKEN_SUB"                   // -
+	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"             // ->
+	tMap[TOKEN_INSTANCEOF] = "TOKEN_INSTANCEOF"     // instanceof
+	tMap[TOKEN_SYNCHRONIZED] = "TOKEN_SYNCHRONIZED" // synchronized
+
 	tMap[TOKEN_MUL] = "TOKEN_MUL"               // *
 	tMap[TOKEN_QUO] = "TOKEN_QUO"               // /
 	tMap[TOKEN_QUO_ASSIGN] = "TOKEN_QUO_ASSIGN" // /=
@@ -328,6 +331,7 @@ const (
 	TOKEN_STATIC // static
 	TOKEN_LAMBDA
 	TOKEN_INSTANCEOF
+	TOKEN_SYNCHRONIZED // synchronized
 	TOKEN_SYSTEM
 	TOKEN_THIS // this
 

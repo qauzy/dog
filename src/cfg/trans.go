@@ -67,7 +67,7 @@ package cfg
 //		switch d := dd.(type) {
 //		case *codegen_c.DecSingle:
 //			trans(d.Tp)
-//			f_dec = &DecSingle{f_tp, d.Name}
+//			f_dec = &DecSingle{f_tp, d.Names}
 //		default:
 //			panic("impossible")
 //		}
@@ -80,7 +80,7 @@ package cfg
 //		case *codegen_c.IntArray:
 //			f_tp = &IntArrayType{}
 //		case *codegen_c.ClassType:
-//			f_tp = &ClassType{t.Name}
+//			f_tp = &ClassType{t.Names}
 //		default:
 //			panic("impossible")
 //		}
@@ -115,14 +115,14 @@ package cfg
 //		case *codegen_c.Call:
 //			trans(e.RetType)
 //			dst := genVarT(f_tp)
-//			trans(e.Value)
+//			trans(e.Values)
 //			var obj string
 //			operand := f_operand
 //			if v, ok := operand.(*Var); ok {
 //				if v.IsField == false {
-//					obj = v.Name
+//					obj = v.Names
 //				} else {
-//					obj = "this->" + v.Name
+//					obj = "this->" + v.Names
 //				}
 //			} else {
 //				panic("impossible")
@@ -132,10 +132,10 @@ package cfg
 //				trans(x)
 //				new_args = append(new_args, f_operand)
 //			}
-//			emit(&InvokeVirtual{dst, obj, e.Name, new_args})
+//			emit(&InvokeVirtual{dst, obj, e.Names, new_args})
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.Id:
-//			f_operand = &Var{e.Name, e.IsField}
+//			f_operand = &Var{e.Names, e.IsField}
 //		case *codegen_c.Length:
 //			dst := genVar()
 //			trans(e.Arrayref)
@@ -151,7 +151,7 @@ package cfg
 //			emit(&Lt{dst, nil, left, right})
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.NewIntArray:
-//			trans(e.Value) //new int[Value] -> a=Value, b=new int[a];
+//			trans(e.Values) //new int[Values] -> a=Values, b=new int[a];
 //			size := f_operand
 //			dst := genVarT(&IntArrayType{}) //int *array;
 //			emit(&NewIntArray{dst, size})
@@ -164,12 +164,12 @@ package cfg
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.Not:
 //			dst := genVar()
-//			trans(e.Value)
+//			trans(e.Values)
 //			exp := f_operand
 //			emit(&Not{dst, exp})
 //			f_operand = &Var{dst, false}
 //		case *codegen_c.Num:
-//			f_operand = &Int{e.Value}
+//			f_operand = &Int{e.Values}
 //		case *codegen_c.Sub:
 //			dst := genVar()
 //			trans(e.Left)
@@ -196,15 +196,15 @@ package cfg
 //	trans_Stm := func(ss codegen_c.Stm) {
 //		switch s := ss.(type) {
 //		case *codegen_c.Assign:
-//			trans(s.Value)
-//			emit(&Move{s.Name, f_tp, f_operand, s.IsField})
+//			trans(s.Values)
+//			emit(&Move{s.Names, f_tp, f_operand, s.IsField})
 //		case *codegen_c.AssignArray:
 //			trans(s.Index)
 //			index := f_operand
-//			trans(s.Value)
+//			trans(s.Values)
 //			exp := f_operand
 //			//AssignArray's dst must be frame.dst, no need tp
-//			emit(&AssignArray{s.Name, index, exp, s.IsField})
+//			emit(&AssignArray{s.Names, index, exp, s.IsField})
 //		case *codegen_c.Block:
 //			for _, t := range s.Stms {
 //				trans(t)
@@ -223,7 +223,7 @@ package cfg
 //			emit(&Goto{e})
 //			emit(e)
 //		case *codegen_c.Print:
-//			trans(s.Value)
+//			trans(s.Values)
 //			emit(&Print{f_operand})
 //		case *codegen_c.While:
 //			start := util.Label_new()
@@ -254,9 +254,9 @@ package cfg
 //					trans(d)
 //					args = append(args, f_dec)
 //				}
-//				new_ftuple = append(new_ftuple, &Ftuple{f.Classname, ret_type, args, f.Name})
+//				new_ftuple = append(new_ftuple, &Ftuple{f.Classname, ret_type, args, f.Names})
 //			}
-//			f_vtable = &VtableSingle{v.Name, new_ftuple}
+//			f_vtable = &VtableSingle{v.Names, new_ftuple}
 //		default:
 //			panic("impossible")
 //		}
@@ -294,7 +294,7 @@ package cfg
 //				new_locals = append(new_locals, d)
 //			}
 //			f_method = &MethodSingle{ret_type,
-//				m.Name,
+//				m.Names,
 //				m.ClassId,
 //				new_formals,
 //				new_locals,
@@ -338,7 +338,7 @@ package cfg
 //				new_tuple = append(new_tuple,
 //					&Tuple{t.Classname, f_tp, t.Field_name})
 //			}
-//			f_class = &ClassSingle{c.Name, new_tuple}
+//			f_class = &ClassSingle{c.Names, new_tuple}
 //		default:
 //			panic("impossible")
 //		}

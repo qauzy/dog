@@ -175,7 +175,7 @@ func (this *FieldSingle) accept(v Visitor) {
 //	return this.Tp.Gettype()
 //}
 //func (this *FieldSingle) String() string {
-//	s := this.Name + " " + this.Tp.String()
+//	s := this.Names + " " + this.Tp.String()
 //	return s
 //}
 
@@ -604,6 +604,29 @@ func (this *Fcon) accept(v Visitor) {
 func (this *Fcon) _exp() {
 } /*}}}*/
 
+//Exp.Remainder  /*{{{*/
+type Remainder struct {
+	Left  Exp
+	Right Exp
+	Exp_T
+}
+
+func Remainder_new(l Exp, r Exp, line int) *Remainder {
+	n := new(Remainder)
+	n.Left = l
+	n.Right = r
+	n.LineNum = line
+	return n
+}
+
+func (this *Remainder) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Remainder) _exp() {
+}
+
+/*}}}*/
+
 //Exp.Time  /*{{{*/
 type Times struct {
 	Left  Exp
@@ -812,13 +835,13 @@ func (this *Null) _exp() {
 //Exp.Id /*{{{*/
 type Id struct {
 	Name      string
-	Tp        Type
+	Tp        Exp
 	IsField   bool
 	Statement bool //指示是否同时声明
 	Exp_T
 }
 
-func Id_new(name string, tp Type, isField bool, line int) *Id {
+func Id_new(name string, tp Exp, isField bool, line int) *Id {
 	e := new(Id)
 	e.Name = name
 	e.Tp = tp
@@ -1349,17 +1372,17 @@ func (this *Stm_T) SetTriple() {
 
 //Stm.DeclStmt    /*{{{*/
 type DeclStmt struct {
-	Name  Exp
-	Tp    Exp
-	Value Exp
+	Names  []Exp
+	Tp     Exp
+	Values []Exp
 	Stm_T
 }
 
-func DeclStmt_new(name Exp, tp Exp, Value Exp, line int) *DeclStmt {
+func DeclStmt_new(names []Exp, tp Exp, Values []Exp, line int) *DeclStmt {
 	s := new(DeclStmt)
-	s.Name = name
+	s.Names = names
 	s.Tp = tp
-	s.Value = Value
+	s.Values = Values
 	s.LineNum = line
 	return s
 }

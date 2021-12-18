@@ -46,7 +46,7 @@ package ast
 //	switch v := e.(type) {
 //	case *FieldSingle:
 //		v.Tp.accept(this)
-//		this.say(" " + v.Name)
+//		this.say(" " + v.Names)
 //	default:
 //		panic("wrong type")
 //	}
@@ -58,7 +58,7 @@ package ast
 //		this.indent()
 //		this.say("  public ")
 //		v.RetType.accept(this)
-//		this.say(" " + v.Name + "(")
+//		this.say(" " + v.Names + "(")
 //		for i, dec := range v.Formals {
 //			switch d := dec.(type) {
 //			case *FieldSingle:
@@ -77,7 +77,7 @@ package ast
 //			case *FieldSingle:
 //				this.printSpeaces()
 //				d.Tp.accept(this)
-//				this.sayln(" " + d.Name + ";")
+//				this.sayln(" " + d.Names + ";")
 //			default:
 //				panic("wrong type")
 //			}
@@ -99,7 +99,7 @@ package ast
 //func (this *PrettyPrintVisitor) visitClass(e Class) {
 //	switch v := e.(type) {
 //	case *ClassSingle:
-//		this.say("class " + v.Name)
+//		this.say("class " + v.Names)
 //		if v.Extends != "" {
 //			this.sayln(" extends " + v.Extends)
 //		} else {
@@ -112,7 +112,7 @@ package ast
 //				this.say("  ")
 //				d.Tp.accept(this)
 //				this.say(" ")
-//				this.sayln(d.Name + ";")
+//				this.sayln(d.Names + ";")
 //			default:
 //				panic("wrong type")
 //			}
@@ -134,7 +134,7 @@ package ast
 //func (this *PrettyPrintVisitor) visitMain(e MainClass) {
 //	switch v := e.(type) {
 //	case *MainClassSingle:
-//		this.sayln("class " + v.Name)
+//		this.sayln("class " + v.Names)
 //		this.sayln("{")
 //		this.sayln("  public static void main (String [] " + v.Args + ")")
 //		this.sayln("  {")
@@ -195,7 +195,7 @@ package ast
 //	case *True:
 //		this.say("true")
 //	case *Id:
-//		this.say(v.Name)
+//		this.say(v.Names)
 //	case *Length:
 //		v.Arrayref.accept(this)
 //		this.say(".length")
@@ -211,9 +211,9 @@ package ast
 //		this.say("new " + v.T.String() + "()")
 //	case *Not:
 //		this.say("!")
-//		v.Value.accept(this)
+//		v.Values.accept(this)
 //	case *Num:
-//		this.say(strconv.Itoa(v.Value))
+//		this.say(strconv.Itoa(v.Values))
 //	case *Sub:
 //		v.Left.accept(this)
 //		this.say(" - ")
@@ -231,16 +231,16 @@ package ast
 //	switch v := e.(type) {
 //	case *Assign:
 //		this.printSpeaces()
-//		this.say(v.Name)
+//		this.say(v.Names)
 //		this.say(" = ")
-//		v.Value.accept(this)
+//		v.Values.accept(this)
 //		this.sayln(";")
 //	case *AssignArray:
 //		this.printSpeaces()
-//		this.say(v.Name + "[")
+//		this.say(v.Names + "[")
 //		v.Index.accept(this)
 //		this.say("] = ")
-//		v.Value.accept(this)
+//		v.Values.accept(this)
 //		this.sayln(";")
 //	case *Block:
 //		this.printSpeaces()
@@ -270,13 +270,13 @@ package ast
 //	case *Print:
 //		this.printSpeaces()
 //		this.say("System.out.println(")
-//		v.Value.accept(this)
+//		v.Values.accept(this)
 //		this.say(")")
 //		this.sayln(";")
 //	case *While:
 //		this.printSpeaces()
 //		this.say("while (")
-//		v.Value.accept(this)
+//		v.Values.accept(this)
 //		this.sayln(")")
 //		this.indent()
 //		v.Body.accept(this)
@@ -293,7 +293,7 @@ package ast
 //	case *IntArray:
 //		this.say("int[]")
 //	case *ClassType:
-//		this.say(v.Name)
+//		this.say(v.Names)
 //	}
 //}
 //

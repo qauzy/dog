@@ -7,7 +7,12 @@ import (
 	"go/token"
 )
 
-func (this *Translation) buildFieldFunc(fi ast.Field) {
+func (this *Translation) constructBuilderFunc(fi ast.Field) {
+
+}
+
+func (this *Translation) constructFieldFunc(fi ast.Field) {
+
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		var recv *gast.FieldList
 		//处理类接收
@@ -54,6 +59,34 @@ func (this *Translation) buildFieldFunc(fi ast.Field) {
 
 		setBody.List = append(setBody.List, setStm)
 
+		setRetStm := &gast.ReturnStmt{
+			Return:  0,
+			Results: []gast.Expr{gast.NewIdent("this")},
+		}
+		setBody.List = append(setBody.List, setRetStm)
+
+		//处理返回值
+		setResult := &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		}
+
+		ret := &gast.Field{
+			Doc:   nil,
+			Names: []*gast.Ident{gast.NewIdent("result")},
+			Type: &gast.StarExpr{X: &gast.Ident{
+				NamePos: 0,
+				Name:    this.CurrentClass.GetName(),
+				Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			}},
+			Tag:     nil,
+			Comment: nil,
+		}
+
+		setResult.List = append(setResult.List, ret)
+
+		//函数声明
 		setFun := &gast.FuncDecl{
 			Doc:  nil,
 			Recv: recv,
@@ -61,7 +94,7 @@ func (this *Translation) buildFieldFunc(fi ast.Field) {
 			Type: &gast.FuncType{
 				Func:    0,
 				Params:  params,
-				Results: nil,
+				Results: setResult,
 			},
 			Body: setBody,
 		}

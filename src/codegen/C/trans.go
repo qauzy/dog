@@ -60,7 +60,7 @@ package codegen_c
 //			new_locals = append(new_locals, dec)
 //		}
 //		method_c = &MethodSingle{new_retType,
-//			classId, mm.Name, new_formals,
+//			classId, mm.Names, new_formals,
 //			new_locals, new_stms, retExp}
 //	} else {
 //		panic("impossible")
@@ -111,7 +111,7 @@ package codegen_c
 //}
 //
 //func trans_Exp_Id(e *ast.Id) {
-//	exp_c = &Id{e.Name, e.IsField}
+//	exp_c = &Id{e.Names, e.IsField}
 //}
 //
 //func trans_Exp_Length(e *ast.Length) {
@@ -136,17 +136,17 @@ package codegen_c
 //}
 //
 //func trans_Exp_NewObject(e *ast.NewObject) {
-//	exp_c = &NewObject{e.Name, ""}
+//	exp_c = &NewObject{e.Names, ""}
 //}
 //
 //func trans_Exp_Not(e *ast.Not) {
-//	trans(e.Value)
+//	trans(e.Values)
 //	t := exp_c
 //	exp_c = &Not{t}
 //}
 //
 //func trans_Exp_Num(e *ast.Num) {
-//	exp_c = &Num{e.Value}
+//	exp_c = &Num{e.Values}
 //}
 //
 //func trans_Exp_Sub(e *ast.Sub) {
@@ -214,16 +214,16 @@ package codegen_c
 //
 //func trans_Stm_Assign(s *ast.Assign) {
 //	isField := s.IsField
-//	trans(s.Value)
-//	stm_c = &Assign{s.Name, exp_c, isField}
+//	trans(s.Values)
+//	stm_c = &Assign{s.Names, exp_c, isField}
 //}
 //
 //func trans_Stm_AssignArray(s *ast.AssignArray) {
 //	isField := s.IsField
 //	trans(s.Index)
 //	index := exp_c
-//	trans(s.Value)
-//	stm_c = &AssignArray{s.Name, index, exp_c, isField}
+//	trans(s.Values)
+//	stm_c = &AssignArray{s.Names, index, exp_c, isField}
 //}
 //
 //func trans_Stm_Block(s *ast.Block) {
@@ -246,12 +246,12 @@ package codegen_c
 //}
 //
 //func trans_Stm_Print(s *ast.Print) {
-//	trans(s.Value)
+//	trans(s.Values)
 //	stm_c = &Print{exp_c}
 //}
 //
 //func trans_Stm_While(s *ast.While) {
-//	trans(s.Value)
+//	trans(s.Values)
 //	cond := exp_c
 //	trans(s.Body)
 //	body := stm_c
@@ -286,7 +286,7 @@ package codegen_c
 //}
 //
 //func trans_Type_ClassType(t *ast.ClassType) {
-//	type_c = &ClassType{t.Name}
+//	type_c = &ClassType{t.Names}
 //}
 //
 //func trans_Type_Boolean(t *ast.Boolean) {
@@ -311,7 +311,7 @@ package codegen_c
 //func trans_Dec(d ast.Field) {
 //	if dec, ok := d.(*ast.FieldSingle); ok {
 //		trans(dec.Tp)
-//		dec_c = &DecSingle{type_c, dec.Name}
+//		dec_c = &DecSingle{type_c, dec.Names}
 //	} else {
 //		panic("impossible")
 //	}
@@ -319,12 +319,12 @@ package codegen_c
 //
 //func trans_Class(c ast.Class) {
 //	if cc, ok := c.(*ast.ClassSingle); ok {
-//		cb := table.get(cc.Name)
+//		cb := table.get(cc.Names)
 //		classes_c = append(classes_c,
-//			&ClassSingle{cc.Name, cb.fields})
+//			&ClassSingle{cc.Names, cb.fields})
 //		vtables_c = append(vtables_c,
-//			&VtableSingle{cc.Name, cb.methods})
-//		classId = cc.Name
+//			&VtableSingle{cc.Names, cb.methods})
+//		classId = cc.Names
 //		for _, m := range cc.Methods {
 //			trans(m)
 //			methods_c = append(methods_c, method_c)
@@ -336,11 +336,11 @@ package codegen_c
 //
 //func trans_MainClass(mc ast.MainClass) {
 //	if cc, ok := mc.(*ast.MainClassSingle); ok {
-//		cb := table.get(cc.Name)
-//		newclass := &ClassSingle{cc.Name, cb.fields}
+//		cb := table.get(cc.Names)
+//		newclass := &ClassSingle{cc.Names, cb.fields}
 //		classes_c = append(classes_c, newclass)
 //		vtables_c = append(vtables_c,
-//			&VtableSingle{cc.Name, cb.methods})
+//			&VtableSingle{cc.Names, cb.methods})
 //		tmpVars_c = make([]Dec, 0)
 //		trans(cc.Stms)
 //		ss := stm_c
@@ -392,7 +392,7 @@ package codegen_c
 //func scanClasses(c []ast.Class) {
 //	for _, cc := range c {
 //		if class, ok := cc.(*ast.ClassSingle); ok {
-//			table.init(class.Name, class.Extends)
+//			table.init(class.Names, class.Extends)
 //		} else {
 //			panic("need *ast.ClassSingle")
 //		}
@@ -410,19 +410,19 @@ package codegen_c
 //			trans(dec)
 //			new_decs = append(new_decs, dec_c)
 //		}
-//		table.initDecs(cs.Name, new_decs)
+//		table.initDecs(cs.Names, new_decs)
 //		//methods
 //		for _, mtd := range cs.Methods {
 //			if m, ok := mtd.(*ast.MethodSingle); ok {
 //				var new_args []Dec
-//				new_args = append(new_args, &DecSingle{&ClassType{cs.Name}, "this"})
+//				new_args = append(new_args, &DecSingle{&ClassType{cs.Names}, "this"})
 //				for _, arg := range m.Formals {
 //					trans(arg)
 //					new_args = append(new_args, dec_c)
 //				}
 //				trans(m.RetType)
 //				new_retType := type_c
-//				table.initMethod(cs.Name, new_retType, new_args, m.Name)
+//				table.initMethod(cs.Names, new_retType, new_args, m.Names)
 //			} else {
 //				panic("impossible")
 //			}
@@ -431,14 +431,14 @@ package codegen_c
 //	//calculate all inheritance information
 //	for _, cc := range c {
 //		if cs, ok := cc.(*ast.ClassSingle); ok {
-//			table.inherit(cs.Name)
+//			table.inherit(cs.Names)
 //		}
 //	}
 //}
 //
 //func scanMain(m ast.MainClass) {
 //	if mm, ok := m.(*ast.MainClassSingle); ok {
-//		table.init(mm.Name, "")
+//		table.init(mm.Names, "")
 //	}
 //}
 //

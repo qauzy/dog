@@ -101,13 +101,13 @@ package ast_opt
 //			exp = e
 //		case *ast.Not:
 //			is_0 = false
-//			opt(e.Value)
+//			opt(e.Values)
 //			new_exp := exp
 //			exp = ast.Not_new(new_exp, e.LineNum)
 //		case *ast.Num:
 //			//XXX important!
 //			is_0 = false
-//			if e.Value == 0 {
+//			if e.Values == 0 {
 //				is_0 = true
 //			} else {
 //				is_0 = false
@@ -180,14 +180,14 @@ package ast_opt
 //	opt_Stm := func(ss ast.Stm) {
 //		switch s := ss.(type) {
 //		case *ast.Assign:
-//			opt_Exp(s.Value)
-//			stm = ast.Assign_new(s.Name, exp, s.Tp, s.IsField, s.LineNum)
+//			opt_Exp(s.Values)
+//			stm = ast.Assign_new(s.Names, exp, s.Tp, s.IsField, s.LineNum)
 //		case *ast.AssignArray:
-//			opt(s.Value)
+//			opt(s.Values)
 //			ee := exp
 //			opt(s.Index)
 //			index := exp
-//			stm = ast.AssignArray_new(s.Name, index, ee, s.Tp, s.IsField, s.LineNum)
+//			stm = ast.AssignArray_new(s.Names, index, ee, s.Tp, s.IsField, s.LineNum)
 //		case *ast.Block:
 //			ss := make([]ast.Stm, 0)
 //			for _, s0 := range s.Stms {
@@ -204,10 +204,10 @@ package ast_opt
 //			elsee := stm
 //			stm = ast.If_new(cond, thenn, elsee, s.LineNum)
 //		case *ast.Print:
-//			opt(s.Value)
+//			opt(s.Values)
 //			stm = ast.Print_new(exp, s.LineNum)
 //		case *ast.While:
-//			opt(s.Value)
+//			opt(s.Values)
 //			cond := exp
 //			opt(s.Body)
 //			body := stm
@@ -220,7 +220,7 @@ package ast_opt
 //	opt_MainClass := func(m ast.MainClass) {
 //		if mc, ok := m.(*ast.MainClassSingle); ok {
 //			opt_Stm(mc.Stms)
-//			main_class = &ast.MainClassSingle{mc.Name, mc.Args, stm}
+//			main_class = &ast.MainClassSingle{mc.Names, mc.Args, stm}
 //		} else {
 //			panic("impossible")
 //		}
@@ -235,7 +235,7 @@ package ast_opt
 //			}
 //			opt(m.RetExp)
 //			method = &ast.MethodSingle{m.RetType,
-//				m.Name,
+//				m.Names,
 //				m.Formals,
 //				m.Locals,
 //				stms,
@@ -252,7 +252,7 @@ package ast_opt
 //				opt(m)
 //				methods = append(methods, method)
 //			}
-//			new_class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Fields, methods}
+//			new_class = &ast.ClassSingle{c.Access, c.Names, c.Extends, c.Fields, methods}
 //		} else {
 //			panic("impossible")
 //		}
@@ -287,7 +287,7 @@ package ast_opt
 //			opt(c)
 //			classes = append(classes, new_class)
 //		}
-//		Ast = &ast.FileSingle{p.Name, main_class, classes}
+//		Ast = &ast.FileSingle{p.Names, main_class, classes}
 //	} else {
 //		panic("impossible")
 //	}

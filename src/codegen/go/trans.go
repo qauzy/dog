@@ -86,43 +86,51 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 		}
 		sp := &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{this.transNameExp(v.Name)},
+			Names:   nil,
 			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
 		}
+
+		for _, name := range v.Names {
+			sp.Names = append(sp.Names, this.transNameExp(name))
+		}
+
 		//临时变量初值
 		d.Specs = append(d.Specs, sp)
 		stmts = append(stmts, &gast.DeclStmt{Decl: d})
 
-		if vv, ok := v.Value.(*ast.Question); ok {
-			q := &gast.IfStmt{
-				If:   0,
-				Init: nil,
-				Cond: this.transExp(vv.E),
-				Body: &gast.BlockStmt{
-					Lbrace: 0,
-					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{this.transExp(v.Name)},
-						TokPos: 0,
-						Tok:    token.ASSIGN,
-						Rhs:    []gast.Expr{this.transExp(vv.One)}}},
-				},
+		for idx, value := range v.Values {
+			if vv, ok := value.(*ast.Question); ok {
+				q := &gast.IfStmt{
+					If:   0,
+					Init: nil,
+					Cond: this.transExp(vv.E),
+					Body: &gast.BlockStmt{
+						Lbrace: 0,
+						List: []gast.Stmt{&gast.AssignStmt{
+							Lhs:    []gast.Expr{this.transExp(v.Names[idx])},
+							TokPos: 0,
+							Tok:    token.ASSIGN,
+							Rhs:    []gast.Expr{this.transExp(vv.One)}}},
+					},
 
-				Else: &gast.BlockStmt{
-					Lbrace: 0,
-					List: []gast.Stmt{&gast.AssignStmt{
-						Lhs:    []gast.Expr{this.transExp(v.Name)},
-						TokPos: 0,
-						Tok:    token.ASSIGN,
-						Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
-					Rbrace: 0,
-				},
+					Else: &gast.BlockStmt{
+						Lbrace: 0,
+						List: []gast.Stmt{&gast.AssignStmt{
+							Lhs:    []gast.Expr{this.transExp(v.Names[idx])},
+							TokPos: 0,
+							Tok:    token.ASSIGN,
+							Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
+						Rbrace: 0,
+					},
+				}
+
+				stmts = append(stmts, q)
+			} else {
+				panic("should triple expr")
 			}
 
-			stmts = append(stmts, q)
-		} else {
-			panic("should triple expr")
 		}
 
 		//赋值语句

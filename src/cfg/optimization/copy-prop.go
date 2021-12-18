@@ -135,7 +135,7 @@ func CopyProp(prog Program) Program {
 					switch op := move.Src.(type) {
 					case *Int:
 						//this is const-prop
-						//f_operand = &Int{op.Value}
+						//f_operand = &Int{op.Values}
 					case *Var:
 						if is_unique(op) {
 							f_operand = &Var{move.Dst, move.IsField}

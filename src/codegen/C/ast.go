@@ -81,7 +81,7 @@ func (this *ArraySelect) _exp()   {}
 func (this *ArraySelect) accept() {}
 
 type Call struct {
-	New_id  string //callee id new Sub().Name -> x_0 = new Sub(), x_0.Name(Args)
+	New_id  string //callee id new Sub().Names -> x_0 = new Sub(), x_0.Names(Args)
 	E       Exp
 	Name    string //method name
 	Args    []Exp

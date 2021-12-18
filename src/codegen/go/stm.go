@@ -17,7 +17,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	//变量声明
 	case *ast.DeclStmt:
 
-		//log.Info("变量声明:", v.Name, "行:", v.LineNum)
+		//log.Info("变量声明:", v.Names, "行:", v.LineNum)
 		d := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
@@ -28,18 +28,18 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		sp := &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{this.transNameExp(v.Name)},
+			Names:   []*gast.Ident{},
 			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
 		}
-		//临时变量初值
-		if v.Value != nil {
-			val := this.transExp(v.Value)
-			if val != nil {
-				sp.Values = append(sp.Values, val)
-			} else {
-				log.Debugf("初值为空")
+		for _, name := range v.Names {
+			sp.Names = append(sp.Names, this.transNameExp(name))
+		}
+
+		for _, value := range v.Values {
+			if v.Values != nil {
+				sp.Values = append(sp.Values, this.transExp(value))
 			}
 		}
 

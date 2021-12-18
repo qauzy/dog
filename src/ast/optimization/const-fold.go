@@ -23,7 +23,7 @@ package ast_opt
 //			l_num, ok := left.(*ast.Num)
 //			r_num, ok2 := right.(*ast.Num)
 //			if ok && ok2 {
-//				new_num := l_num.Value + r_num.Value
+//				new_num := l_num.Values + r_num.Values
 //				exp = ast.Num_new(new_num, e.LineNum)
 //			} else {
 //				exp = ast.Add_new(left, right, e.LineNum)
@@ -96,7 +96,7 @@ package ast_opt
 //			l_num, ok := left.(*ast.Num)
 //			r_num, ok2 := right.(*ast.Num)
 //			if ok && ok2 {
-//				if l_num.Value < r_num.Value {
+//				if l_num.Values < r_num.Values {
 //					exp = ast.True_new(e.LineNum)
 //				} else {
 //					exp = ast.False_new(e.LineNum)
@@ -111,7 +111,7 @@ package ast_opt
 //		case *ast.NewObject:
 //			exp = e
 //		case *ast.Not:
-//			opt(e.Value)
+//			opt(e.Values)
 //			not_e := exp
 //			if _, ok := not_e.(*ast.True); ok {
 //				exp = ast.False_new(e.LineNum)
@@ -130,7 +130,7 @@ package ast_opt
 //			l_num, ok := left.(*ast.Num)
 //			r_num, ok2 := right.(*ast.Num)
 //			if ok && ok2 {
-//				new_num := l_num.Value - r_num.Value
+//				new_num := l_num.Values - r_num.Values
 //				exp = ast.Num_new(new_num, e.LineNum)
 //			} else {
 //				exp = ast.Sub_new(left, right, e.LineNum)
@@ -145,7 +145,7 @@ package ast_opt
 //			l_num, ok := left.(*ast.Num)
 //			r_num, ok2 := right.(*ast.Num)
 //			if ok && ok2 {
-//				new_num := l_num.Value * r_num.Value
+//				new_num := l_num.Values * r_num.Values
 //				exp = ast.Num_new(new_num, e.LineNum)
 //			} else {
 //				exp = ast.Times_new(left, right, e.LineNum)
@@ -160,14 +160,14 @@ package ast_opt
 //	opt_Stm := func(ss ast.Stm) {
 //		switch s := ss.(type) {
 //		case *ast.Assign:
-//			opt(s.Value)
-//			stm = ast.Assign_new(s.Name, exp, s.Tp, s.IsField, s.LineNum)
+//			opt(s.Values)
+//			stm = ast.Assign_new(s.Names, exp, s.Tp, s.IsField, s.LineNum)
 //		case *ast.AssignArray:
 //			opt(s.Index)
 //			index := exp
-//			opt(s.Value)
+//			opt(s.Values)
 //			e := exp
-//			stm = ast.AssignArray_new(s.Name, index, e, s.Tp, s.IsField, s.LineNum)
+//			stm = ast.AssignArray_new(s.Names, index, e, s.Tp, s.IsField, s.LineNum)
 //		case *ast.Block:
 //			bstms := make([]ast.Stm, 0)
 //			for _, _s := range s.Stms {
@@ -176,7 +176,7 @@ package ast_opt
 //			}
 //			stm = ast.Block_new(bstms, s.LineNum)
 //		case *ast.Print:
-//			opt(s.Value)
+//			opt(s.Values)
 //			stm = ast.Print_new(exp, s.LineNum)
 //		case *ast.If:
 //			opt(s.Condition)
@@ -187,7 +187,7 @@ package ast_opt
 //			elsee := stm
 //			stm = ast.If_new(cond, thenn, elsee, s.LineNum)
 //		case *ast.While:
-//			opt(s.Value)
+//			opt(s.Values)
 //			cond := exp
 //			opt(s.Body)
 //			body := stm
@@ -208,7 +208,7 @@ package ast_opt
 //			opt(m.RetExp)
 //			ret_exp := exp
 //			method = &ast.MethodSingle{m.RetType,
-//				m.Name,
+//				m.Names,
 //				m.Formals,
 //				m.Locals,
 //				stms,
@@ -222,7 +222,7 @@ package ast_opt
 //		switch c := mc.(type) {
 //		case *ast.MainClassSingle:
 //			opt(c.Stms)
-//			main_class = &ast.MainClassSingle{c.Name, c.Args, stm}
+//			main_class = &ast.MainClassSingle{c.Names, c.Args, stm}
 //		default:
 //			panic("impossible")
 //		}
@@ -236,7 +236,7 @@ package ast_opt
 //				opt(m)
 //				methods = append(methods, method)
 //			}
-//			class = &ast.ClassSingle{c.Access, c.Name, c.Extends, c.Fields, methods}
+//			class = &ast.ClassSingle{c.Access, c.Names, c.Extends, c.Fields, methods}
 //		default:
 //			panic("impossible")
 //		}
@@ -271,7 +271,7 @@ package ast_opt
 //			opt(c)
 //			classes = append(classes, class)
 //		}
-//		Ast = &ast.FileSingle{p.Name, main_class, classes}
+//		Ast = &ast.FileSingle{p.Names, main_class, classes}
 //	} else {
 //		panic("impossible")
 //	}
