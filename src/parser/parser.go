@@ -955,6 +955,8 @@ func (this *Parser) parseExp() ast.Exp {
 func (this *Parser) parseStatement() ast.Stm {
 	log.Debugf("*******解析代码段******* --> %v", this.current.Lexeme)
 	switch this.current.Kind {
+	case TOKEN_ASSERT:
+
 	case TOKEN_COMMENT:
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()
@@ -1374,6 +1376,7 @@ func (this *Parser) parseStatement() ast.Stm {
 func (this *Parser) parseStatements() []ast.Stm {
 	stms := []ast.Stm{}
 	for this.TypeToken() ||
+		this.ExtraToken() ||
 		this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_LBRACE ||
 		this.current.Kind == TOKEN_COMMENT ||
@@ -1786,6 +1789,7 @@ func (this *Parser) parseProgram() ast.File {
 		this.advance()
 		var id string
 		var path string
+		var pack string
 		for this.current.Kind != TOKEN_SEMI {
 			var dot string
 
@@ -1797,23 +1801,26 @@ func (this *Parser) parseProgram() ast.File {
 			} else if this.current.Kind == TOKEN_ARRAYLIST ||
 				this.current.Kind == TOKEN_LIST ||
 				this.current.Kind == TOKEN_DATE ||
+				this.current.Kind == TOKEN_ASSERT ||
 				this.current.Kind == TOKEN_MAP ||
 				this.current.Kind == TOKEN_HASHMAP ||
 				this.current.Kind == TOKEN_SET ||
 				this.current.Kind == TOKEN_HASHSET {
 				this.advance()
 			} else if this.current.Kind == TOKEN_DOT {
+				pack = id
 				dot = "."
 				this.eatToken(TOKEN_DOT)
 			} else if this.current.Kind == TOKEN_STATIC {
 				this.advance()
 			} else {
-				panic("import bug")
+				this.ParseBug("导入bug")
 			}
 			path += id + dot
 
 		}
 		im := &ast.ImportSingle{
+			Pack: pack,
 			Name: id,
 			Path: path,
 		}

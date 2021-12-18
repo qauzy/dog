@@ -179,8 +179,16 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Sel: gast.NewIdent(v.Sel),
 		}
 	case *ast.Id:
+		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
+			pack := this.CurrentFile.GetImport(v.Name).GetPack()
+			v.Name = pack + "." + Capitalize(v.Name)
+		}
 		return gast.NewIdent(v.Name)
 	case *ast.Ident:
+		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
+			pack := this.CurrentFile.GetImport(v.Name).GetPack()
+			v.Name = pack + "." + Capitalize(v.Name)
+		}
 		return gast.NewIdent(v.Name)
 	case *ast.Void:
 		return nil
@@ -207,6 +215,10 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Elt:    this.transType(v.Ele),
 		}
 	case *ast.ClassType:
+		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
+			pack := this.CurrentFile.GetImport(v.Name).GetPack()
+			v.Name = pack + "." + Capitalize(v.Name)
+		}
 		return &gast.Ident{
 			NamePos: 0,
 			Name:    v.Name,

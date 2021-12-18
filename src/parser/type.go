@@ -9,6 +9,10 @@ func (this *Parser) TypeToken() (b bool) {
 	return this.current.Kind > TOKEN_TYPE_START && this.current.Kind < TOKEN_TYPE_END
 }
 
+func (this *Parser) ExtraToken() (b bool) {
+	return this.current.Kind > TOKEN_EXTRA_START && this.current.Kind < TOKEN_EXTRA_END
+}
+
 func (this *Parser) parseTypeV2() ast.Exp {
 	switch this.current.Kind {
 	case TOKEN_FLOAT:

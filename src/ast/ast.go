@@ -15,6 +15,7 @@ type File interface {
 }
 type Import interface {
 	GetName() string
+	GetPack() string
 	accept(v Visitor)
 }
 type Class interface {
@@ -266,12 +267,16 @@ func (this *MethodSingle) GetFormal(name string) (f Field) {
 
 //描述包导入
 type ImportSingle struct {
+	Pack string
 	Name string // identifier name
 	Path string // identifier name
 }
 
 func (this *ImportSingle) GetName() string {
 	return this.Name
+}
+func (this *ImportSingle) GetPack() string {
+	return this.Pack
 }
 func (this *ImportSingle) accept(v Visitor) {
 	v.visit(this)
@@ -1413,6 +1418,31 @@ func (this *Binary) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Binary) _stm() {
+}
+
+/*}}}*/
+
+//Stm.Assert    /*{{{*/
+type Assert struct {
+	Cond Exp //左边可能是一个包含声明语句的
+	E    Exp
+	Opt  string
+	Stm_T
+}
+
+func Assert_new(Cond Exp, E Exp, Opt string, line int) *Assert {
+	s := new(Assert)
+	s.Cond = Cond
+	s.E = E
+	s.Opt = Opt
+	s.LineNum = line
+	return s
+}
+
+func (this *Assert) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Assert) _stm() {
 }
 
 /*}}}*/

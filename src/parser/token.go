@@ -132,6 +132,9 @@ func initTokenMap() {
 	tokenMap["Date"] = TOKEN_DATE
 	tokenMap["enum"] = TOKEN_ENUM
 
+	//自定义处理关键字
+	tokenMap["Assert"] = TOKEN_ASSERT
+
 	tMap = make(map[int]string)
 
 	tMap[TOKEN_ADD] = "TOKEN_ADD"         // +
@@ -239,6 +242,9 @@ func initTokenMap() {
 	tMap[TOKEN_ARRAYLIST] = "TOKEN_ARRAYLIST"
 	tMap[TOKEN_DATE] = "TOKEN_DATE"
 	tMap[TOKEN_ENUM] = "TOKEN_ENUM"
+
+	//自定义处理关键字
+	tMap[TOKEN_ASSERT] = "TOKEN_ASSERT"
 
 }
 
@@ -360,6 +366,18 @@ const (
 	TOKEN_OBJECT
 	TOKEN_INTEGER
 	TOKEN_TYPE_END
+
+	//自定义处理关键字
+	TOKEN_EXTRA_START
+	TOKEN_ASSERT
+	TOKEN_IS_TRUE //isTrue
+	TOKEN_IS_FALSE
+	TOKEN_IS_NULL        //isNull
+	TOKEN_NOT_NULL       //notNull
+	TOKEN_HAS_TEXT       //hasText
+	TOKEN_NOT_EMPTY      //notEmpty
+	TOKEN_IS_INSTANCE_OF //isInstanceOf
+	TOKEN_EXTRA_END
 )
 
 func (this *Token) ToString() string {
