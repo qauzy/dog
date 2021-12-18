@@ -955,8 +955,18 @@ func (this *Parser) parseExp() ast.Exp {
 func (this *Parser) parseStatement() ast.Stm {
 	log.Debugf("*******解析代码段******* --> %v", this.current.Lexeme)
 	switch this.current.Kind {
+	case TOKEN_IS_NULL:
+		fallthrough
+	case TOKEN_NOT_EMPTY:
+		fallthrough
+	case TOKEN_HAS_TEXT:
+		fallthrough
+	case TOKEN_NOT_NULL:
+		fallthrough
+	case TOKEN_IS_TRUE:
+		fallthrough
 	case TOKEN_ASSERT:
-
+		return this.parseAssertExp()
 	case TOKEN_COMMENT:
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()

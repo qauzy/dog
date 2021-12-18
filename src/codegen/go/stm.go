@@ -173,6 +173,58 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		return cs
 	case *ast.Comment:
 		stmt = &gast.ExprStmt{X: gast.NewIdent(v.C)}
+	case *ast.Assert:
+		//stmt = &gast.ExprStmt{X: gast.NewIdent("************************************")}
+		cond := this.transExp(v.Cond)
+		block := new(gast.BlockStmt)
+		block.List = append(block.List, &gast.ExprStmt{X: this.transExp(v.E)})
+		switch v.Opt {
+		case "isTrue":
+			if e, ok := cond.(*gast.UnaryExpr); ok {
+				if e.Op == token.NOT {
+					cond = e.X
+				}
+			} else {
+				cond = &gast.BinaryExpr{
+					X:     cond,
+					OpPos: 0,
+					Op:    token.EQL,
+					Y:     gast.NewIdent("false"),
+				}
+			}
+
+		case "isNull":
+			cond = &gast.BinaryExpr{
+				X:     cond,
+				OpPos: 0,
+				Op:    token.NEQ,
+				Y:     gast.NewIdent("nil"),
+			}
+		case "notNull":
+			cond = &gast.BinaryExpr{
+				X:     cond,
+				OpPos: 0,
+				Op:    token.EQL,
+				Y:     gast.NewIdent("nil"),
+			}
+		case "hasText":
+			cond = &gast.BinaryExpr{
+				X:     cond,
+				OpPos: 0,
+				Op:    token.EQL,
+				Y:     gast.NewIdent("\"\""),
+			}
+		default:
+			this.TranslationBug("Assert语句转换bug")
+		}
+		stmt = &gast.IfStmt{
+			If:   0,
+			Init: nil,
+			Cond: cond,
+			Body: block,
+			Else: nil,
+		}
+
 	case *ast.Print:
 		//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
 	default:
