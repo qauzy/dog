@@ -21,12 +21,18 @@ func Bug(info string) {
 }
 
 func Debug(info string) {
-	var msg = joint(4, "[DEBUG]", info)
+	var msg = joint(5, "[DEBUG]", info)
 	l.Output(5, msg)
 }
 
 func ParserError(expect string, current string, linenum int, file string) {
 	var msg = joint(4, "[ERROR]", fmt.Sprintf("Expect: <%s>, but got <%s> at line:%d file:%s\n", expect, current, linenum, file))
+	l.Output(2, msg)
+	os.Exit(0)
+}
+
+func ParserError5(expect string, current string, linenum int, file string) {
+	var msg = joint(5, "[ERROR]", fmt.Sprintf("Expect: <%s>, but got <%s> at line:%d file:%s\n", expect, current, linenum, file))
 	l.Output(2, msg)
 	os.Exit(0)
 }

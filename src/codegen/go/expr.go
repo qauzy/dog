@@ -24,7 +24,7 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
-		if this.CurrentClass != nil && (this.CurrentClass.GetMethod(v.Name) != nil || this.CurrentClass.GetField(v.Name) != nil) {
+		if this.CurrentClass != nil && (this.CurrentMethod != nil && this.CurrentMethod.GetFormal(v.Name) == nil) && (this.CurrentClass.GetMethod(v.Name) != nil || this.CurrentClass.GetField(v.Name) != nil) {
 			v.Name = "this." + Capitalize(v.Name)
 		}
 		//是类型标识符,可能需要转换
@@ -369,6 +369,17 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			Op:    token.EQL,
 			Y:     this.transExp(v.Right),
 		}
+	case *ast.BuilderExpr:
+		call := &gast.CallExpr{
+			Fun:      gast.NewIdent("new"),
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+
+		call.Args = append(call.Args, this.transExp(v.X))
+		return call
 	default:
 		this.TranslationBug(v)
 	}

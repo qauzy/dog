@@ -1,5 +1,13 @@
 package ast
 
+type KEY int
+
+const (
+	CLASS_TYPE KEY = iota
+	ENUM_TYPE
+	INTERFACE_TYPE
+)
+
 /*--------------------interface------------------*/
 type File interface {
 	accept(v Visitor)
@@ -28,7 +36,7 @@ type Class interface {
 	GetMethod(name string) (m Method)
 	ListMethods() []Method
 	GetName() string
-	IsEnum() bool
+	GetType() KEY
 }
 
 type Field interface {
@@ -97,7 +105,7 @@ type ClassSingle struct {
 	FieldsMap  map[string]Field
 	Methods    []Method
 	MethodsMap map[string]Method
-	Enum       bool //枚举类型
+	Key        KEY //枚举类型
 }
 
 func (this *ClassSingle) accept(v Visitor) {
@@ -137,17 +145,17 @@ func (this *ClassSingle) ListMethods() []Method {
 	return this.Methods
 }
 
-func (this *ClassSingle) IsEnum() bool {
-	return this.Enum
+func (this *ClassSingle) GetType() KEY {
+	return this.Key
 }
 
-func NewClassSingle(Access int, Name string, Extends string, IsEnum bool) (cl *ClassSingle) {
+func NewClassSingle(Access int, Name string, Extends string, key KEY) (cl *ClassSingle) {
 	cl = &ClassSingle{
 		Access:     Access,
 		Name:       Name,
 		Extends:    Extends,
 		Fields:     nil,
-		Enum:       IsEnum,
+		Key:        key,
 		FieldsMap:  make(map[string]Field),
 		Methods:    nil,
 		MethodsMap: make(map[string]Method),
@@ -725,6 +733,27 @@ func (this *Call) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Call) _exp() {
+}
+
+/*}}}*/
+
+//Exp.BuilderExpr /*{{{*/
+type BuilderExpr struct {
+	X Exp
+	Exp_T
+}
+
+func BuilderExpr_new(x Exp, line int) *BuilderExpr {
+	e := new(BuilderExpr)
+	e.X = x
+	e.LineNum = line
+	return e
+}
+
+func (this *BuilderExpr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *BuilderExpr) _exp() {
 }
 
 /*}}}*/

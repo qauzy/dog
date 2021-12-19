@@ -95,7 +95,6 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		//log.Debugf("表达式语句:%v", v)
 		stmt = &gast.ExprStmt{X: this.transExp(v.E)}
 	case *ast.Throw:
-
 		log.Debugf("Throw语句:%v", v)
 		stmt = &gast.ReturnStmt{
 			Return:  0,

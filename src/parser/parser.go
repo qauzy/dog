@@ -62,7 +62,7 @@ func (this *Parser) eatToken(kind int) {
 		this.advance()
 		this.eatToken(kind)
 	} else {
-		util.ParserError(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
+		util.ParserError5(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
 	}
 }
 func (this *Parser) parseType() ast.Exp {
@@ -217,6 +217,7 @@ func (this *Parser) parseType() ast.Exp {
 		}
 
 	default:
+		//FIXME 类型可能带包名前缀
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		if this.current.Kind != TOKEN_LT {
@@ -333,6 +334,7 @@ func (this *Parser) parseCastExp() ast.Exp {
 // param: x
 // return:
 func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
+	var builder = false
 	for this.current.Kind == TOKEN_DOT {
 		this.eatToken(TOKEN_DOT)
 		if this.current.Kind == TOKEN_LENGTH {
@@ -354,9 +356,26 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			return ast.ClassExp_new(x, this.Linenum)
 		}
 
-		x = ast.SelectorExpr_new(x, this.current.Lexeme, this.Linenum)
+		//处理builder注解函数
+		if this.current.Lexeme == "builder" {
+			builder = true
+			this.eatToken(TOKEN_ID)
+			this.eatToken(TOKEN_LPAREN)
+			this.eatToken(TOKEN_RPAREN)
+			x = ast.BuilderExpr_new(x, this.Linenum)
+			//处理最后的build
+		} else if this.current.Lexeme == "build" {
+			this.eatToken(TOKEN_ID)
+			this.eatToken(TOKEN_LPAREN)
+			this.eatToken(TOKEN_RPAREN)
+		} else if builder {
 
-		this.eatToken(TOKEN_ID)
+			x = ast.SelectorExpr_new(x, "Set"+Capitalize(this.current.Lexeme), this.Linenum)
+			this.eatToken(TOKEN_ID)
+		} else {
+			x = ast.SelectorExpr_new(x, this.current.Lexeme, this.Linenum)
+			this.eatToken(TOKEN_ID)
+		}
 		if this.current.Kind == TOKEN_LPAREN {
 			this.eatToken(TOKEN_LPAREN)
 			args := this.parseExpList()
@@ -1598,22 +1617,37 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 
 		} else {
 
+			id := this.current.Lexeme
+
 			//处理类构造函数
-			if this.currentClass.GetName() == this.current.Lexeme && prefix == false {
-				log.Infof("处理构造函数-->%v", this.current.Lexeme)
-				IsConstruct = true
-				tmp.Tp = &ast.Void{ast.TYPE_VOID}
-				//变量/函数名
-				tmp.Name = "New" + this.current.Lexeme
+			if this.currentClass.GetName() == id && prefix == false {
+				this.advance()
+				if this.current.Kind == TOKEN_LPAREN {
+					log.Infof("处理构造函数-->%v", this.current.Lexeme)
+					IsConstruct = true
+					tmp.Tp = &ast.Void{ast.TYPE_VOID}
+					//变量/函数名
+					tmp.Name = "New" + id
+				} else {
+					tmp.Tp = &ast.ClassType{
+						Name:     id,
+						TypeKind: ast.TYPE_CLASS,
+					}
+
+					this.assignType = tmp.Tp
+					//变量/函数名
+					tmp.Name = this.current.Lexeme
+					this.eatToken(TOKEN_ID)
+				}
+
 			} else {
 				//类型
 				tmp.Tp = this.parseType()
 				this.assignType = tmp.Tp
 				//变量/函数名
 				tmp.Name = this.current.Lexeme
+				this.eatToken(TOKEN_ID)
 			}
-
-			this.eatToken(TOKEN_ID)
 
 			//成员方法
 			if this.current.Kind == TOKEN_LPAREN {
@@ -1689,69 +1723,6 @@ func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
 
 	return ast.NewMethodSingle(&ast.Void{}, "init", nil, stms, false, true, false, comment)
 }
-func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
-	var id, extends string
-
-	this.eatToken(TOKEN_ENUM)
-	id = this.current.Lexeme
-	this.eatToken(TOKEN_ID)
-	//处理implements
-	if this.current.Kind == TOKEN_IMPLEMENTS {
-		this.eatToken(TOKEN_IMPLEMENTS)
-		extends = this.current.Lexeme
-		this.eatToken(TOKEN_ID)
-	}
-	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends, true)
-	this.currentClass = classSingle
-	//处理枚举变量
-	for {
-		var comment string
-		//处理注释
-		if this.current.Kind == TOKEN_COMMENT {
-			comment = ""
-			for this.current.Kind == TOKEN_COMMENT {
-				comment += "\n" + this.current.Lexeme
-				this.advance()
-			}
-			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED && this.current.Kind != TOKEN_ID) {
-				return
-			}
-			log.Infof("注释-->%v", comment)
-		}
-
-		id = this.current.Lexeme
-		this.eatToken(TOKEN_ID)
-		//FIXME 只支持一个值枚举
-		if this.current.Kind == TOKEN_LPAREN {
-			this.eatToken(TOKEN_LPAREN)
-			l := this.parseExpList()
-			value := l[0]
-			classSingle.AddField(ast.NewFieldSingle(access, nil, id, value, false, true))
-			this.eatToken(TOKEN_RPAREN)
-		} else {
-			classSingle.AddField(ast.NewFieldSingle(access, nil, id, nil, false, true))
-		}
-
-		for this.current.Kind == TOKEN_COMMENT {
-			this.advance()
-		}
-		if this.current.Kind == TOKEN_SEMI {
-			this.eatToken(TOKEN_SEMI)
-			break
-		} else {
-
-			this.eatToken(TOKEN_COMMER)
-		}
-
-	}
-	//
-	this.parseClassContext(ast.NewClassSingle(access, id, extends, false))
-
-	this.eatToken(TOKEN_RBRACE)
-
-	return classSingle
-}
 
 // 解析类
 //
@@ -1769,6 +1740,10 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	if this.current.Kind == TOKEN_ENUM {
 
 		return this.parseEnumDecl(access)
+	}
+
+	if this.current.Kind == TOKEN_INTERFACE {
+		return this.parseInterfaceDecl(access)
 	}
 
 	//处理abstract
@@ -1801,9 +1776,11 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	}
 
 	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends, false)
+	classSingle := ast.NewClassSingle(access, id, extends, ast.CLASS_TYPE)
 	this.currentClass = classSingle
-
+	defer func() {
+		this.currentClass = nil
+	}()
 	this.parseClassContext(classSingle)
 	this.eatToken(TOKEN_RBRACE)
 	return classSingle
@@ -1849,10 +1826,10 @@ func (this *Parser) parseAnnotation() {
 			return
 		}
 		for {
-			this.parseNotExp() //id
+			this.parseExp() //id
 			if this.current.Kind == TOKEN_ASSIGN {
-				this.advance()     // =
-				this.parseNotExp() //id
+				this.advance()  // =
+				this.parseExp() //id
 			}
 			if this.current.Kind == TOKEN_COMMER {
 				this.eatToken(TOKEN_COMMER)

@@ -43,7 +43,10 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 		for _, fi := range cc.Fields {
 			//FIXME 是否排除static
-			if !fi.IsStatic() && !cc.IsEnum() {
+			if !fi.IsStatic() && cc.GetType() == ast.CLASS_TYPE {
+				if fi.GetName() == "SerialVersionUID" {
+					continue
+				}
 				gfi := this.transField(fi)
 				Type.Fields.List = append(Type.Fields.List, gfi)
 				this.constructFieldFunc(fi)
@@ -66,7 +69,9 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 // param: c
 func (this *Translation) transEnum(c ast.Class) {
 	this.CurrentClass = c
-
+	defer func() {
+		this.CurrentClass = nil
+	}()
 	if cc, ok := c.(*ast.ClassSingle); ok {
 		//1 定义枚举类型为int
 		t := &gast.GenDecl{

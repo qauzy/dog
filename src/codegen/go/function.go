@@ -145,6 +145,9 @@ func (this *Translation) constructFieldFunc(fi ast.Field) {
 // return:
 func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 	this.CurrentMethod = fi
+	defer func() {
+		this.CurrentMethod = nil
+	}()
 	if method, ok := fi.(*ast.MethodSingle); ok {
 		var recv *gast.FieldList
 

@@ -54,15 +54,25 @@ func (this *Translation) ParseClasses() {
 			Specs:  nil,
 			Rparen: 0,
 		}
-		this.GolangFile.Decls = append(this.GolangFile.Decls, v)
+
 		for _, f := range this.CurrentFile.ListFields() {
+			if f.GetName() == "serialVersionUID" {
+				continue
+			}
 			v.Specs = append(v.Specs, this.transGlobalField(f))
 		}
+
+		if v.Specs != nil {
+			this.GolangFile.Decls = append(this.GolangFile.Decls, v)
+		}
+
 	}
 
 	for _, c := range this.CurrentFile.ListClasses() {
-		if c.IsEnum() {
+		if c.GetType() == ast.ENUM_TYPE {
 			this.transEnum(c)
+		} else if c.GetType() == ast.INTERFACE_TYPE {
+
 		} else {
 			cl := this.transClass(c)
 			this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
@@ -140,10 +150,13 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	//获取文件名称(不带后缀)
 	fileNameOnly := strings.TrimSuffix(fileNameWithSuffix, fileType)
 
+	//删掉末尾的 "/"
+	base = strings.TrimSuffix(base, "/")
+
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
-	log.Warnf("------%v", suffix)
-	var dir = "./out/" + path.Base(base) + "/" + suffix
+	log.Warnf("suffix ------> %v", suffix)
+	var dir = "/opt/google/code/bitrade/core" + suffix
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}

@@ -233,7 +233,6 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Obj:     gast.NewObj(gast.Typ, v.Name),
 		}
 	case *ast.ObjectType:
-		//return gast.NewIdent("interface{}")
 		return &gast.InterfaceType{
 			Interface: 0,
 			Methods: &gast.FieldList{
