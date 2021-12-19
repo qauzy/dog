@@ -224,3 +224,56 @@ func (this *Translation) transEnum(c ast.Class) {
 
 	}
 }
+
+//
+func (this *Translation) transInterface(c ast.Class) {
+	this.CurrentClass = c
+	defer func() {
+		this.CurrentClass = nil
+	}()
+
+	it := &gast.GenDecl{
+		Doc:    nil,
+		TokPos: 0,
+		Tok:    token.TYPE,
+		Lparen: 0,
+		Specs:  nil,
+		Rparen: 0,
+	}
+
+	sp := &gast.TypeSpec{
+		Doc:     nil,
+		Name:    gast.NewIdent(c.GetName()),
+		Assign:  0,
+		Type:    nil,
+		Comment: nil,
+	}
+	Type := &gast.InterfaceType{
+		Interface: 0,
+		Methods: &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		},
+		Incomplete: false,
+	}
+	sp.Type = Type
+
+	for _, m := range c.ListMethods() {
+		gmeth := this.transFunc(m)
+
+		field := &gast.Field{
+			Doc:     nil,
+			Names:   []*gast.Ident{gmeth.Name},
+			Type:    gmeth.Type,
+			Tag:     nil,
+			Comment: nil,
+		}
+
+		Type.Methods.List = append(Type.Methods.List, field)
+	}
+	it.Specs = append(it.Specs, sp)
+
+	this.GolangFile.Decls = append(this.GolangFile.Decls, it)
+
+}

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"dog/ast"
-	log "github.com/corgi-kx/logcustom"
 )
 
 //
@@ -86,7 +85,6 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		this.eatToken(TOKEN_SEMI)
 		this.currentMethod = ast.NewMethodSingle(tp, id, formals, nil, false, false, false, "")
 		classSingle.AddMethod(this.currentMethod)
-		log.Debugf("*************** ->%v ", this.Linenum)
 	}
 	this.eatToken(TOKEN_RBRACE)
 	return classSingle

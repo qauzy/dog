@@ -128,7 +128,7 @@ func (this *Translation) transTriple(s ast.Stm) (stmts []gast.Stmt) {
 
 				stmts = append(stmts, q)
 			} else {
-				panic("should triple expr")
+				this.TranslationBug("必须是三目运算表达式")
 			}
 
 		}
