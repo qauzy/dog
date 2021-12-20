@@ -261,6 +261,9 @@ func (this *Translation) transInterface(c ast.Class) {
 
 	for _, m := range c.ListMethods() {
 		gmeth := this.transFunc(m)
+		if gmeth.Type.Results != nil {
+			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
+		}
 
 		field := &gast.Field{
 			Doc:     nil,

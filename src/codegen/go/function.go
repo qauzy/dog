@@ -425,6 +425,8 @@ func GetNewId(id string) (nId string) {
 		nId = "oMap"
 	} else if id == "type" {
 		nId = "oType"
+	} else if id == "var" {
+		nId = "vari"
 	} else {
 		nId = id
 	}

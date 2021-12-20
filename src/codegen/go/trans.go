@@ -238,7 +238,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Methods: &gast.FieldList{
 				Opening: 0,
 				List:    nil,
-				Closing: 0,
+				Closing: 1,
 			},
 			Incomplete: false,
 		}
@@ -263,7 +263,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Methods: &gast.FieldList{
 				Opening: 0,
 				List:    nil,
-				Closing: 0,
+				Closing: 1,
 			},
 			Incomplete: false,
 		}
