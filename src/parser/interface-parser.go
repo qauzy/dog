@@ -60,10 +60,51 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 
 	for this.TypeToken() ||
 		this.current.Kind == TOKEN_COMMENT ||
+		this.current.Kind == TOKEN_QUERY || //解析jpa的  @Query 注解,
 		this.current.Kind == TOKEN_PUBLIC ||
 		this.current.Kind == TOKEN_ID {
+
 		for this.current.Kind == TOKEN_COMMENT {
 			this.advance()
+		}
+		if this.current.Kind == TOKEN_QUERY {
+			this.eatToken(TOKEN_QUERY)
+			this.eatToken(TOKEN_LPAREN)
+
+			//获得sql 有多重形式
+			//1 value = "xxx",nativeQuery = xxx
+			id = this.current.Lexeme
+			this.advance()
+			if this.current.Kind == TOKEN_ASSIGN {
+				this.eatToken(TOKEN_ASSIGN)
+				this.advance()
+				for this.current.Kind == TOKEN_ADD {
+					this.advance()
+					this.advance()
+
+				}
+				for this.current.Kind == TOKEN_COMMER {
+					this.eatToken(TOKEN_COMMER)
+					this.eatToken(TOKEN_ID)
+					this.eatToken(TOKEN_ASSIGN)
+					this.advance()
+					for this.current.Kind == TOKEN_ADD {
+						this.advance()
+						this.advance()
+					}
+				}
+
+				// 2 xxx + xxxx
+			} else if this.current.Kind == TOKEN_ADD {
+				for this.current.Kind == TOKEN_ADD {
+					this.advance()
+					this.advance()
+				}
+
+			}
+			//2 "xxxx"
+
+			this.eatToken(TOKEN_RPAREN)
 		}
 
 		if this.current.Kind == TOKEN_PUBLIC {

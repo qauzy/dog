@@ -251,6 +251,7 @@ func initTokenMap() {
 
 	//自定义处理关键字
 	tMap[TOKEN_ASSERT] = "TOKEN_ASSERT"
+	tMap[TOKEN_QUERY] = "TOKEN_QUERY"
 
 }
 
@@ -385,6 +386,7 @@ const (
 	TOKEN_HAS_TEXT       //hasText
 	TOKEN_NOT_EMPTY      //notEmpty
 	TOKEN_IS_INSTANCE_OF //isInstanceOf
+	TOKEN_QUERY
 	TOKEN_EXTRA_END
 )
 

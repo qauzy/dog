@@ -1,12 +1,13 @@
 package control
 
-var Lexer_test bool = false
-var Lexer_dump bool = true
+var Lexer_test = false
+var Lexer_dump = true
 
-var CodeGen_fileName string = ""
-var CodeGen_outputName string = ""
+var CodeGen_base = ""
+var CodeGen_fileName = ""
+var CodeGen_outputName = ""
 
-var CodeGen_dump bool = false
+var CodeGen_dump = false
 
 type CodeGen_Kind int
 

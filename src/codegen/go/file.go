@@ -155,8 +155,8 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
-	log.Warnf("suffix ------> %v", suffix)
-	var dir = "/mnt/d/code/bitrade/core" + suffix
+	log.Debugf("suffix ------> %v", suffix)
+	var dir = "/opt/google/code/bitrade/core" + suffix
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}

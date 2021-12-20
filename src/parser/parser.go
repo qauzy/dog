@@ -35,7 +35,7 @@ func NewParse(fname string, buf []byte) *Parser {
 
 func (this *Parser) advance() {
 	if control.Lexer_dump == true {
-		util.Debug(this.current.ToString())
+		//util.Debug(this.current.ToString())
 	}
 	this.Linenum = this.current.LineNum
 	this.current = this.lexer.NextToken()
@@ -43,14 +43,6 @@ func (this *Parser) advance() {
 	//处理所有注解
 	for this.current.Kind == TOKEN_AT {
 		this.parseAnnotation()
-		//this.eatToken(TOKEN_AT)
-		//this.eatToken(TOKEN_ID)
-		//if this.current.Kind == TOKEN_LPAREN {
-		//	for this.current.Kind != TOKEN_RPAREN {
-		//		this.advance()
-		//	}
-		//	this.advance()
-		//}
 	}
 
 }
@@ -62,7 +54,7 @@ func (this *Parser) eatToken(kind int) {
 		this.advance()
 		this.eatToken(kind)
 	} else {
-		util.ParserError5(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
+		util.ParserError(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
 	}
 }
 func (this *Parser) parseType() ast.Exp {
@@ -267,9 +259,10 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 		pre := this.current.Lexeme
 
 		tp = this.parseNotExp()
-		log.Debugf("解析函数 --> 需要类型推断 -> %v", this.current.Lexeme)
+
 		//不用类型推断
 		if this.current.Kind == TOKEN_ID {
+			log.Debugf("解析函数 --> 不需要类型推断 -> %v", this.current.Lexeme)
 			id = this.current.Lexeme
 			id = GetNewId(id)
 			this.eatToken(TOKEN_ID)
@@ -312,7 +305,6 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 
 //强制类型转换
 func (this *Parser) parseCastExp() ast.Exp {
-	log.Infof("****************** - > %v", this.current.Lexeme)
 	switch this.current.Kind {
 	case TOKEN_LPAREN:
 		this.advance()
@@ -1553,6 +1545,11 @@ func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
 
 func (this *Parser) parseAnnotation() {
 	this.eatToken(TOKEN_AT)
+	//TODO 不忽略的注解
+	if this.current.Lexeme == "Query" {
+		this.current.Kind = TOKEN_QUERY
+		return
+	}
 	this.eatToken(TOKEN_ID)
 	//带参数的注解
 	if this.current.Kind == TOKEN_LPAREN {
@@ -1661,7 +1658,7 @@ func (this *Parser) parseProgram() ast.File {
 			Path: path,
 		}
 		this.eatToken(TOKEN_SEMI)
-		log.Warnf("导入:%v --> %v", path, id)
+		log.Debugf("导入:%v --> %v", path, id)
 		this.currentFile.AddImport(im)
 
 	}
