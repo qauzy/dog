@@ -279,4 +279,120 @@ func (this *Translation) transInterface(c ast.Class) {
 
 	this.GolangFile.Decls = append(this.GolangFile.Decls, it)
 
+	this.buildDao(c)
+
+}
+
+func (this *Translation) buildDao(c ast.Class) {
+	cl := &gast.GenDecl{
+		Doc:    nil,
+		TokPos: 0,
+		Tok:    token.TYPE,
+		Lparen: 0,
+		Specs:  nil,
+		Rparen: 0,
+	}
+
+	sp := &gast.TypeSpec{
+		Doc:     nil,
+		Name:    gast.NewIdent(DeCapitalize(c.GetName())),
+		Assign:  0,
+		Type:    nil,
+		Comment: nil,
+	}
+	Type := &gast.StructType{
+		Struct: 0,
+		Fields: &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		},
+		Incomplete: false,
+	}
+	sp.Type = Type
+
+	Type.Fields.List = append(Type.Fields.List, this.getField(gast.NewIdent("db"), gast.NewIdent("*db.DB")))
+
+	cl.Specs = append(cl.Specs, sp)
+
+	this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
+
+	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getNewDaoFunc(c))
+
+}
+
+func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
+	var init gast.Stmt // 构造函数的初始化语句
+	//处理函数参数
+	params := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
+	params.List = append(params.List, this.getField(gast.NewIdent("db"), gast.NewIdent("*db.DB")))
+	//处理返回值
+	results := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
+
+	results.List = append(results.List, this.getField(gast.NewIdent("dao"), gast.NewIdent(c.GetName())))
+
+	var body = &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+
+	call := &gast.CallExpr{
+		Fun:      gast.NewIdent("new"),
+		Lparen:   0,
+		Args:     nil,
+		Ellipsis: 0,
+		Rparen:   0,
+	}
+
+	call.Args = append(call.Args, gast.NewIdent(DeCapitalize(c.GetName())))
+	init = &gast.AssignStmt{
+		Lhs:    []gast.Expr{gast.NewIdent("dao")},
+		TokPos: 0,
+		Tok:    token.ASSIGN,
+		Rhs:    []gast.Expr{call},
+	}
+
+	body.List = append(body.List, init)
+
+	retStm := &gast.ReturnStmt{
+		Return:  0,
+		Results: nil,
+	}
+
+	//body.List = append(body.List, &gast.ExprStmt{gast.NewIdent("dao.")})
+
+	body.List = append(body.List, retStm)
+
+	fn = &gast.FuncDecl{
+		Doc:  nil,
+		Recv: nil,
+		Name: gast.NewIdent("New" + c.GetName()),
+		Type: &gast.FuncType{
+			Func:    0,
+			Params:  params,
+			Results: results,
+		},
+		Body: body,
+	}
+	return
+}
+
+func (this *Translation) getField(name *gast.Ident, tp *gast.Ident) (gfi *gast.Field) {
+	gfi = &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{name},
+		Type:    tp,
+		Tag:     nil,
+		Comment: nil,
+	}
+	return
 }

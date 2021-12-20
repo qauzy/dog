@@ -297,3 +297,22 @@ func Capitalize(str string) string {
 	}
 	return upperStr
 }
+
+func DeCapitalize(str string) string {
+	var upperStr string
+	vv := []rune(str) // 后文有介绍
+	for i := 0; i < len(vv); i++ {
+		if i == 0 {
+			if vv[i] >= 65 && vv[i] <= 90 { // 后文有介绍
+				vv[i] += 32 // string的码表相差32位
+				upperStr += string(vv[i])
+			} else {
+				//log.Info("Not begins with lowercase letter,")
+				return str
+			}
+		} else {
+			upperStr += string(vv[i])
+		}
+	}
+	return upperStr
+}
