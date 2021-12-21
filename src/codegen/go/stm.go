@@ -2,7 +2,9 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"fmt"
 	log "github.com/corgi-kx/logcustom"
+	"github.com/xwb1989/sqlparser"
 	gast "go/ast"
 	"go/token"
 	"reflect"
@@ -225,10 +227,31 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 
 	case *ast.Print:
-		//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
+	//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
+	case *ast.Query:
+		stm, err := sqlparser.Parse(v.SQL)
+		if err != nil {
+			log.Errorf("Query=%v", err)
+		}
+
+		// Otherwise do something with stmt
+		switch stm := stm.(type) {
+		case *sqlparser.Select:
+			_ = stm
+		case *sqlparser.Insert:
+		}
+
+		exe := `eng := this.DBWrite().Exec(` + v.SQL + `%v)
+	err = eng.Error`
+		var args string
+		for _, v := range this.CurrentMethod.ListFormal() {
+			args += ","
+			args += v.GetName()
+		}
+		exe = fmt.Sprintf(exe, args)
+		stmt = &gast.ExprStmt{X: gast.NewIdent(exe)}
 	default:
-		log.Debugf("transBlock-->%v -->%v", reflect.TypeOf(s).String(), v)
-		panic("bug")
+		this.TranslationBug(v)
 
 	}
 

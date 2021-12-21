@@ -67,8 +67,18 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		for this.current.Kind == TOKEN_COMMENT {
 			this.advance()
 		}
+		var stms []ast.Stm
 		if this.current.Kind == TOKEN_QUERY {
-			this.parseQuery()
+			q := this.parseQuery()
+			if q != nil {
+				stms = append(stms, q)
+				stms = append(stms, ast.Return_new(nil, this.Linenum))
+
+			}
+		}
+
+		if stms == nil {
+			stms = append(stms, ast.Return_new(nil, this.Linenum))
 		}
 
 		if this.current.Kind == TOKEN_PUBLIC {
@@ -81,14 +91,13 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 			return classSingle
 		}
 		tp := this.parseType()
-
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_LPAREN)
 		formals := this.parseFormalList(false)
 		this.eatToken(TOKEN_RPAREN)
 		this.eatToken(TOKEN_SEMI)
-		this.currentMethod = ast.NewMethodSingle(tp, id, formals, nil, false, false, false, "")
+		this.currentMethod = ast.NewMethodSingle(tp, id, formals, stms, false, false, false, "")
 		classSingle.AddMethod(this.currentMethod)
 	}
 	this.eatToken(TOKEN_RBRACE)

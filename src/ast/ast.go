@@ -62,6 +62,7 @@ type Method interface {
 	_method()
 	GetName() string //获取方法名
 	GetFormal(name string) (f Field)
+	ListFormal() (f []Field)
 	IsConstruct() bool //是否构造方法
 	IsStatic() bool    //是否静态方法
 	IsThrows() bool    //是否抛出异常
@@ -268,6 +269,10 @@ func (this *MethodSingle) IsThrows() bool {
 
 func (this *MethodSingle) GetFormal(name string) (f Field) {
 	f = this.FormalsMap[name]
+	return
+}
+func (this *MethodSingle) ListFormal() (f []Field) {
+	f = this.Formals
 	return
 }
 
@@ -1568,6 +1573,28 @@ func (this *AssignArray) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *AssignArray) _stm() {
+}
+
+/*}}}*/
+//Stm.Query /*{{{*/
+type Query struct {
+	SQL         string
+	NativeQuery bool
+	Stm_T
+}
+
+func Query_new(SQL string, NativeQuery bool, line int) *Query {
+	s := new(Query)
+	s.SQL = SQL
+	s.NativeQuery = NativeQuery
+	s.LineNum = line
+	return s
+}
+
+func (this *Query) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Query) _stm() {
 }
 
 /*}}}*/

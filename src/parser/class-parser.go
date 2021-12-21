@@ -110,8 +110,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		this.current.Kind == TOKEN_FINAL ||
 		this.current.Kind == TOKEN_COMMENT ||
 		this.current.Kind == TOKEN_STATIC {
-
-		log.Debugf("解析类上下文...... -- >%v", this.current.Lexeme)
 		var comment string
 		//处理注释
 		if this.current.Kind == TOKEN_COMMENT {
@@ -123,7 +121,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
 				return
 			}
-			//log.Infof("注释-->%v", comment)
 		}
 		var tmp ast.FieldSingle
 		var IsConstruct = false
@@ -181,7 +178,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		} else {
 
 			id := this.current.Lexeme
-
 			//处理类构造函数
 			if this.currentClass.GetName() == id && prefix == false {
 				this.advance()

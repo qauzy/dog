@@ -263,6 +263,13 @@ func (this *Translation) transInterface(c ast.Class) {
 		gmeth := this.transFunc(m)
 		if gmeth.Type.Results != nil {
 			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
+		} else {
+			gmeth.Type.Results = &gast.FieldList{
+				Opening: 0,
+				List:    nil,
+				Closing: 0,
+			}
+			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
 		}
 
 		field := &gast.Field{
@@ -283,6 +290,9 @@ func (this *Translation) transInterface(c ast.Class) {
 
 }
 
+// dao接口实现
+//
+// param: c
 func (this *Translation) buildDao(c ast.Class) {
 	cl := &gast.GenDecl{
 		Doc:    nil,
@@ -311,13 +321,36 @@ func (this *Translation) buildDao(c ast.Class) {
 	}
 	sp.Type = Type
 
-	Type.Fields.List = append(Type.Fields.List, this.getField(gast.NewIdent("db"), gast.NewIdent("*db.DB")))
+	Type.Fields.List = append(Type.Fields.List, this.getField(gast.NewIdent(""), gast.NewIdent("*db.DB")))
 
 	cl.Specs = append(cl.Specs, sp)
 
 	this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
 
 	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getNewDaoFunc(c))
+
+	//接口实现
+	for _, m := range c.ListMethods() {
+		gmeth := this.transFunc(m)
+		for _, v := range gmeth.Recv.List {
+			//实现接口的struct名字小写开口
+			v.Type = &gast.StarExpr{X: gast.NewIdent(DeCapitalize(c.GetName()))}
+		}
+
+		//每个函数末尾加err 返回
+		if gmeth.Type.Results != nil {
+			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
+		} else {
+			gmeth.Type.Results = &gast.FieldList{
+				Opening: 0,
+				List:    nil,
+				Closing: 0,
+			}
+			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
+		}
+
+		this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
+	}
 
 }
 
@@ -351,13 +384,9 @@ func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 		OpPos: 0,
 		Op:    token.AND,
 		X: &gast.CompositeLit{
-			Type:   gast.NewIdent(DeCapitalize(c.GetName())),
-			Lbrace: 0,
-			Elts: []gast.Expr{&gast.KeyValueExpr{
-				Key:   gast.NewIdent("db"),
-				Colon: 0,
-				Value: gast.NewIdent("db"),
-			}},
+			Type:       gast.NewIdent(DeCapitalize(c.GetName())),
+			Lbrace:     0,
+			Elts:       []gast.Expr{gast.NewIdent("db")},
 			Rbrace:     0,
 			Incomplete: false,
 		},
