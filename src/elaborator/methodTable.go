@@ -5,13 +5,13 @@ import (
 	"fmt"
 )
 
-var method_table map[string]ast.Type
+var method_table map[string]ast.Exp
 
 func initMethodTable() {
-	method_table = make(map[string]ast.Type)
+	method_table = make(map[string]ast.Exp)
 }
 
-func mt_get(id string) ast.Type {
+func mt_get(id string) ast.Exp {
 	return method_table[id]
 }
 

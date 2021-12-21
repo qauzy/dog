@@ -321,6 +321,7 @@ func (this *Translation) buildDao(c ast.Class) {
 
 }
 
+//dao构造函数
 func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 	var init gast.Stmt // 构造函数的初始化语句
 	//处理函数参数
@@ -345,20 +346,28 @@ func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 		Rbrace: 0,
 	}
 
-	call := &gast.CallExpr{
-		Fun:      gast.NewIdent("new"),
-		Lparen:   0,
-		Args:     nil,
-		Ellipsis: 0,
-		Rparen:   0,
+	//初始化语句
+	val := &gast.UnaryExpr{
+		OpPos: 0,
+		Op:    token.AND,
+		X: &gast.CompositeLit{
+			Type:   gast.NewIdent(DeCapitalize(c.GetName())),
+			Lbrace: 0,
+			Elts: []gast.Expr{&gast.KeyValueExpr{
+				Key:   gast.NewIdent("db"),
+				Colon: 0,
+				Value: gast.NewIdent("db"),
+			}},
+			Rbrace:     0,
+			Incomplete: false,
+		},
 	}
 
-	call.Args = append(call.Args, gast.NewIdent(DeCapitalize(c.GetName())))
 	init = &gast.AssignStmt{
 		Lhs:    []gast.Expr{gast.NewIdent("dao")},
 		TokPos: 0,
 		Tok:    token.ASSIGN,
-		Rhs:    []gast.Expr{call},
+		Rhs:    []gast.Expr{val},
 	}
 
 	body.List = append(body.List, init)
@@ -367,8 +376,6 @@ func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 		Return:  0,
 		Results: nil,
 	}
-
-	//body.List = append(body.List, &gast.ExprStmt{gast.NewIdent("dao.")})
 
 	body.List = append(body.List, retStm)
 
