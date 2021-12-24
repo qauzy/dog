@@ -19,6 +19,8 @@ func dog_Parser(filename string, buf []byte) ast.File {
 }
 
 func main() {
+	//tool.PrintAst()
+	//return
 	//log.SetLogDiscardLevel(log.Levelwarn)
 	args := os.Args[1:len(os.Args)]
 	control.CodeGen_base = control.Do_arg(args)

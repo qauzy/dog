@@ -282,6 +282,19 @@ func (this *Translation) transInterface(c ast.Class) {
 
 		Type.Methods.List = append(Type.Methods.List, field)
 	}
+
+	//Save
+	gmeth := this.getSaveDao(c)
+	field := &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{gmeth.Name},
+		Type:    gmeth.Type,
+		Tag:     nil,
+		Comment: nil,
+	}
+
+	Type.Methods.List = append(Type.Methods.List, field)
+
 	it.Specs = append(it.Specs, sp)
 
 	this.GolangFile.Decls = append(this.GolangFile.Decls, it)
@@ -351,75 +364,9 @@ func (this *Translation) buildDao(c ast.Class) {
 
 		this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
 	}
+	//TODO 增加Save,FindAll,FindById等接口
+	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getSaveDao(c))
 
-}
-
-//dao构造函数
-func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
-	var init gast.Stmt // 构造函数的初始化语句
-	//处理函数参数
-	params := &gast.FieldList{
-		Opening: 0,
-		List:    nil,
-		Closing: 0,
-	}
-	params.List = append(params.List, this.getField(gast.NewIdent("db"), gast.NewIdent("*db.DB")))
-	//处理返回值
-	results := &gast.FieldList{
-		Opening: 0,
-		List:    nil,
-		Closing: 0,
-	}
-
-	results.List = append(results.List, this.getField(gast.NewIdent("dao"), gast.NewIdent(c.GetName())))
-
-	var body = &gast.BlockStmt{
-		Lbrace: 0,
-		List:   nil,
-		Rbrace: 0,
-	}
-
-	//初始化语句
-	val := &gast.UnaryExpr{
-		OpPos: 0,
-		Op:    token.AND,
-		X: &gast.CompositeLit{
-			Type:       gast.NewIdent(DeCapitalize(c.GetName())),
-			Lbrace:     0,
-			Elts:       []gast.Expr{gast.NewIdent("db")},
-			Rbrace:     0,
-			Incomplete: false,
-		},
-	}
-
-	init = &gast.AssignStmt{
-		Lhs:    []gast.Expr{gast.NewIdent("dao")},
-		TokPos: 0,
-		Tok:    token.ASSIGN,
-		Rhs:    []gast.Expr{val},
-	}
-
-	body.List = append(body.List, init)
-
-	retStm := &gast.ReturnStmt{
-		Return:  0,
-		Results: nil,
-	}
-
-	body.List = append(body.List, retStm)
-
-	fn = &gast.FuncDecl{
-		Doc:  nil,
-		Recv: nil,
-		Name: gast.NewIdent("New" + c.GetName()),
-		Type: &gast.FuncType{
-			Func:    0,
-			Params:  params,
-			Results: results,
-		},
-		Body: body,
-	}
-	return
 }
 
 func (this *Translation) getField(name *gast.Ident, tp *gast.Ident) (gfi *gast.Field) {

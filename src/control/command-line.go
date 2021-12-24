@@ -26,7 +26,7 @@ const (
 
 const (
 	VERSION = "dog v0.2.0 linux/i386"
-	WEBSITE = "https://github.com/qc1iu/dog-comp"
+	WEBSITE = "https://github.com/qc1iu/dog"
 )
 
 /**
