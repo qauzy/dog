@@ -20,3 +20,14 @@ func (this *Translation) getExpr(src string) (expr gast.Expr) {
 	expr = exprStmt.X
 	return
 }
+
+func (this *Translation) getFunc(src string) (fn *gast.FuncDecl) {
+	src = fmt.Sprintf(`package p; %v`, src)
+
+	f, err := parser.ParseFile(token.NewFileSet(), "", src, 0)
+	if err != nil {
+		this.TranslationBug(err)
+	}
+	fn = f.Decls[0].(*gast.FuncDecl)
+	return
+}
