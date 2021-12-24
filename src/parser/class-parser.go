@@ -54,6 +54,16 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 		this.eatToken(TOKEN_IMPLEMENTS)
 		extends = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
+		//FIXME 泛型忽略
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			this.eatToken(TOKEN_ID)
+			for this.current.Kind == TOKEN_COMMER {
+				this.eatToken(TOKEN_COMMER)
+				this.eatToken(TOKEN_ID)
+			}
+			this.eatToken(TOKEN_GT)
+		}
 	}
 
 	this.eatToken(TOKEN_LBRACE)

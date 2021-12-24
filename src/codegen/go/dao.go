@@ -140,3 +140,25 @@ func (this *Translation) getSaveDao(c ast.Class) (fn *gast.FuncDecl) {
 
 	return
 }
+
+//func getExtraFun() {
+//	f, err := parser.ParseFile(token.NewFileSet(), "", `package p; func f() { x, y, z := x, y, z }`, 0)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// RHS refers to undefined globals; LHS does not.
+//	as := f.Decls[0].(*gast.FuncDecl).Body.List[0].(*gast.AssignStmt)
+//	for _, v := range as.Rhs {
+//		id := v.(*gast.Ident)
+//		if id.Obj != nil {
+//			t.Errorf("rhs %s has Obj, should not", id.Name)
+//		}
+//	}
+//	for _, v := range as.Lhs {
+//		id := v.(*gast.Ident)
+//		if id.Obj == nil {
+//			t.Errorf("lhs %s does not have Obj, should", id.Name)
+//		}
+//	}
+//}

@@ -49,6 +49,13 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			Op:    token.LAND,
 			Y:     this.transExp(v.Right),
 		}
+	case *ast.And:
+		expr = &gast.BinaryExpr{
+			X:     this.transExp(v.Left),
+			OpPos: 0,
+			Op:    token.AND,
+			Y:     this.transExp(v.Right),
+		}
 	case *ast.Lt:
 		expr = &gast.BinaryExpr{
 			X:     this.transExp(v.Left),
@@ -349,6 +356,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.Float:
 		return gast.NewIdent("float64")
 	case *ast.NewDate:
+		if len(v.Params) == 1 {
+			exp := this.getExpr("time.UnixMilli()")
+			callExp := exp.(*gast.CallExpr)
+			callExp.Args = []gast.Expr{this.transExp(v.Params[0])}
+			return exp
+		}
 		return gast.NewIdent("time.Now()")
 	case *ast.String:
 		return gast.NewIdent("string")
@@ -379,6 +392,29 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 
 		call.Args = append(call.Args, this.transExp(v.X))
+		return call
+	case *ast.NewArray:
+		call := &gast.CallExpr{
+			Fun:      gast.NewIdent("make"),
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+
+		t := &gast.ArrayType{
+			Lbrack: 0,
+			Len:    nil,
+			Elt:    this.transExp(v.Ele),
+		}
+		call.Args = append(call.Args, t)
+
+		len := &gast.BasicLit{
+			ValuePos: 0,
+			Kind:     token.INT,
+			Value:    "0",
+		}
+		call.Args = append(call.Args, len)
 		return call
 	default:
 		this.TranslationBug(v)

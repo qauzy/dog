@@ -60,54 +60,13 @@ func (this *Parser) parseStatement() ast.Stm {
 		//3 赋值语句左边表达式
 		//4 泛型类型声明
 		id := this.current.Lexeme
-		exp := this.parseNotExp()
+		this.advance()
+		x := ast.NewIdent(id, this.Linenum)
+		exp := this.parseCallExp(x)
 		switch this.current.Kind {
 		//处理声明临时变量和赋值语句
 		case TOKEN_ID:
-			log.Debugf("*******解析临时变量声明语句*******")
-			id = this.current.Lexeme
-			this.eatToken(TOKEN_ID)
-			decl := ast.DeclStmt_new(nil, exp, nil, this.Linenum)
-			decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
-			//有赋值语句
-			if this.current.Kind == TOKEN_ASSIGN {
-				//临时变量类型
-				log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
-				this.eatToken(TOKEN_ASSIGN)
-				exp := this.parseExp()
-				//三元表达式
-				if _, ok := exp.(*ast.Question); ok {
-					decl.SetTriple()
-				}
-				decl.Values = append(decl.Values, exp)
-			}
-
-			//定义多个变量
-			for this.current.Kind == TOKEN_COMMER {
-				this.advance()
-				id = this.current.Lexeme
-				this.eatToken(TOKEN_ID)
-				decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
-
-				if this.current.Kind == TOKEN_ASSIGN {
-					//临时变量类型
-					log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
-					this.eatToken(TOKEN_ASSIGN)
-					exp := this.parseExp()
-					//三元表达式
-					if _, ok := exp.(*ast.Question); ok {
-						decl.SetTriple()
-					}
-					decl.Values = append(decl.Values, exp)
-				}
-
-			}
-			this.eatToken(TOKEN_SEMI)
-			return decl
-
-		case TOKEN_LPAREN:
-			//直接函数调用语句
-			fallthrough
+			return this.parserDecl(exp)
 		case TOKEN_DOT:
 			log.Debugf("*******解析函数调用*******")
 			exp := this.parseExp()
@@ -218,6 +177,11 @@ func (this *Parser) parseStatement() ast.Stm {
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "-=", this.Linenum)
 		case TOKEN_LBRACK:
 			this.eatToken(TOKEN_LBRACK) //[
+			//数组类型
+			if this.current.Kind == TOKEN_RBRACK {
+				this.eatToken(TOKEN_RBRACK) //]
+				return this.parserDecl(&ast.ArrayType{Ele: exp})
+			}
 			index := this.parseExp()
 			this.eatToken(TOKEN_RBRACK) //]
 			this.eatToken(TOKEN_ASSIGN)

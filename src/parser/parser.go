@@ -22,6 +22,7 @@ type Parser struct {
 	currentFile   ast.File   //当前解析的File
 	currentClass  ast.Class  //当前解析的class TODO 类嵌套
 	currentMethod ast.Method //当前解析的Method	TODO 函数嵌套
+	currentStm    ast.Stm    //当前解析的Stm
 	Linenum       int
 }
 
@@ -59,6 +60,16 @@ func (this *Parser) eatToken(kind int) {
 }
 func (this *Parser) parseType() ast.Exp {
 	switch this.current.Kind {
+	case TOKEN_CHAR:
+		this.advance()
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ArrayType{Ele: &ast.Char{}}
+		} else {
+			this.currentType = &ast.Char{}
+		}
+
 	case TOKEN_FLOAT:
 		fallthrough
 	case TOKEN_DOUBLE:
@@ -321,12 +332,18 @@ func (this *Parser) parseCastExp() ast.Exp {
 	return nil
 }
 
-// 成员(函数/变量)访问语句
+// 成员(函数/变量)访问语句 "." 或 "(" 开头作为判定条件
 //
 // param: x
 // return:
 func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 	var builder = false
+	if this.current.Kind == TOKEN_LPAREN {
+		this.eatToken(TOKEN_LPAREN)
+		args := this.parseExpList()
+		this.eatToken(TOKEN_RPAREN)
+		x = ast.CallExpr_new(x, args, this.Linenum)
+	}
 	for this.current.Kind == TOKEN_DOT {
 		this.eatToken(TOKEN_DOT)
 		if this.current.Kind == TOKEN_LENGTH {
@@ -403,6 +420,11 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			n.Value = s
 			n.LineNum = this.Linenum
 			return n
+		} else if this.current.Kind == TOKEN_ID {
+			id := this.current.Lexeme
+			this.advance()
+			return ast.NewIdent("-"+id, this.Linenum)
+
 		} else {
 			this.ParseBug("加法解析bug")
 		}
@@ -538,6 +560,12 @@ func (this *Parser) parseAtomExp() ast.Exp {
 func (this *Parser) parseNewExp() ast.Exp {
 	this.advance()
 	switch this.current.Kind {
+	case TOKEN_BYTE:
+		this.advance()
+		this.eatToken(TOKEN_LBRACK)
+		exp := this.parseExp()
+		this.eatToken(TOKEN_RBRACK)
+		return ast.NewArray_new(ast.NewIdent("byte", this.Linenum), exp, this.Linenum)
 	case TOKEN_INT:
 		this.advance()
 		this.eatToken(TOKEN_LBRACK)
@@ -546,6 +574,12 @@ func (this *Parser) parseNewExp() ast.Exp {
 		return ast.NewIntArray_new(exp, this.Linenum)
 	case TOKEN_STRING:
 		this.advance()
+		if this.current.Kind == TOKEN_LPAREN {
+			this.eatToken(TOKEN_LPAREN)
+			args := this.parseExpList()
+			this.eatToken(TOKEN_RPAREN)
+			return ast.CallExpr_new(ast.NewIdent("string", this.Linenum), args, this.Linenum)
+		}
 		this.eatToken(TOKEN_LBRACK)
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RBRACK)
@@ -606,6 +640,11 @@ func (this *Parser) parseNewExp() ast.Exp {
 	case TOKEN_DATE:
 		this.eatToken(TOKEN_DATE)
 		this.eatToken(TOKEN_LPAREN)
+		if this.current.Kind != TOKEN_RPAREN {
+			exps := this.parseExpList()
+			this.eatToken(TOKEN_RPAREN)
+			return ast.NewDateParam_new(this.Linenum, exps)
+		}
 		this.eatToken(TOKEN_RPAREN)
 		return ast.NewDate_new(this.Linenum)
 	case TOKEN_HASHSET:
@@ -1005,6 +1044,16 @@ func (this *Parser) parseQuestionExp() ast.Exp {
 //          -> OrExp
 func (this *Parser) parseExp() ast.Exp {
 	log.Debugf("解析 parseExp")
+
+	//数组赋值语句
+	if this.current.Kind == TOKEN_LBRACE {
+		log.Infof("TOKEN_LBRACK --> 数组赋值语句")
+		this.eatToken(TOKEN_LBRACE)
+		exps := this.parseExpList()
+		this.eatToken(TOKEN_RBRACE)
+		return ast.ArrayAssign_new(exps, this.Linenum)
+	}
+
 	left := this.parseQuestionExp()
 	//
 	if id, ok := left.(*ast.Id); ok {
@@ -1028,6 +1077,7 @@ func (this *Parser) parseExp() ast.Exp {
 		right := this.parseQuestionExp()
 		return ast.Instanceof_new(left, right, this.Linenum)
 	}
+
 	return left
 }
 

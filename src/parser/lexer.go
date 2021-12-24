@@ -121,7 +121,7 @@ func (this *Lexer) lex_Comments(c byte) (comment string) {
 	var ed = 0
 	//行注释
 	if ex == '/' {
-		for ex != '\n' && this.fp < len(this.buf) {
+		for ex != '\n' && this.fp+1 < len(this.buf) {
 			this.fp++
 			ex = this.buf[this.fp]
 		}
@@ -160,12 +160,20 @@ func (this *Lexer) lex_Comments(c byte) (comment string) {
 func (this *Lexer) lex_Num(c byte) string {
 	var s string
 	s += string(c)
-
+	var f = false
+	var hex = false
 	for {
 		next := this.buf[this.fp]
 		this.fp++
-		var f = false
-		if next >= '0' && next <= '9' || next == '.' && !f {
+
+		//16进制
+		if s == "0" && next == 'x' {
+			hex = true
+			s += string(next)
+			continue
+		}
+
+		if next >= '0' && next <= '9' || hex && ((next >= 'a' && next <= 'f') || (next >= 'A' && next <= 'F')) || next == '.' && !f {
 			if next == '.' {
 				f = true
 			}
@@ -176,17 +184,18 @@ func (this *Lexer) lex_Num(c byte) string {
 		//999abc is not number
 		if (next == '_') || (next >= 'a' && next <= 'z' && (next != 'f')) ||
 			(next >= 'A' && next <= 'Z' && next != 'L') {
-			log.Errorf("ilegal number,%v", string(next))
+			log.Errorf("ilegal number,%v, %v", string(next), s)
 			os.Exit(0)
 		}
 
-		if next == 'L' || next == 'f' {
+		if next == 'L' || next == 'f' && !hex {
 			this.fp++
 		}
 		break
 	}
 
 	this.fp--
+	log.Warnf("数字:%v", s)
 	return s
 
 }

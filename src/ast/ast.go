@@ -447,6 +447,25 @@ func (this *Lambda) accept(v Visitor) {
 func (this *Lambda) _exp() {
 } /*}}}*/
 
+//Exp.ArrayAssign /*{{{*/
+type ArrayAssign struct {
+	E []Exp
+	Exp_T
+}
+
+func ArrayAssign_new(exp []Exp, line int) *ArrayAssign {
+	n := new(ArrayAssign)
+	n.E = exp
+	n.LineNum = line
+	return n
+}
+
+func (this *ArrayAssign) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *ArrayAssign) _exp() {
+} /*}}}*/
+
 //Exp.Question /*{{{*/
 type Question struct {
 	E   Exp
@@ -1124,6 +1143,29 @@ func (this *NewObjectArray) _exp() {
 
 /*}}}*/
 
+//Exp.NewArray   /*{{{*/
+type NewArray struct {
+	Size Exp
+	Ele  Exp
+	Exp_T
+}
+
+func NewArray_new(Ele Exp, size Exp, line int) *NewArray {
+	e := new(NewArray)
+	e.Ele = Ele
+	e.Size = size
+	e.LineNum = line
+	return e
+}
+
+func (this *NewArray) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewArray) _exp() {
+}
+
+/*}}}*/
+
 //Exp.NewIntArray   /*{{{*/
 type NewIntArray struct {
 	Size Exp
@@ -1146,12 +1188,19 @@ func (this *NewIntArray) _exp() {
 /*}}}*/
 //Exp.NewDate   /*{{{*/
 type NewDate struct {
+	Params []Exp
 	Exp_T
 }
 
 func NewDate_new(line int) *NewDate {
 	e := new(NewDate)
 	e.LineNum = line
+	return e
+}
+func NewDateParam_new(line int, Params []Exp) *NewDate {
+	e := new(NewDate)
+	e.LineNum = line
+	e.Params = Params
 	return e
 }
 
@@ -1967,6 +2016,22 @@ func (this *Integer) String() string {
 func (this *Integer) _exp() {
 }
 
+type Char struct {
+	TypeKind int
+}
+
+func (this *Char) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Char) Gettype() int {
+	return this.TypeKind
+}
+func (this *Char) String() string {
+	return "@Char"
+}
+func (this *Char) _exp() {
+}
+
 type Byte struct {
 	TypeKind int
 }
@@ -2075,7 +2140,7 @@ func (this *ArrayType) Gettype() int {
 }
 
 func (this *ArrayType) String() string {
-	return "@int[]"
+	return "@Array[]"
 }
 func (this *ArrayType) _exp() {
 }

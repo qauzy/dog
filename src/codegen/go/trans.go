@@ -271,6 +271,13 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return gast.NewIdent("float64")
 	case *ast.Date:
 		return gast.NewIdent("time.Time")
+	case *ast.ArrayType:
+		return &gast.ArrayType{
+			Lbrack: 0,
+			Len:    nil,
+			Elt:    this.transExp(v.Ele),
+		}
+
 	default:
 		//return nil
 		log.Info(v)
