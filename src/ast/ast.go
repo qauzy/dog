@@ -449,13 +449,15 @@ func (this *Lambda) _exp() {
 
 //Exp.ArrayAssign /*{{{*/
 type ArrayAssign struct {
-	E []Exp
+	E  []Exp
+	Tp Exp
 	Exp_T
 }
 
-func ArrayAssign_new(exp []Exp, line int) *ArrayAssign {
+func ArrayAssign_new(exp []Exp, Tp Exp, line int) *ArrayAssign {
 	n := new(ArrayAssign)
 	n.E = exp
+	n.Tp = Tp
 	n.LineNum = line
 	return n
 }

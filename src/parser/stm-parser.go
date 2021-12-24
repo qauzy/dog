@@ -372,7 +372,7 @@ func (this *Parser) parseStatement() ast.Stm {
 	case TOKEN_SYSTEM:
 		this.eatToken(TOKEN_SYSTEM)
 		this.eatToken(TOKEN_DOT)
-		this.eatToken(TOKEN_OUT)
+		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_DOT)
 		this.eatToken(TOKEN_PRINTLN)
 		this.eatToken(TOKEN_LPAREN)

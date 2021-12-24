@@ -416,6 +416,18 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		call.Args = append(call.Args, len)
 		return call
+	case *ast.ArrayAssign:
+		clit := &gast.CompositeLit{
+			Type:       this.transType(v.Tp),
+			Lbrace:     0,
+			Elts:       nil,
+			Rbrace:     0,
+			Incomplete: false,
+		}
+		for _, v := range v.E {
+			clit.Elts = append(clit.Elts, this.transExp(v))
+		}
+		return clit
 	default:
 		this.TranslationBug(v)
 	}

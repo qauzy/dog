@@ -1051,7 +1051,7 @@ func (this *Parser) parseExp() ast.Exp {
 		this.eatToken(TOKEN_LBRACE)
 		exps := this.parseExpList()
 		this.eatToken(TOKEN_RBRACE)
-		return ast.ArrayAssign_new(exps, this.Linenum)
+		return ast.ArrayAssign_new(exps, this.currentType, this.Linenum)
 	}
 
 	left := this.parseQuestionExp()

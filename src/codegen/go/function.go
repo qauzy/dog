@@ -12,7 +12,9 @@ func (this *Translation) constructBuilderFunc(fi ast.Field) {
 }
 
 func (this *Translation) constructFieldFunc(fi ast.Field) {
-
+	if !ConstructFieldFunc {
+		return
+	}
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		var recv *gast.FieldList
 		//处理类接收
