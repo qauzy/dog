@@ -14,7 +14,9 @@ import (
 )
 
 var (
-	ConstructFieldFunc = false
+	ConstructFieldFunc = false //构建Get,Set函数
+	AppendContext      = false //添加*gin.Contex
+	DropResult         = false //去掉返回值
 )
 
 type Translation struct {

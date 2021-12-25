@@ -192,6 +192,13 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 	case *ast.CallExpr:
 		fn := this.transExp(v.Callee)
+		//替换name
+		if f, ok := fn.(*gast.Ident); ok {
+			if IdMapper[f.Name] != "" {
+				f.Name = IdMapper[f.Name]
+			}
+		}
+
 		call := &gast.CallExpr{
 			Fun:      fn,
 			Lparen:   0,

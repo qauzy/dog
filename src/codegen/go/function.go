@@ -160,6 +160,11 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			List:    nil,
 			Closing: 0,
 		}
+		//添加gin
+		if AppendContext {
+			params.List = append(params.List, this.getField(gast.NewIdent("ctx"), gast.NewIdent("*gin.Context")))
+		}
+
 		for _, p := range method.Formals {
 			params.List = append(params.List, this.transField(p))
 		}
@@ -297,6 +302,10 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		if method.Comment == "" {
 			cm = nil
 		}
+		if DropResult {
+			results = nil
+		}
+
 		fn = &gast.FuncDecl{
 			Doc:  cm,
 			Recv: recv,

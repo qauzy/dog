@@ -54,7 +54,6 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		}
 		for _, m := range cc.Methods {
 			gmeth := this.transFunc(m)
-
 			this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
 		}
 

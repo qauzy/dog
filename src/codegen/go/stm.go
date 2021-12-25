@@ -10,6 +10,32 @@ import (
 	"reflect"
 )
 
+func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
+	switch v := s.(type) {
+	//变量声明
+	case *ast.DeclStmt:
+		var names, values []gast.Expr
+		for _, name := range v.Names {
+			names = append(names, this.transNameExp(name))
+		}
+
+		for _, value := range v.Values {
+			if v.Values != nil {
+				values = append(values, this.transExp(value))
+			}
+		}
+		stmt = &gast.AssignStmt{
+			Lhs:    names,
+			TokPos: 0,
+			Tok:    token.DEFINE,
+			Rhs:    values,
+		}
+	default:
+		this.TranslationBug(v)
+	}
+	return
+}
+
 //
 //
 // param: s
@@ -34,6 +60,9 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Type:    this.transType(v.Tp),
 			Values:  nil,
 			Comment: nil,
+		}
+		if len(v.Names) == len(v.Values) {
+			sp.Type = nil
 		}
 		for _, name := range v.Names {
 			sp.Names = append(sp.Names, this.transNameExp(name))
@@ -76,7 +105,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		//log.Debugf("For语句:%v", *v)
 		stmt = &gast.ForStmt{
 			For:  0,
-			Init: this.transStm(v.Init),
+			Init: this.transDefine(v.Init),
 			Cond: this.transExp(v.Cond),
 			Post: this.transStm(v.Post),
 			Body: this.transBlock(v.Body),
