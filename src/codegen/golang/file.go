@@ -18,6 +18,7 @@ var (
 	ConstructFieldFunc = false //构建Get,Set函数
 	AppendContext      = false //添加*gin.Contex
 	DropResult         = false //去掉返回值
+	OneFold            = true  //独立文件夹
 )
 
 type Translation struct {
@@ -167,7 +168,10 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}
+	if OneFold {
+		dir += "/" + this.GolangFile.Name.Name
 
+	}
 	var filename = dir + "/" + fileNameOnly + ".go"
 
 	log.Warnf("写入:%v", filename)

@@ -402,7 +402,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		if q, ok := exp.(*ast.Question); ok {
 			assign1 := ast.Return_new(q.One, this.Linenum)
 			assign2 := ast.Return_new(q.Two, this.Linenum)
-			return ast.If_new(q.E, assign1, assign2, this.Linenum)
+			return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 		}
 		return ast.Return_new(exp, this.Linenum)
 	default:
