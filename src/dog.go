@@ -2,7 +2,7 @@ package main
 
 import (
 	"dog/ast"
-	codegen_go "dog/codegen/go"
+	codegen_go "dog/codegen/golang"
 	"dog/control"
 	"dog/parser"
 	log "github.com/corgi-kx/logcustom"

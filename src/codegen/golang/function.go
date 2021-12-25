@@ -326,9 +326,9 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 //
 // param: fi
 // return:
-func (this *Translation) transFuncLit(v *ast.Question) (fn *gast.FuncLit) {
+func (this *Translation) transFuncLit(v *ast.Question) (call *gast.CallExpr) {
 
-	fn = &gast.FuncLit{
+	fn := &gast.FuncLit{
 		Type: &gast.FuncType{
 			Func:    0,
 			Params:  nil,
@@ -371,6 +371,14 @@ func (this *Translation) transFuncLit(v *ast.Question) (fn *gast.FuncLit) {
 		List:   []gast.Stmt{stmt},
 		Rbrace: 0,
 	}
+	call = &gast.CallExpr{
+		Fun:      fn,
+		Lparen:   0,
+		Args:     nil,
+		Ellipsis: 0,
+		Rparen:   0,
+	}
+
 	return
 }
 

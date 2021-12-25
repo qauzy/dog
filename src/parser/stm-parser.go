@@ -110,12 +110,15 @@ func (this *Parser) parseStatement() ast.Stm {
 			if this.currentClass.GetField(id) != nil {
 				id = "this." + id
 			}
+			//三元表达式
+			if q, ok := exp.(*ast.Question); ok {
+				assign1 := ast.Assign_new(ast.Id_new(id, nil, false, this.Linenum), q.One, false, this.Linenum)
+				assign2 := ast.Assign_new(ast.Id_new(id, nil, false, this.Linenum), q.Two, false, this.Linenum)
+				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
+			}
 			assign.Left = ast.Id_new(id, nil, false, this.Linenum)
 			assign.Value = exp
-			//三元表达式
-			if _, ok := exp.(*ast.Question); ok {
-				assign.SetTriple()
-			}
+
 			return assign
 
 		case TOKEN_QUO_ASSIGN:
@@ -393,9 +396,15 @@ func (this *Parser) parseStatement() ast.Stm {
 			return ast.Return_new(nil, this.Linenum)
 		}
 		log.Debugf("------>解析return,%v", this.current.Lexeme)
-		e := this.parseExp()
+		exp := this.parseExp()
 		this.eatToken(TOKEN_SEMI)
-		return ast.Return_new(e, this.Linenum)
+		//三元表达式
+		if q, ok := exp.(*ast.Question); ok {
+			assign1 := ast.Return_new(q.One, this.Linenum)
+			assign2 := ast.Return_new(q.Two, this.Linenum)
+			return ast.If_new(q.E, assign1, assign2, this.Linenum)
+		}
+		return ast.Return_new(exp, this.Linenum)
 	default:
 		if this.TypeToken() {
 			tp := this.parseType()

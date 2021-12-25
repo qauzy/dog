@@ -51,7 +51,7 @@ func getpProcInfo(level int) (filename, funcname string, line int) {
 		funcname = runtime.FuncForPC(pc).Name()      // main.(*MyStruct).foo
 		funcname = filepath.Ext(funcname)            // .foo
 		funcname = strings.TrimPrefix(funcname, ".") // foo
-		filename = filepath.Base(filename)           // /full/path/basename.go => basename.go
+		filename = filepath.Base(filename)           // /full/path/basename.golang => basename.golang
 	}
 	return
 }

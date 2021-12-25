@@ -62,7 +62,7 @@ package ast_opt
 //		/*
 //		 * Although we can do some magic in here to opt
 //		 * Exp like 1<2 -> true, but the real work is in
-//		 * const-fold.go
+//		 * const-fold.golang
 //		 */
 //		this.is_bool = false
 //	case *ast.NewIntArray:

@@ -3,6 +3,7 @@ package codegen_go
 import (
 	"bytes"
 	"dog/ast"
+	"dog/optimize/golang"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/format"
@@ -134,6 +135,14 @@ func (this *Translation) astToGo(dst *bytes.Buffer, node interface{}) error {
 }
 
 func (this *Translation) WriteFile(base string, file string) (err error) {
+
+	gast.Inspect(this.GolangFile, func(n gast.Node) bool {
+		for _, rule := range golang.StandardRules {
+			rule(n)
+		}
+		return true
+	})
+
 	header := ""
 	buffer := bytes.NewBufferString(header)
 
@@ -141,15 +150,7 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	if err != nil {
 		return
 	}
-	//fset := token.NewFileSet()
-	//gast.Print(fset, this.GolangFile)
-	//gast.Inspect(f, func(n gast.Node) bool {
-	//	// Called recursively.
-	//	gast.Print(fset, n)
-	//	return true
-	//})
-	//var filename = "D:\\code\\dog\\src\\codegen\\go\\example\\test.go"
-
+	//var filename = "D:\\code\\dog\\src\\codegen\\golang\\example\\test.golang"
 	fileNameWithSuffix := path.Base(file)
 	//获取文件的后缀(文件类型)
 	fileType := path.Ext(fileNameWithSuffix)
