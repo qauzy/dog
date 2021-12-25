@@ -30,6 +30,7 @@ type Translation struct {
 	CurrentStm    ast.Stm
 	CurrentExp    ast.Exp
 	GolangFile    *gast.File
+	PkgName       string
 }
 
 func NewTranslation(file string, j ast.File) (translation *Translation) {
@@ -164,14 +165,16 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
 	log.Debugf("suffix ------> %v", suffix)
-	var dir = "/opt/google/code/bitrade/user-api" + suffix
+	var dir = "/mnt/d/code/bitrade/core" + suffix
+
+	if OneFold {
+		dir += "/" + this.PkgName
+	}
+
 	if !checkFileIsExist(dir) {
 		os.MkdirAll(dir, os.ModePerm)
 	}
-	if OneFold {
-		dir += "/" + this.GolangFile.Name.Name
 
-	}
 	var filename = dir + "/" + fileNameOnly + ".go"
 
 	log.Warnf("写入:%v", filename)

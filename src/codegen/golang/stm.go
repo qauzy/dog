@@ -2,12 +2,13 @@ package codegen_go
 
 import (
 	"dog/ast"
-	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"github.com/xwb1989/sqlparser"
 	gast "go/ast"
 	"go/token"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
@@ -270,14 +271,21 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		case *sqlparser.Insert:
 		}
 
-		exe := `eng := this.DBWrite().Exec(` + v.SQL + `%v)
-	err = eng.Error`
 		var args string
-		for _, v := range this.CurrentMethod.ListFormal() {
+		for idx, arg := range this.CurrentMethod.ListFormal() {
 			args += ","
-			args += v.GetName()
+			args += arg.GetName()
+			//不是原生的要处理下
+			if !v.NativeQuery {
+				v.SQL = strings.Replace(v.SQL, ":"+arg.GetName(), "?", 1)
+				v.SQL = strings.Replace(v.SQL, ":"+strconv.Itoa(idx+1), "?", 1)
+			}
 		}
-		exe = fmt.Sprintf(exe, args)
+		exe := `
+	//FIXME 非原生sql，需要处理
+	eng := this.DBWrite().Exec(` + v.SQL + args + `)
+	err = eng.Error`
+
 		stmt = &gast.ExprStmt{X: gast.NewIdent(exe)}
 	default:
 		this.TranslationBug(v)

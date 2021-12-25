@@ -195,7 +195,12 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.Ident:
 		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
 			pack := this.CurrentFile.GetImport(v.Name).GetPack()
-			v.Name = pack + "." + Capitalize(v.Name)
+			expr := &gast.SelectorExpr{
+				X:   gast.NewIdent(pack),
+				Sel: gast.NewIdent(v.Name),
+			}
+
+			return expr
 		}
 		return gast.NewIdent(v.Name)
 	case *ast.Void:

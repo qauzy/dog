@@ -6,6 +6,7 @@ type OptimizeFunc func(n ast.Node)
 
 var StandardRules = []OptimizeFunc{
 	TimeOp,
+	ConstantOp, //处理枚举
 }
 
 func TimeOp(n ast.Node) {
@@ -36,6 +37,16 @@ func RedisUtilOp(n ast.Node) {
 		if s, ok := sl.X.(*ast.Ident); ok {
 			if s.Name == "util" && sl.Sel.Name == "RedisUtil" {
 				s.Name = "*cache"
+			}
+		}
+	}
+}
+func ConstantOp(n ast.Node) {
+	sl, ok := n.(*ast.SelectorExpr)
+	if ok {
+		if s, ok := sl.X.(*ast.Ident); ok {
+			if s.Name == "constant" {
+				s.Name = sl.Sel.Name
 			}
 		}
 	}
