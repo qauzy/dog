@@ -2,8 +2,10 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"fmt"
 	gast "go/ast"
 	"go/token"
+	"strings"
 )
 
 //dao构造函数
@@ -75,90 +77,93 @@ func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 }
 
 func (this *Translation) getSaveDao(c ast.Class) (fn *gast.FuncDecl) {
-	fn = &gast.FuncDecl{
-		Recv: &gast.FieldList{
-			List: []*gast.Field{
-				&gast.Field{
-					Names: []*gast.Ident{gast.NewIdent("this")},
-					Type: &gast.StarExpr{
-						X: gast.NewIdent(DeCapitalize(c.GetName()))},
-				},
-			},
-		},
-		Name: gast.NewIdent("Save"),
-		Type: &gast.FuncType{
-
-			Params: &gast.FieldList{
-				List: []*gast.Field{
-					&gast.Field{
-						Names: []*gast.Ident{gast.NewIdent("m")},
-						Type:  gast.NewIdent("interface{}"),
-					},
-				},
-			},
-			Results: &gast.FieldList{
-
-				List: []*gast.Field{&gast.Field{
-					Names: []*gast.Ident{gast.NewIdent("err")},
-					Type:  gast.NewIdent("error"),
-				},
-				},
-			},
-		},
-		Body: &gast.BlockStmt{
-
-			List: []gast.Stmt{
-				&gast.AssignStmt{
-					Lhs: []gast.Expr{
-						gast.NewIdent("err"),
-					},
-					Tok: token.ASSIGN,
-					Rhs: []gast.Expr{&gast.SelectorExpr{
-						X: &gast.CallExpr{
-							Fun: &gast.SelectorExpr{
-								X: &gast.CallExpr{
-									Fun: &gast.SelectorExpr{
-										X:   gast.NewIdent("this"),
-										Sel: gast.NewIdent("DBWrite"),
-									},
-								},
-								Sel: gast.NewIdent("Save"),
-							},
-							Args: []gast.Expr{gast.NewIdent("m")},
-						},
-						Sel: gast.NewIdent("Error"),
-					},
-					},
-				},
-				1: &gast.ReturnStmt{
-					Return:  0,
-					Results: nil,
-				},
-			},
-		},
-	}
+	src := `
+func (this *adminAccessLogDao) Save(m *entity.@) (result *entity.AdminAccessLog, err error) {
+	err = this.DBWrite().Save(m).Error
+	return
+}
+`
+	src = strings.Replace(src, "@", strings.Replace(c.GetName(), "Dao", "", 1), 1)
+	fn = this.getFunc(src)
+	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Type.Results.List[0].Type = gast.NewIdent("*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
+	return
 
 	return
 }
 
-//func getExtraFun() {
-//	f, err := parser.ParseFile(token.NewFileSet(), "", `package p; func f() { x, y, z := x, y, z }`, 0)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
+func (this *Translation) getFindByIdDao(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *adminDao) FindById(id int64) (result *entity.Admin,err error) {
+	err = this.DBRead().Where("id = ?", id).First(&result).Error
+	return
+}
+`
+	fn = this.getFunc(src)
+	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Type.Results.List[0].Type = gast.NewIdent("*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
+	return
+}
+
+func (this *Translation) getDeleteByIdDao(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *dataDictionaryDao) DeleteById(id int64) (count int64, err error) {
+	d := this.DBRead().Where("id = ?", id).Delete(@)
+	err = d.Error
+	count = d.RowsAffected
+	return
+}
+`
+	src = strings.Replace(src, "@", "entity."+strings.Replace(c.GetName(), "Dao", "", 1)+"{}", 1)
+	fn = this.getFunc(src)
+	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	return
+}
+
+func (this *Translation) getFindAllDao(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *adminAccessLogDao) FindAll(qp *types.QueryParam) (result []*entity.AdminAccessLog, err error) {
+	d := this.DBRead()
+	if qp != nil {
+		d = qp.BuildQuery(d)
+	}
+	d = d.Find(&result)
+	err = d.Error
+	return
+}
+`
+	fn = this.getFunc(src)
+	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Type.Results.List[0].Type = gast.NewIdent("[]*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
+	return
+}
+
+// 构建New对象函数
 //
-//	// RHS refers to undefined globals; LHS does not.
-//	as := f.Decls[0].(*gast.FuncDecl).Body.List[0].(*gast.AssignStmt)
-//	for _, v := range as.Rhs {
-//		id := v.(*gast.Ident)
-//		if id.Obj != nil {
-//			t.Errorf("rhs %s has Obj, should not", id.Name)
-//		}
-//	}
-//	for _, v := range as.Lhs {
-//		id := v.(*gast.Ident)
-//		if id.Obj == nil {
-//			t.Errorf("lhs %s does not have Obj, should", id.Name)
-//		}
-//	}
-//}
+// param: c
+// return:
+func (this *Translation) getNewService(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func NewBusinessAuthApplyService(BusinessAuthApplyDao *dao.BusinessAuthApplyDao) (ret *BusinessAuthApplyService) {
+	ret = new(@)
+}
+`
+	src = strings.Replace(src, "@", c.GetName(), 1)
+
+	fn = this.getFunc(src)
+	fn.Name = gast.NewIdent("New" + c.GetName())
+	fn.Type.Params.List = nil
+	for _, fi := range c.ListFields() {
+		param := this.transField(fi)
+		//参数小写
+		for _, v := range param.Names {
+			v.Name = DeCapitalize(v.Name)
+		}
+
+		fn.Type.Params.List = append(fn.Type.Params.List, param)
+		fn.Body.List = append(fn.Body.List, &gast.ExprStmt{gast.NewIdent(fmt.Sprintf("ret.%s = %s", Capitalize(fi.GetName()), DeCapitalize(fi.GetName())))})
+	}
+	fn.Body.List = append(fn.Body.List, &gast.ReturnStmt{})
+	fn.Type.Results.List[0].Type = gast.NewIdent("*" + c.GetName())
+	return
+}

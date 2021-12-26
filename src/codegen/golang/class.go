@@ -2,8 +2,12 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"fmt"
+	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
+	"regexp"
+	"strings"
 )
 
 //
@@ -59,6 +63,12 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		cl.Specs = append(cl.Specs, sp)
 
 	}
+	//构建New函数
+	if ConstructNewFunc {
+		this.GolangFile.Decls = append(this.GolangFile.Decls, this.getNewService(c))
+
+	}
+
 	return
 }
 
@@ -264,6 +274,7 @@ func (this *Translation) transInterface(c ast.Class) {
 
 	for _, m := range c.ListMethods() {
 		gmeth := this.transFunc(m)
+
 		if gmeth.Type.Results != nil {
 			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
 		} else {
@@ -295,7 +306,39 @@ func (this *Translation) transInterface(c ast.Class) {
 		Tag:     nil,
 		Comment: nil,
 	}
+	Type.Methods.List = append(Type.Methods.List, field)
 
+	//FindById
+	gmeth = this.getFindByIdDao(c)
+	field = &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{gmeth.Name},
+		Type:    gmeth.Type,
+		Tag:     nil,
+		Comment: nil,
+	}
+	Type.Methods.List = append(Type.Methods.List, field)
+
+	//DeleteById
+	gmeth = this.getDeleteByIdDao(c)
+	field = &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{gmeth.Name},
+		Type:    gmeth.Type,
+		Tag:     nil,
+		Comment: nil,
+	}
+	Type.Methods.List = append(Type.Methods.List, field)
+
+	//FindAll
+	gmeth = this.getFindAllDao(c)
+	field = &gast.Field{
+		Doc:     nil,
+		Names:   []*gast.Ident{gmeth.Name},
+		Type:    gmeth.Type,
+		Tag:     nil,
+		Comment: nil,
+	}
 	Type.Methods.List = append(Type.Methods.List, field)
 
 	it.Specs = append(it.Specs, sp)
@@ -348,6 +391,71 @@ func (this *Translation) buildDao(c ast.Class) {
 	//接口实现
 	for _, m := range c.ListMethods() {
 		gmeth := this.transFunc(m)
+
+		//添加jpa查询实现
+		reg := regexp.MustCompile(`Find(All)?(\w+)?By(\w+)`)
+		n := reg.FindStringSubmatch(gmeth.Name.Name)
+		//Find
+		var q = "err = this.DBRead()"
+		if len(n) == 4 && n[1] == "" && n[2] == "" && gmeth.Type.Params.List != nil {
+			ss := strings.Split(n[3], "And")
+			for k, v := range ss {
+				if strings.HasSuffix(v, "Not") {
+					v = strings.Replace(v, "Not", "", 1)
+					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				} else {
+					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				}
+			}
+			q += ".First(&result).Error"
+			gmeth.Body.List = nil
+			gmeth.Body.List = append(gmeth.Body.List, &gast.ExprStmt{gast.NewIdent(q)})
+			ret := &gast.ReturnStmt{
+				Return:  0,
+				Results: nil,
+			}
+			gmeth.Body.List = append(gmeth.Body.List, ret)
+			//FindAll
+		} else if len(n) == 4 && n[1] == "All" && gmeth.Type.Params.List != nil {
+			ss := strings.Split(n[3], "And")
+			for k, v := range ss {
+				if strings.HasSuffix(v, "Not") {
+					v = strings.Replace(v, "Not", "", 1)
+					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				} else {
+					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				}
+			}
+			q += ".Find(&result).Error"
+			gmeth.Body.List = nil
+			gmeth.Body.List = append(gmeth.Body.List, &gast.ExprStmt{gast.NewIdent(q)})
+			ret := &gast.ReturnStmt{
+				Return:  0,
+				Results: nil,
+			}
+			gmeth.Body.List = append(gmeth.Body.List, ret)
+
+		} else if len(n) == 4 && n[1] != "All" && gmeth.Type.Params.List != nil {
+			ss := strings.Split(n[3], "And")
+			for k, v := range ss {
+				if strings.HasSuffix(v, "Not") {
+					v = strings.Replace(v, "Not", "", 1)
+					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				} else {
+					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+				}
+			}
+			q += ".First(&result).Error"
+			gmeth.Body.List = nil
+			gmeth.Body.List = append(gmeth.Body.List, &gast.ExprStmt{gast.NewIdent(q)})
+			ret := &gast.ReturnStmt{
+				Return:  0,
+				Results: nil,
+			}
+			gmeth.Body.List = append(gmeth.Body.List, ret)
+		}
+
+		log.Warn(n, gmeth.Name.Name, len(n))
 		for _, v := range gmeth.Recv.List {
 			//实现接口的struct名字小写开口
 			v.Type = &gast.StarExpr{X: gast.NewIdent(DeCapitalize(c.GetName()))}
@@ -369,6 +477,25 @@ func (this *Translation) buildDao(c ast.Class) {
 	}
 	//TODO 增加Save,FindAll,FindById等接口
 	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getSaveDao(c))
+	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getFindByIdDao(c))
+	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getDeleteByIdDao(c))
+	this.GolangFile.Decls = append(this.GolangFile.Decls, this.getFindAllDao(c))
+
+}
+
+// 完善查询函数 FindAllxxx,Findxxx
+//
+// param: fn
+func (this *Translation) OptimizeDaoFun(fn *gast.FuncDecl) {
+	//
+	//regexp.Regexp{}
+	//
+	//var act = string
+	//if strings.HasPrefix(fn.Name.Name, "FindAll") {
+	//	act = "Find"
+	//} else if strings.HasPrefix(fn.Name.Name, "Find") {
+	//	act = "First"
+	//}
 
 }
 

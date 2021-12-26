@@ -278,7 +278,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			//不是原生的要处理下
 			if !v.NativeQuery {
 				v.SQL = strings.Replace(v.SQL, ":"+arg.GetName(), "?", 1)
-				v.SQL = strings.Replace(v.SQL, ":"+strconv.Itoa(idx+1), "?", 1)
+				v.SQL = strings.Replace(v.SQL, "?"+strconv.Itoa(idx+1), "?", 1)
 			}
 		}
 		exe := `
