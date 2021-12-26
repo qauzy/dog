@@ -1,6 +1,8 @@
 package golang
 
-import ast "go/ast"
+import (
+	ast "go/ast"
+)
 
 type OptimizeFunc func(n ast.Node)
 

@@ -24,6 +24,7 @@ type Parser struct {
 	currentMethod ast.Method //当前解析的Method	TODO 函数嵌套
 	currentStm    ast.Stm    //当前解析的Stm
 	Linenum       int
+	ProjectPath   string //项目路径
 }
 
 func NewParse(fname string, buf []byte) *Parser {
@@ -36,7 +37,7 @@ func NewParse(fname string, buf []byte) *Parser {
 
 func (this *Parser) advance() {
 	if control.Lexer_dump == true {
-		//util.Debug(this.current.ToString())
+		util.Debug(this.current.ToString())
 	}
 	this.Linenum = this.current.LineNum
 	this.current = this.lexer.NextToken()
@@ -877,10 +878,10 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 		this.advance()
 	}
 	for this.current.Kind == TOKEN_REM ||
-		this.current.Kind == TOKEN_MUL ||
+		this.current.Kind == TOKEN_STAR ||
 		this.current.Kind == TOKEN_QUO {
 		switch this.current.Kind {
-		case TOKEN_MUL:
+		case TOKEN_STAR:
 			this.advance()
 			//去除注释
 			for this.current.Kind == TOKEN_COMMENT {
@@ -1202,8 +1203,8 @@ func (this *Parser) parseProgram() ast.File {
 				name = this.current.Lexeme
 				id = this.current.Lexeme
 				this.eatToken(TOKEN_ID)
-			} else if this.current.Kind == TOKEN_MUL {
-				this.eatToken(TOKEN_MUL)
+			} else if this.current.Kind == TOKEN_STAR {
+				this.eatToken(TOKEN_STAR)
 			} else if this.current.Kind == TOKEN_ARRAYLIST ||
 				this.current.Kind == TOKEN_LIST ||
 				this.current.Kind == TOKEN_DATE ||

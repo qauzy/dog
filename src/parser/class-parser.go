@@ -39,6 +39,20 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	if this.current.Kind == TOKEN_LT {
 		this.eatToken(TOKEN_LT)
 		this.eatToken(TOKEN_ID)
+		if this.current.Kind == TOKEN_EXTENDS {
+			this.advance()
+			this.parseType()
+		}
+		for this.current.Kind == TOKEN_COMMER {
+			this.advance()
+			this.eatToken(TOKEN_ID)
+			if this.current.Kind == TOKEN_EXTENDS {
+				this.advance()
+				this.parseType()
+			}
+
+		}
+
 		this.eatToken(TOKEN_GT)
 	}
 

@@ -51,7 +51,7 @@ func initTokenMap() {
 	tokenMap["]"] = TOKEN_RBRACK
 	tokenMap[")"] = TOKEN_RPAREN
 	tokenMap[";"] = TOKEN_SEMI
-	tokenMap["*"] = TOKEN_MUL
+	tokenMap["*"] = TOKEN_STAR
 	tokenMap["*="] = TOKEN_MUL_ASSIGN
 	tokenMap["/"] = TOKEN_QUO
 	tokenMap["/="] = TOKEN_QUO_ASSIGN
@@ -158,7 +158,7 @@ func initTokenMap() {
 	tMap[TOKEN_INSTANCEOF] = "TOKEN_INSTANCEOF"     // instanceof
 	tMap[TOKEN_SYNCHRONIZED] = "TOKEN_SYNCHRONIZED" // synchronized
 
-	tMap[TOKEN_MUL] = "TOKEN_MUL"               // *
+	tMap[TOKEN_STAR] = "TOKEN_STAR"             // *
 	tMap[TOKEN_QUO] = "TOKEN_QUO"               // /
 	tMap[TOKEN_QUO_ASSIGN] = "TOKEN_QUO_ASSIGN" // /=
 	tMap[TOKEN_REM] = "TOKEN_REM"               // %
@@ -287,7 +287,7 @@ const (
 	TOKEN_OR                // |
 	TOKEN_NE                // !=
 	TOKEN_NOT               // !
-	TOKEN_MUL               // *
+	TOKEN_STAR              // *
 	TOKEN_MUL_ASSIGN        // *=
 	TOKEN_QUO               // /
 	TOKEN_QUO_ASSIGN        // /=

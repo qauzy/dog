@@ -15,10 +15,14 @@ import (
 )
 
 var (
-	ConstructFieldFunc = false //构建Get,Set函数
-	AppendContext      = false //添加*gin.Contex
-	DropResult         = false //去掉返回值
-	OneFold            = true  //独立文件夹
+	ConstructFieldFunc = true                                                                          //构建Get,Set函数
+	AppendContext      = false                                                                         //添加*gin.Contex
+	DropResult         = false                                                                         //去掉返回值
+	OneFold            = false                                                                         //独立文件夹
+	SourceBase         = "/opt/code/abc/ZTuoExchange_framework"                                        //待转换源代码工程目录
+	SourcePath         = "/opt/code/abc/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
+	TargetPath         = "/opt/google/code/bitrade/core"                                               //目标目录
+
 )
 
 type Translation struct {
@@ -165,7 +169,7 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
 	log.Debugf("suffix ------> %v", suffix)
-	var dir = "/mnt/d/code/bitrade/core" + suffix
+	var dir = "/opt/google/code/bitrade/core" + suffix
 
 	if OneFold {
 		dir += "/" + this.PkgName
