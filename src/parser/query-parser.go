@@ -1,6 +1,9 @@
 package parser
 
-import "dog/ast"
+import (
+	"dog/ast"
+	"strings"
+)
 
 //解析 @Query 注解
 func (this *Parser) parseQuery() (stm ast.Stm) {
@@ -26,7 +29,7 @@ func (this *Parser) parseQuery() (stm ast.Stm) {
 		for this.current.Kind == TOKEN_ADD {
 			this.advance()
 			if id == "value" {
-				q += this.current.Lexeme
+				q = strings.TrimSuffix(q, "\"") + strings.TrimPrefix(this.current.Lexeme, "\"")
 			} else if id == "nativeQuery" {
 				if this.current.Kind == TOKEN_TRUE {
 					nativeQuery = true
@@ -44,7 +47,7 @@ func (this *Parser) parseQuery() (stm ast.Stm) {
 			for this.current.Kind == TOKEN_ADD {
 				this.advance()
 				if id == "value" {
-					q += this.current.Lexeme
+					q = strings.TrimSuffix(q, "\"") + strings.TrimPrefix(this.current.Lexeme, "\"")
 				} else if id == "nativeQuery" {
 					if this.current.Kind == TOKEN_TRUE {
 						nativeQuery = true
@@ -56,10 +59,10 @@ func (this *Parser) parseQuery() (stm ast.Stm) {
 
 		// 2 xxx + xxxx
 	} else if this.current.Kind == TOKEN_ADD {
-		q += id
+		q = strings.TrimSuffix(q, "\"") + strings.TrimPrefix(id, "\"")
 		for this.current.Kind == TOKEN_ADD {
 			this.advance()
-			q += this.current.Lexeme
+			q = strings.TrimSuffix(q, "\"") + strings.TrimPrefix(this.current.Lexeme, "\"")
 			this.advance()
 		}
 		//3 "xxxx"
