@@ -1,7 +1,7 @@
-package sqls
+package sqlx
 
 import (
-	"dog/sqls/query"
+	"dog/sqlx/query"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,10 +29,10 @@ type output struct {
 func TestSQL(t *testing.T) {
 	ts := []testCase{
 		{
-			Name:     "empty sqls fails",
+			Name:     "empty sqlx fails",
 			SQL:      "",
 			Expected: query.Query{},
-			Err:      fmt.Errorf("sqls type cannot be empty"),
+			Err:      fmt.Errorf("sqlx type cannot be empty"),
 		},
 		{
 			Name:     "SELECT without FROM fails",
