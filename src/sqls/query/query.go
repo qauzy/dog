@@ -1,6 +1,6 @@
 package query
 
-// Query represents a parsed query
+// Query represents a parsed sqls
 type Query struct {
 	Type       Type
 	TableName  string
@@ -11,19 +11,19 @@ type Query struct {
 	Aliases    map[string]string
 }
 
-// Type is the type of SQL query, e.g. SELECT/UPDATE
+// Type is the type of SQL sqls, e.g. SELECT/UPDATE
 type Type int
 
 const (
 	// UnknownType is the zero value for a Type
 	UnknownType Type = iota
-	// Select represents a SELECT query
+	// Select represents a SELECT sqls
 	Select
-	// Update represents an UPDATE query
+	// Update represents an UPDATE sqls
 	Update
-	// Insert represents an INSERT query
+	// Insert represents an INSERT sqls
 	Insert
-	// Delete represents a DELETE query
+	// Delete represents a DELETE sqls
 	Delete
 )
 
