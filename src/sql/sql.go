@@ -1,13 +1,13 @@
-package sqlx
+package sql
 
 import (
-	"dog/sqlx/query"
+	"dog/sql/query"
 	"fmt"
 	"regexp"
 	"strings"
 )
 
-// Parse takes a string representing a SQL sqlx and parses it into a sqlx.Query struct. It may fail.
+// Parse takes a string representing a SQL sql and parses it into a sql.Query struct. It may fail.
 func Parse(sqls string) (query.Query, error) {
 	qs, err := ParseMany([]string{sqls})
 	if len(qs) == 0 {
@@ -16,7 +16,7 @@ func Parse(sqls string) (query.Query, error) {
 	return qs[0], err
 }
 
-// ParseMany takes a string slice representing many SQL queries and parses them into a sqlx.Query struct slice.
+// ParseMany takes a string slice representing many SQL queries and parses them into a sql.Query struct slice.
 // It may fail. If it fails, it will stop at the first failure.
 func ParseMany(sqls []string) ([]query.Query, error) {
 	qs := []query.Query{}
@@ -110,7 +110,7 @@ func (p *parser) doParse() (query.Query, error) {
 				p.pop()
 				p.step = stepDeleteFromTable
 			default:
-				return p.query, fmt.Errorf("invalid sqlx type")
+				return p.query, fmt.Errorf("invalid sql type")
 			}
 		case stepSelectField:
 			identifier := p.peek()
@@ -427,7 +427,7 @@ func (p *parser) validate() error {
 		return fmt.Errorf("at WHERE: empty WHERE clause")
 	}
 	if p.query.Type == query.UnknownType {
-		return fmt.Errorf("sqlx type cannot be empty")
+		return fmt.Errorf("sql type cannot be empty")
 	}
 	if p.query.TableName == "" {
 		return fmt.Errorf("table name cannot be empty")
