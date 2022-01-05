@@ -274,7 +274,9 @@ func (this *Translation) transInterface(c ast.Class) {
 
 	for _, m := range c.ListMethods() {
 		gmeth := this.transFunc(m)
-
+		if gmeth.Name.Name == "FindById" {
+			continue
+		}
 		if gmeth.Type.Results != nil {
 			gmeth.Type.Results.List = append(gmeth.Type.Results.List, this.getErrRet())
 		} else {
@@ -391,6 +393,10 @@ func (this *Translation) buildDao(c ast.Class) {
 	//接口实现
 	for _, m := range c.ListMethods() {
 		gmeth := this.transFunc(m)
+
+		if gmeth.Name.Name == "FindById" {
+			continue
+		}
 
 		//添加jpa查询实现
 		reg := regexp.MustCompile(`Find(All)?(\w+)?By(\w+)`)
