@@ -41,7 +41,7 @@ type Class interface {
 
 type Field interface {
 	accept(v Visitor)
-	//GetDecType() int
+	GetDecType() Exp
 	//String() string
 	GetName() string
 	IsStatic() bool //是否静态方法
@@ -180,9 +180,10 @@ func (this *FieldSingle) accept(v Visitor) {
 	v.visit(this)
 }
 
-//func (this *FieldSingle) GetDecType() int {
-//	return this.Tp.Gettype()
-//}
+func (this *FieldSingle) GetDecType() Exp {
+	return this.Tp
+}
+
 //func (this *FieldSingle) String() string {
 //	s := this.Names + " " + this.Tp.String()
 //	return s

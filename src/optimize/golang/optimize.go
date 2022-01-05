@@ -2,7 +2,6 @@ package golang
 
 import (
 	ast "go/ast"
-	"strings"
 )
 
 type OptimizeFunc func(n ast.Node)
@@ -63,9 +62,9 @@ func TypeOp(n ast.Node) {
 		for _, fi := range tp.Fields.List {
 			switch t := fi.Type.(type) {
 			case *ast.Ident:
-				if !strings.HasPrefix(t.Name, "*") {
-					fi.Type = &ast.StarExpr{X: fi.Type}
-				}
+				//if !strings.HasPrefix(t.Name, "*") {
+				//	fi.Type = &ast.StarExpr{X: fi.Type}
+				//}
 			case *ast.SelectorExpr:
 				if id, ok := t.X.(*ast.Ident); ok {
 					if id.Name == "entity" {

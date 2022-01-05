@@ -51,6 +51,10 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 					continue
 				}
 				gfi := this.transField(fi)
+				if _, ok := fi.GetDecType().(*ast.ClassType); ok {
+					gfi.Type = &gast.StarExpr{X: gfi.Type}
+				}
+
 				Type.Fields.List = append(Type.Fields.List, gfi)
 				this.constructFieldFunc(fi)
 			}

@@ -48,6 +48,13 @@ func (this *Parser) advance() {
 	}
 
 }
+func (this *Parser) advanceOnly() {
+	if control.Lexer_dump == true {
+		util.Debug(this.current.ToString())
+	}
+	this.Linenum = this.current.LineNum
+	this.current = this.lexer.NextToken()
+}
 
 func (this *Parser) eatToken(kind int) {
 	if kind == this.current.Kind {
@@ -1136,8 +1143,27 @@ func (this *Parser) parseAnnotation() {
 		for {
 			this.parseExp() //id
 			if this.current.Kind == TOKEN_ASSIGN {
-				this.advance()  // =
-				this.parseExp() //id
+				this.advance() // =
+				if this.current.Kind == TOKEN_LBRACE {
+					this.advanceOnly()
+					for {
+						if this.current.Kind == TOKEN_AT {
+							this.parseAnnotation()
+						} else {
+							this.parseExp() //id
+						}
+						if this.current.Kind == TOKEN_COMMER {
+							this.eatToken(TOKEN_COMMER)
+						} else {
+							break
+						}
+					}
+
+					this.eatToken(TOKEN_RBRACE)
+				} else {
+					this.parseExp() //id
+				}
+
 			}
 			if this.current.Kind == TOKEN_COMMER {
 				this.eatToken(TOKEN_COMMER)
