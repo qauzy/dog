@@ -75,7 +75,7 @@ func (this *Graph) LookupNode(data interface{}) *Node {
 
 func (this *Graph) AddNode(data interface{}) {
 	if this.LookupNode(data) != nil {
-		panic("dup graph data")
+		panic("dup graph storage")
 	}
 	this.nodes = append(this.nodes, this.Node_new(data))
 }

@@ -5,6 +5,7 @@ import (
 	codegen_go "dog/codegen/golang"
 	"dog/control"
 	"dog/parser"
+	"dog/storage"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"io/ioutil"
@@ -35,14 +36,14 @@ func main() {
 func PareseJava(file string, info os.FileInfo, err error) error {
 	//目录不处理
 	if info.IsDir() {
-		log.Warnf("忽略目录:%v", file)
+		//log.Warnf("忽略目录:%v", file)
 		return nil
 	}
 
 	//非java文件不处理
 	suffix := path.Ext(file)
 	if !strings.EqualFold(suffix, ".java") {
-		log.Warnf("忽略文件非java:%v --%v", file, suffix)
+		//log.Warnf("忽略文件非java:%v --%v", file, suffix)
 		return nil
 	}
 
@@ -56,12 +57,50 @@ func PareseJava(file string, info os.FileInfo, err error) error {
 	if control.Lexer_test == true {
 		lex := parser.NewLexer(file, buf)
 		tk := lex.NextToken()
+		var path string
 		for tk.Kind != parser.TOKEN_EOF {
-			log.Info(tk.ToString())
+			if tk.Kind == parser.TOKEN_PACKAGE {
+				tk = lex.NextToken()
+				for tk.Kind != parser.TOKEN_SEMI {
+					path += tk.Lexeme
+					tk = lex.NextToken()
+				}
+			}
+
+			var isClass bool
 			tk = lex.NextToken()
+			if tk.Kind == parser.TOKEN_PUBLIC || // public
+				tk.Kind == parser.TOKEN_PROTECTED || // protected
+				tk.Kind == parser.TOKEN_PRIVATE || // private
+				tk.Kind == parser.TOKEN_ABSTRACT { // abstract
+				isClass = true
+				tk = lex.NextToken()
+			}
+
+			if (tk.Kind == parser.TOKEN_CLASS || tk.Kind == parser.TOKEN_ENUM || tk.Kind == parser.TOKEN_INTERFACE) && isClass {
+
+				var kind int
+				switch tk.Kind {
+				case parser.TOKEN_CLASS:
+					kind = 0
+				case parser.TOKEN_ENUM:
+					kind = 1
+				case parser.TOKEN_INTERFACE:
+					kind = 2
+				}
+				tk = lex.NextToken()
+
+				pk := &storage.PackInfo{
+					Project: "bitrade",
+					Name:    tk.Lexeme,
+					Path:    path,
+					Kind:    kind,
+				}
+				storage.AddPack(pk)
+				log.Info(tk.ToString(), path)
+			}
 		}
-		log.Info(tk.ToString())
-		os.Exit(0)
+		return nil
 	}
 	var Ast ast.File
 	//setp1: lexer&&parser

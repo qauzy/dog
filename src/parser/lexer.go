@@ -110,7 +110,7 @@ func (this *Lexer) lex_String(c byte) string {
 	//处理字符串末尾的"
 	this.fp++
 	ss = string(this.buf[st-1 : ed+1])
-	log.Debugf("字符串:%v", ss)
+	//log.Debugf("字符串:%v", ss)
 	return ss
 }
 
@@ -195,7 +195,7 @@ func (this *Lexer) lex_Num(c byte) string {
 	}
 
 	this.fp--
-	log.Warnf("数字:%v", s)
+	//log.Warnf("数字:%v", s)
 	return s
 
 }
