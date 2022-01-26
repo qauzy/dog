@@ -4,6 +4,7 @@ import (
 	"dog/ast"
 	codegen_go "dog/codegen/golang"
 	"dog/control"
+
 	"dog/parser"
 	"dog/storage"
 	log "github.com/corgi-kx/logcustom"
@@ -20,8 +21,7 @@ func dog_Parser(filename string, buf []byte) ast.File {
 }
 
 func main() {
-	//tool.PrintAst()
-	//return
+
 	//log.SetLogDiscardLevel(log.Levelwarn)
 	args := os.Args[1:len(os.Args)]
 	control.CodeGen_base = control.Do_arg(args)
@@ -91,13 +91,13 @@ func PareseJava(file string, info os.FileInfo, err error) error {
 				tk = lex.NextToken()
 
 				pk := &storage.PackInfo{
-					Project: "bitrade",
+					Project: "kk",
 					Name:    tk.Lexeme,
 					Path:    path,
 					Kind:    kind,
 				}
 				storage.AddPack(pk)
-				log.Info(tk.ToString(), path)
+				log.Info(tk.ToString(), " path: ", path)
 			}
 		}
 		return nil

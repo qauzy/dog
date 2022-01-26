@@ -146,8 +146,8 @@ func (this *Lexer) lex_Comments(c byte) (comment string) {
 			}
 		}
 		if this.fp == len(this.buf) {
-			log.Info("error")
-			os.Exit(0)
+			log.Errorf("end of file,line:%v", this.lineNum)
+			return
 		}
 	}
 	ed = this.fp
@@ -167,7 +167,7 @@ func (this *Lexer) lex_Num(c byte) string {
 		this.fp++
 
 		//16进制
-		if s == "0" && next == 'x' {
+		if s == "0" && (next == 'x' || next == 'X') {
 			hex = true
 			s += string(next)
 			continue
@@ -182,13 +182,13 @@ func (this *Lexer) lex_Num(c byte) string {
 		}
 
 		//999abc is not number
-		if (next == '_') || (next >= 'a' && next <= 'z' && (next != 'f')) ||
-			(next >= 'A' && next <= 'Z' && next != 'L') {
-			log.Errorf("ilegal number,%v, %v", string(next), s)
+		if (c < '0' && c > '9' && next == '_') || (next >= 'a' && next <= 'z' && (next != 'f') && (next != 'd') && (next != 'l')) ||
+			(next >= 'A' && next <= 'Z' && next != 'L' && (next != 'D') && (next != 'F')) {
+			log.Errorf("ilegal number,line:%v, %v, %v", this.lineNum, string(next), s)
 			os.Exit(0)
 		}
 
-		if next == 'L' || next == 'f' && !hex {
+		if next == 'L' || next == 'l' || next == 'd' || next == 'D' || next == '_' || (next == 'f' || next == 'F') && !hex {
 			this.fp++
 		}
 		break
