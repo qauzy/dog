@@ -510,7 +510,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		return &ast.This{}
 	case TOKEN_SYSTEM:
 		var x ast.Exp
-		x = ast.Id_new(this.current.Lexeme, nil, false, this.Linenum)
+		x = ast.NewIdent(this.current.Lexeme, this.Linenum)
 		this.eatToken(TOKEN_SYSTEM)
 		if this.current.Lexeme == "CurrentTimeMillis" {
 			this.advance()

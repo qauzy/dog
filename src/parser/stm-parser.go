@@ -112,17 +112,17 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 			//三元表达式
 			if q, ok := exp.(*ast.Question); ok {
-				assign1 := ast.Assign_new(ast.Id_new(id, nil, false, this.Linenum), q.One, false, this.Linenum)
-				assign2 := ast.Assign_new(ast.Id_new(id, nil, false, this.Linenum), q.Two, false, this.Linenum)
+				assign1 := ast.Assign_new(ast.NewIdent(id, this.Linenum), q.One, false, this.Linenum)
+				assign2 := ast.Assign_new(ast.NewIdent(id, this.Linenum), q.Two, false, this.Linenum)
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
-			assign.Left = ast.Id_new(id, nil, false, this.Linenum)
+			assign.Left = ast.NewIdent(id, this.Linenum)
 			assign.Value = exp
 
 			return assign
 
 		case TOKEN_QUO_ASSIGN:
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_QUO_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -130,27 +130,27 @@ func (this *Parser) parseStatement() ast.Stm {
 			return ast.Binary_new(left, right, "/=", this.Linenum)
 		case TOKEN_MUL_ASSIGN:
 
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_MUL_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "*=", this.Linenum)
 		case TOKEN_SUB_ASSIGN:
 
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_SUB_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "-=", this.Linenum)
 		case TOKEN_ADD_ASSIGN:
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_ADD_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "+=", this.Linenum)
 		case TOKEN_REM_ASSIGN:
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_REM_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -166,7 +166,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				this.isSpecial = false
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
 			//处理的是后缀减
@@ -176,7 +176,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				this.isSpecial = false
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.Id_new(id, nil, false, this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "-=", this.Linenum)
 		case TOKEN_LBRACK:
 			this.eatToken(TOKEN_LBRACK) //[
