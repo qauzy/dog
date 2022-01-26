@@ -3,6 +3,7 @@ package codegen_go
 import (
 	"bytes"
 	"dog/ast"
+	"dog/cfg"
 	"dog/optimize/golang"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
@@ -171,7 +172,7 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
 	log.Debugf("suffix ------> %v", suffix)
-	var dir = "/opt/google/code/bitrade/core" + suffix
+	var dir = cfg.TargetPath + suffix
 
 	if OneFold {
 		dir += "/" + this.PkgName

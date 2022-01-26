@@ -41,6 +41,11 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 			Comment: nil,
 		}
 
+		tag := &gast.BasicLit{
+			Kind:  token.STRING,
+			Value: fmt.Sprintf("`gorm:\"column:%s\" json:\"%s\"`", SnakeString(name), field.Name),
+		}
+		gfi.Tag = tag
 	}
 	return
 }
