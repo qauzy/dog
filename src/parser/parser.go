@@ -811,6 +811,7 @@ func (this *Parser) parseNotExp() ast.Exp {
 	log.Debugf("解析 parseNotExp")
 	exp := this.parseAtomExp()
 	for this.current.Kind == TOKEN_DOT ||
+		this.current.Kind == TOKEN_DOUBLE_COLON ||
 		this.current.Kind == TOKEN_COMMENT ||
 		//FIXME 自增,自减作为语句处理
 		//this.current.Kind == TOKEN_AUTOSUB || //后缀加
@@ -822,6 +823,11 @@ func (this *Parser) parseNotExp() ast.Exp {
 		case TOKEN_DOT:
 			log.Debugf("解析函数调用,或成员变量")
 			exp = this.parseCallExp(exp)
+		case TOKEN_DOUBLE_COLON:
+			log.Debugf("方法引用")
+			this.eatToken(TOKEN_DOUBLE_COLON)
+			m := this.parseExp()
+			exp = ast.MethodReference_new(exp, m, this.Linenum)
 			//数组索引操作
 		case TOKEN_LBRACK: //[exp]
 			this.advance()

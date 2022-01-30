@@ -67,7 +67,7 @@ func (this *Translation) getErrRet() (gfi *gast.Field) {
 	return
 }
 func (this *Translation) TranslationBug(v interface{}) {
-	var msg = fmt.Sprintf("未处理 [%v] %s\n", reflect.TypeOf(v).String(), path.Base(this.file))
+	var msg = fmt.Sprintf("未处理 [%v] %s,%v\n", reflect.TypeOf(v).String(), path.Base(this.file), v)
 	util.Bug(msg)
 }
 

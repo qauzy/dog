@@ -34,6 +34,7 @@ func initTokenMap() {
 	tokenMap[","] = TOKEN_COMMER
 	tokenMap["."] = TOKEN_DOT
 	tokenMap[":"] = TOKEN_COLON
+	tokenMap["::"] = TOKEN_DOUBLE_COLON
 	tokenMap["?"] = TOKEN_QUESTION
 	tokenMap["{"] = TOKEN_LBRACE
 	tokenMap["["] = TOKEN_LBRACK
@@ -153,6 +154,7 @@ func initTokenMap() {
 	tMap[TOKEN_COMMER] = "TOKEN_COMMER"             // ,
 	tMap[TOKEN_DOT] = "TOKEN_DOT"                   // .
 	tMap[TOKEN_COLON] = "TOKEN_COLON"               // :
+	tMap[TOKEN_DOUBLE_COLON] = "TOKEN_DOUBLE_COLON" // ::
 	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"         // ?
 	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"           // --
 	tMap[TOKEN_SUB] = "TOKEN_SUB"                   // -
@@ -262,42 +264,43 @@ type Kind int
 
 const (
 	//运算符
-	TOKEN_ADD        = iota // +
-	TOKEN_ADD_ASSIGN        // +=
-	TOKEN_AUTOADD           // ++
-	TOKEN_SUB               // -
-	TOKEN_SUB_ASSIGN        // -=
-	TOKEN_AUTOSUB           // --
-	TOKEN_LAND              // &&
-	TOKEN_AND               // &
-	TOKEN_ASSIGN            // =
-	TOKEN_COMMER            // ,
-	TOKEN_DOT               // .
-	TOKEN_COLON             // :
-	TOKEN_QUESTION          // ?
-	TOKEN_LBRACE            // {
-	TOKEN_RBRACE            // }
-	TOKEN_LBRACK            // [
-	TOKEN_RBRACK            // ]
-	TOKEN_LPAREN            // (
-	TOKEN_RPAREN            // )
-	TOKEN_LT                // <
-	TOKEN_LE                // <=
-	TOKEN_EQ                // ==
-	TOKEN_GT                // >
-	TOKEN_GE                // >=
-	TOKEN_LOR               // ||
-	TOKEN_OR                // |
-	TOKEN_NE                // !=
-	TOKEN_NOT               // !
-	TOKEN_STAR              // *
-	TOKEN_MUL_ASSIGN        // *=
-	TOKEN_QUO               // /
-	TOKEN_QUO_ASSIGN        // /=
-	TOKEN_REM               // %
-	TOKEN_REM_ASSIGN        // %=
-	TOKEN_SEMI              // ;
-	TOKEN_AT                // @
+	TOKEN_ADD          = iota // +
+	TOKEN_ADD_ASSIGN          // +=
+	TOKEN_AUTOADD             // ++
+	TOKEN_SUB                 // -
+	TOKEN_SUB_ASSIGN          // -=
+	TOKEN_AUTOSUB             // --
+	TOKEN_LAND                // &&
+	TOKEN_AND                 // &
+	TOKEN_ASSIGN              // =
+	TOKEN_COMMER              // ,
+	TOKEN_DOT                 // .
+	TOKEN_COLON               // :
+	TOKEN_DOUBLE_COLON        // ::
+	TOKEN_QUESTION            // ?
+	TOKEN_LBRACE              // {
+	TOKEN_RBRACE              // }
+	TOKEN_LBRACK              // [
+	TOKEN_RBRACK              // ]
+	TOKEN_LPAREN              // (
+	TOKEN_RPAREN              // )
+	TOKEN_LT                  // <
+	TOKEN_LE                  // <=
+	TOKEN_EQ                  // ==
+	TOKEN_GT                  // >
+	TOKEN_GE                  // >=
+	TOKEN_LOR                 // ||
+	TOKEN_OR                  // |
+	TOKEN_NE                  // !=
+	TOKEN_NOT                 // !
+	TOKEN_STAR                // *
+	TOKEN_MUL_ASSIGN          // *=
+	TOKEN_QUO                 // /
+	TOKEN_QUO_ASSIGN          // /=
+	TOKEN_REM                 // %
+	TOKEN_REM_ASSIGN          // %=
+	TOKEN_SEMI                // ;
+	TOKEN_AT                  // @
 
 	TOKEN_COMMENT //注释
 	//关键字

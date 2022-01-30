@@ -255,6 +255,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			if this.expectKeyword("+") {
 				return newToken(TOKEN_AUTOADD, "++", this.lineNum)
+			} else if this.expectKeyword("=") {
+				return newToken(TOKEN_ADD_ASSIGN, "+=", this.lineNum)
 			} else {
 				return this.expectIdOrKey(c)
 			}
@@ -265,6 +267,16 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			if this.expectKeyword("=") {
 				return newToken(TOKEN_EQ, "==", this.lineNum)
+			} else {
+				return this.expectIdOrKey(c)
+			}
+		} else {
+			return this.expectIdOrKey(c)
+		}
+	case ':':
+		if this.s == "" {
+			if this.expectKeyword(":") {
+				return newToken(TOKEN_DOUBLE_COLON, "::", this.lineNum)
 			} else {
 				return this.expectIdOrKey(c)
 			}
@@ -331,8 +343,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 		fallthrough
 	case '(':
 		fallthrough
-	case ':':
-		fallthrough
+
 	case '}':
 		fallthrough
 	case ']':

@@ -435,6 +435,8 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			clit.Elts = append(clit.Elts, this.transExp(v))
 		}
 		return clit
+	case *ast.MethodReference:
+		this.TranslationBug(v)
 	default:
 		this.TranslationBug(v)
 	}

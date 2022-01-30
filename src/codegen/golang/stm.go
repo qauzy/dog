@@ -46,7 +46,6 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	//变量声明
 	case *ast.DeclStmt:
 
-		//log.Info("变量声明:", v.Names, "行:", v.LineNum)
 		d := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
@@ -68,11 +67,15 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		for _, name := range v.Names {
 			sp.Names = append(sp.Names, this.transNameExp(name))
 		}
+		if v.GetExtra() == nil {
 
-		for _, value := range v.Values {
-			if v.Values != nil {
-				sp.Values = append(sp.Values, this.transExp(value))
+			for _, value := range v.Values {
+				if v.Values != nil {
+					sp.Values = append(sp.Values, this.transExp(value))
+				}
 			}
+		} else {
+			log.Debugf("v.GetExtra() = %v", v.GetExtra())
 		}
 
 		d.Specs = append(d.Specs, sp)
@@ -263,6 +266,40 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 	case *ast.Print:
 	//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
+	case *ast.MapStm:
+		block := new(gast.BlockStmt)
+
+		stmt = &gast.RangeStmt{
+			For:    0,
+			Key:    gast.NewIdent("_"),
+			Value:  gast.NewIdent("vo"),
+			TokPos: 0,
+			Tok:    token.DEFINE,
+			X:      this.transExp(v.List),
+			Body:   block,
+		}
+		//
+		//mp :=
+		//
+		lf := this.transExp(v.Left)
+		call := &gast.CallExpr{
+			Fun:      gast.NewIdent("append"),
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+		call.Args = append(call.Args, lf)
+		call.Args = append(call.Args, gast.NewIdent("vo"))
+
+		as := &gast.AssignStmt{
+			Lhs:    []gast.Expr{lf},
+			TokPos: 0,
+			Tok:    token.ASSIGN,
+			Rhs:    []gast.Expr{call},
+		}
+		block.List = append(block.List, as)
+
 	case *ast.Query:
 		stm, err := sqlparser.Parse(v.SQL)
 		if err != nil {

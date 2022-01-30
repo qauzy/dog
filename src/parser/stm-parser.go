@@ -117,6 +117,31 @@ func (this *Parser) parseStatement() ast.Stm {
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
 			assign.Left = ast.NewIdent(id, this.Linenum)
+			if c0, ok := exp.(*ast.CallExpr); ok {
+				if sl0, ok := c0.Callee.(*ast.SelectorExpr); ok {
+					if sl0.Sel == "collect" {
+						if c1, ok := sl0.X.(*ast.CallExpr); ok {
+							if sl1, ok := c1.Callee.(*ast.SelectorExpr); ok {
+								if sl1.Sel == "oMap" || sl1.Sel == "map" || sl1.Sel == "Map" || sl1.Sel == "sorted" {
+									if c2, ok := sl1.X.(*ast.CallExpr); ok {
+										if sl2, ok := c2.Callee.(*ast.SelectorExpr); ok {
+											if sl2.Sel == "stream" {
+												//this.ParseBug(fmt.Sprintf("====%v", c1.ArgsList))
+												if len(c1.ArgsList) == 1 {
+													return ast.MapStm_new(assign.Left, sl2.X, c1.ArgsList[0], this.Linenum)
+												}
+											}
+										}
+									}
+
+								} else {
+									this.ParseBug(sl1.Sel)
+								}
+							}
+						}
+					}
+				}
+			}
 			assign.Value = exp
 
 			return assign
@@ -162,8 +187,9 @@ func (this *Parser) parseStatement() ast.Stm {
 			log.Debugf("处理累加")
 			this.eatToken(TOKEN_AUTOADD)
 			//特殊的for语句才不需要分号
-			if !this.isSpecial {
+			if this.isSpecial {
 				this.isSpecial = false
+			} else {
 				this.eatToken(TOKEN_SEMI)
 			}
 			left := ast.NewIdent(id, this.Linenum)
@@ -413,31 +439,8 @@ func (this *Parser) parseStatement() ast.Stm {
 	default:
 		if this.TypeToken() {
 			tp := this.parseType()
-			id := this.current.Lexeme
-			id = GetNewId(id)
 
-			this.eatToken(TOKEN_ID)
-			decl := ast.DeclStmt_new(nil, tp, nil, this.Linenum)
-
-			decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
-			//有赋值语句
-			if this.current.Kind == TOKEN_ASSIGN {
-				this.assignType = tp
-				//临时变量类型
-				log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
-				this.eatToken(TOKEN_ASSIGN)
-				exp := this.parseExp()
-				//三元表达式
-				if _, ok := exp.(*ast.Question); ok {
-					decl.SetTriple()
-				}
-				decl.Values = append(decl.Values, exp)
-			} else {
-				log.Debugf("*******解析临时变量声明语句(无赋值语句)*******")
-			}
-			this.eatToken(TOKEN_SEMI)
-			return decl
-
+			return this.parserDecl(tp)
 		}
 		this.ParseBug("代码段解析bug")
 	}

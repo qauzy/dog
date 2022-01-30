@@ -70,6 +70,8 @@ type Method interface {
 
 type Stm interface {
 	IsTriple() bool
+	GetExtra() (Extra Stm)
+	SetExtra(Extra Stm)
 	accept(v Visitor)
 	_stm()
 }
@@ -727,6 +729,29 @@ func (this *ArraySelect) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *ArraySelect) _exp() {
+}
+
+/*}}}*/
+
+//Exp.MethodReference /*{{{*/
+type MethodReference struct {
+	Owner  Exp
+	Method Exp
+	Exp_T
+}
+
+func MethodReference_new(Owner Exp, Method Exp, line int) *MethodReference {
+	e := new(MethodReference)
+	e.Owner = Owner
+	e.Method = Method
+	e.LineNum = line
+	return e
+}
+
+func (this *MethodReference) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *MethodReference) _exp() {
 }
 
 /*}}}*/
@@ -1446,9 +1471,16 @@ func (this *This) _exp() {
 //Stm   /*{{{*/
 type Stm_T struct {
 	isTriple bool
+	Extra    Stm
 	LineNum  int
 }
 
+func (this *Stm_T) GetExtra() (Extra Stm) {
+	return this.Extra
+}
+func (this *Stm_T) SetExtra(Extra Stm) {
+	this.Extra = Extra
+}
 func (this *Stm_T) IsTriple() bool {
 	return this.isTriple
 }
@@ -1486,14 +1518,15 @@ type Assign struct {
 	Left    Exp //左边可能是一个包含声明语句的
 	Value   Exp
 	IsField bool
+	Special bool
 	Stm_T
 }
 
-func Assign_new(Left Exp, exp Exp, isField bool, line int) *Assign {
+func Assign_new(Left Exp, exp Exp, Special bool, line int) *Assign {
 	s := new(Assign)
 	s.Left = Left
 	s.Value = exp
-	s.IsField = isField
+	s.Special = Special
 	s.LineNum = line
 	return s
 }
@@ -1502,6 +1535,31 @@ func (this *Assign) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *Assign) _stm() {
+}
+
+/*}}}*/
+
+//Stm.MapStm    /*{{{*/
+type MapStm struct {
+	Left Exp //左边可能是一个包含声明语句的
+	List Exp
+	Ele  Exp
+	Stm_T
+}
+
+func MapStm_new(Left Exp, exp Exp, Ele Exp, line int) *MapStm {
+	s := new(MapStm)
+	s.Left = Left
+	s.List = exp
+	s.Ele = Ele
+	s.LineNum = line
+	return s
+}
+
+func (this *MapStm) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *MapStm) _stm() {
 }
 
 /*}}}*/
