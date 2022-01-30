@@ -279,6 +279,10 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				if ss != nil {
 					body.List = append(body.List, ss)
 				}
+
+				if stm.GetExtra() != nil {
+					body.List = append(body.List, this.transStm(stm.GetExtra()))
+				}
 			}
 		}
 		//函数体为空

@@ -1541,17 +1541,19 @@ func (this *Assign) _stm() {
 
 //Stm.MapStm    /*{{{*/
 type MapStm struct {
-	Left Exp //左边可能是一个包含声明语句的
-	List Exp
-	Ele  Exp
+	Left  Exp //左边可能是一个包含声明语句的
+	List  Exp
+	Ele   Exp
+	ToAny string
 	Stm_T
 }
 
-func MapStm_new(Left Exp, exp Exp, Ele Exp, line int) *MapStm {
+func MapStm_new(Left Exp, exp Exp, Ele Exp, ToAny string, line int) *MapStm {
 	s := new(MapStm)
 	s.Left = Left
 	s.List = exp
 	s.Ele = Ele
+	s.ToAny = ToAny
 	s.LineNum = line
 	return s
 }
@@ -2366,6 +2368,26 @@ func (this *ListType) String() string {
 	return "@" + this.Name
 }
 func (this *ListType) _exp() {
+}
+
+//泛型
+type SetType struct {
+	Name     string
+	Ele      Exp
+	TypeKind int
+}
+
+func (this *SetType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *SetType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *SetType) String() string {
+	return "@" + this.Name
+}
+func (this *SetType) _exp() {
 }
 
 type HashType struct {

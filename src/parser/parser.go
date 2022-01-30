@@ -153,10 +153,10 @@ func (this *Parser) parseType() ast.Exp {
 			this.eatToken(TOKEN_LT)
 			ele := this.parseNotExp()
 			this.eatToken(TOKEN_GT)
-			this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+			this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
 		} else {
 			this.assignType = &ast.ObjectType{ast.TYPE_OBJECT}
-			this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+			this.currentType = &ast.SetType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
 		}
 
 	case TOKEN_HASHSET:
@@ -552,7 +552,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			return this.parseLambdaExp([]ast.Exp{ast.NewIdent(newId, this.Linenum)})
 		}
 		log.Debugf("适配变量ID->%s", id)
-		return ast.NewIdent(id, this.Linenum)
+		return ast.NewIdent(GetNewId(id), this.Linenum)
 	case TOKEN_NEW:
 		return this.parseNewExp()
 	default:
@@ -826,7 +826,8 @@ func (this *Parser) parseNotExp() ast.Exp {
 		case TOKEN_DOUBLE_COLON:
 			log.Debugf("方法引用")
 			this.eatToken(TOKEN_DOUBLE_COLON)
-			m := this.parseExp()
+			m := ast.NewIdent(Capitalize(this.current.Lexeme), this.Linenum)
+			this.eatToken(TOKEN_ID)
 			exp = ast.MethodReference_new(exp, m, this.Linenum)
 			//数组索引操作
 		case TOKEN_LBRACK: //[exp]

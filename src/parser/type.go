@@ -89,7 +89,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		this.eatToken(TOKEN_LT)
 		ele := this.parseNotExp()
 		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+		this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
 	case TOKEN_HASHSET:
 		//处理泛型
 		name := this.current.Lexeme
@@ -98,7 +98,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		ele := this.parseNotExp()
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+		this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
 
 	case TOKEN_LIST:
 		name := this.current.Lexeme

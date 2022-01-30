@@ -61,7 +61,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Values:  nil,
 			Comment: nil,
 		}
-		if len(v.Names) == len(v.Values) {
+		if len(v.Names) == len(v.Values) && v.GetExtra() == nil {
 			sp.Type = nil
 		}
 		for _, name := range v.Names {
@@ -282,23 +282,61 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		//mp :=
 		//
 		lf := this.transExp(v.Left)
-		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("append"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
-		}
-		call.Args = append(call.Args, lf)
-		call.Args = append(call.Args, gast.NewIdent("vo"))
+		if v.ToAny == "toList" {
 
-		as := &gast.AssignStmt{
-			Lhs:    []gast.Expr{lf},
-			TokPos: 0,
-			Tok:    token.ASSIGN,
-			Rhs:    []gast.Expr{call},
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("append"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			call.Args = append(call.Args, lf)
+			call.Args = append(call.Args, gast.NewIdent("vo"))
+
+			as := &gast.AssignStmt{
+				Lhs:    []gast.Expr{lf},
+				TokPos: 0,
+				Tok:    token.ASSIGN,
+				Rhs:    []gast.Expr{call},
+			}
+			block.List = append(block.List, as)
+		} else if v.ToAny == "toSet" {
+			var method *gast.Ident
+			if mr, ok := v.Ele.(*ast.MethodReference); ok {
+				method = this.transNameExp(mr.Method)
+			}
+			el := &gast.CallExpr{
+				Fun: &gast.SelectorExpr{
+					X:   gast.NewIdent("vo"),
+					Sel: method,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+
+			idx := &gast.IndexExpr{
+				X:      lf,
+				Lbrack: 0,
+				Index:  el,
+				Rbrack: 0,
+			}
+
+			as := &gast.AssignStmt{
+				Lhs:    []gast.Expr{idx},
+				TokPos: 0,
+				Tok:    token.ASSIGN,
+				Rhs: []gast.Expr{&gast.BasicLit{
+					ValuePos: 0,
+					Kind:     token.STRING,
+					Value:    "\"1\"",
+				}},
+			}
+			block.List = append(block.List, as)
+
 		}
-		block.List = append(block.List, as)
 
 	case *ast.Query:
 		stm, err := sqlparser.Parse(v.SQL)

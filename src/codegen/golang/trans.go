@@ -238,6 +238,12 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Len:    nil,
 			Elt:    this.transType(v.Ele),
 		}
+	case *ast.SetType:
+		return &gast.MapType{
+			Map:   0,
+			Key:   this.transType(v.Ele),
+			Value: gast.NewIdent("string"),
+		}
 	case *ast.ClassType:
 		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
 			pack := this.CurrentFile.GetImport(v.Name).GetPack()
