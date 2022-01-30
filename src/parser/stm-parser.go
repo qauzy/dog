@@ -304,6 +304,11 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_COLON)
 		body := this.parseStatements()
 		return ast.Case_new(exp, ast.Block_new(body, this.Linenum), this.Linenum)
+	case TOKEN_DEFAULT:
+		this.eatToken(TOKEN_DEFAULT)
+		this.eatToken(TOKEN_COLON)
+		body := this.parseStatements()
+		return ast.Case_new(nil, ast.Block_new(body, this.Linenum), this.Linenum)
 	case TOKEN_FOR:
 		log.Debugf("********TOKEN_FOR***********")
 		this.eatToken(TOKEN_FOR)
@@ -455,6 +460,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_THIS ||
 		this.current.Kind == TOKEN_SWITCH ||
 		this.current.Kind == TOKEN_CASE ||
+		this.current.Kind == TOKEN_DEFAULT ||
 		this.current.Kind == TOKEN_SYSTEM {
 		log.Infof("****************** parseStatements **********************-->%v", this.current.Lexeme)
 		stms = append(stms, this.parseStatement())

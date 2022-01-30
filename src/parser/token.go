@@ -92,13 +92,15 @@ func initTokenMap() {
 	tokenMap["public"] = TOKEN_PUBLIC
 	tokenMap["protected"] = TOKEN_PROTECTED
 	tokenMap["private"] = TOKEN_PRIVATE
+	tokenMap["default"] = TOKEN_DEFAULT
 	tokenMap["final"] = TOKEN_FINAL
 	tokenMap["abstract"] = TOKEN_ABSTRACT
 	tokenMap["transient"] = TOKEN_TRANSIENT
 	tokenMap["this"] = TOKEN_THIS
 	tokenMap["static"] = TOKEN_STATIC
 	//tokenMap["length"] = TOKEN_LENGTH
-	//tokenMap["Size"] = TOKEN_SIZE
+	tokenMap["Size"] = TOKEN_SIZE
+	tokenMap["size"] = TOKEN_SIZE
 	tokenMap["return"] = TOKEN_RETURN
 	tokenMap["System"] = TOKEN_SYSTEM
 
@@ -195,6 +197,7 @@ func initTokenMap() {
 
 	tMap[TOKEN_PUBLIC] = "TOKEN_PUBLIC"
 	tMap[TOKEN_PRIVATE] = "TOKEN_PRIVATE"
+	tMap[TOKEN_DEFAULT] = "TOKEN_DEFAULT"
 	tMap[TOKEN_PROTECTED] = "TOKEN_PROTECTED"
 	tMap[TOKEN_PACKAGE] = "TOKEN_PACKAGE"
 	tMap[TOKEN_IMPORT] = "TOKEN_IMPORT"

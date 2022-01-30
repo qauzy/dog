@@ -189,9 +189,14 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Body:   this.transBlock(v.Cases),
 		}
 	case *ast.Case:
+		var ca []gast.Expr
+		if v.E != nil {
+			ca = []gast.Expr{this.transExp(v.E)}
+		}
+
 		cs := &gast.CaseClause{
 			Case:  0,
-			List:  []gast.Expr{this.transExp(v.E)},
+			List:  ca,
 			Colon: 0,
 		}
 
