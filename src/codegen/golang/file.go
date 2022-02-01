@@ -159,7 +159,7 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 	if err != nil {
 		return
 	}
-	//var filename = "D:\\code\\dog\\src\\codegen\\golang\\example\\test.golang"
+
 	fileNameWithSuffix := path.Base(file)
 	//获取文件的后缀(文件类型)
 	fileType := path.Ext(fileNameWithSuffix)

@@ -58,7 +58,7 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		this.currentClass = nil
 	}()
 
-	for this.TypeToken() ||
+	for this.IsTypeToken() ||
 		this.current.Kind == TOKEN_COMMENT ||
 		this.current.Kind == TOKEN_QUERY || //解析jpa的  @Query 注解,
 		this.current.Kind == TOKEN_PUBLIC ||

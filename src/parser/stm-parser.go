@@ -450,7 +450,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		}
 		return ast.Return_new(exp, this.Linenum)
 	default:
-		if this.TypeToken() {
+		if this.IsTypeToken() {
 			tp := this.parseType()
 
 			return this.parserDecl(tp)
@@ -462,7 +462,7 @@ func (this *Parser) parseStatement() ast.Stm {
 
 func (this *Parser) parseStatements() []ast.Stm {
 	stms := []ast.Stm{}
-	for this.TypeToken() ||
+	for this.IsTypeToken() ||
 		this.ExtraToken() ||
 		this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_LBRACE ||

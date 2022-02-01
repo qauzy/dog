@@ -151,7 +151,7 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_SET)
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
-			ele := this.parseNotExp()
+			ele := this.parseType()
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
 		} else {
@@ -164,7 +164,7 @@ func (this *Parser) parseType() ast.Exp {
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_HASHSET)
 		this.eatToken(TOKEN_LT)
-		ele := this.parseNotExp()
+		ele := this.parseType()
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_GT)
 		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
@@ -174,7 +174,7 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_LIST)
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
-			ele := this.parseNotExp()
+			ele := this.parseType()
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
 		} else {
@@ -187,7 +187,7 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_ARRAYLIST)
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
-			ele := this.parseNotExp()
+			ele := this.parseType()
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
 		} else {
@@ -231,6 +231,11 @@ func (this *Parser) parseType() ast.Exp {
 		//FIXME 类型可能带包名前缀
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
+		if this.current.Kind == TOKEN_DOT {
+			id := ast.NewIdent(name, this.Linenum)
+			this.parseCallExp(id)
+		}
+		name = this.current.Lexeme
 		if this.current.Kind != TOKEN_LT {
 			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
 		} else {
@@ -272,7 +277,7 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 	var id string
 	var access int
 
-	if this.TypeToken() ||
+	if this.IsTypeToken() ||
 		this.current.Kind == TOKEN_ID {
 		var nonType = false
 		pre := this.current.Lexeme
@@ -556,7 +561,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 	case TOKEN_NEW:
 		return this.parseNewExp()
 	default:
-		if this.TypeToken() {
+		if this.IsTypeToken() {
 			return this.parseType()
 		}
 		this.ParseBug("未处理")
@@ -1185,30 +1190,6 @@ func (this *Parser) parseAnnotation() {
 		}
 	}
 
-}
-
-func (this *Parser) parseMainClass() ast.MainClass {
-	//
-	this.eatToken(TOKEN_CLASS)
-	id := this.current.Lexeme
-	this.eatToken(TOKEN_ID)
-	this.eatToken(TOKEN_LBRACE)
-	this.eatToken(TOKEN_PUBLIC)
-	this.eatToken(TOKEN_STATIC)
-	this.eatToken(TOKEN_VOID)
-	this.eatToken(TOKEN_MAIN)
-	this.eatToken(TOKEN_LPAREN)
-	this.eatToken(TOKEN_STRING)
-	this.eatToken(TOKEN_LBRACK)
-	this.eatToken(TOKEN_RBRACK)
-	arg := this.current.Lexeme
-	this.eatToken(TOKEN_ID)
-	this.eatToken(TOKEN_RPAREN)
-	this.eatToken(TOKEN_LBRACE)
-	stm := this.parseStatement()
-	this.eatToken(TOKEN_RBRACE)
-	this.eatToken(TOKEN_RBRACE)
-	return &ast.MainClassSingle{id, arg, stm}
 }
 
 func (this *Parser) parseProgram() ast.File {

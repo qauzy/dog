@@ -126,7 +126,7 @@ func (this *Parser) parseClassDecls() {
 func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 
 	//每次循环解析一个成员变量或一个成员函数
-	for this.TypeToken() ||
+	for this.IsTypeToken() ||
 		this.current.Kind == TOKEN_ID ||
 		this.current.Kind == TOKEN_PRIVATE ||
 		this.current.Kind == TOKEN_PUBLIC ||

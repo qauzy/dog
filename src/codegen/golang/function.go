@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
@@ -12,7 +13,7 @@ func (this *Translation) constructBuilderFunc(fi ast.Field) {
 }
 
 func (this *Translation) constructFieldFunc(fi ast.Field) {
-	if !ConstructFieldFunc {
+	if !cfg.ConstructFieldFunc {
 		return
 	}
 	if field, ok := fi.(*ast.FieldSingle); ok {

@@ -134,112 +134,223 @@ func (this *Translation) transEnum(c ast.Class) {
 
 			v.Specs = append(v.Specs, value)
 		}
+		this.buildEnumString(cc)
+		this.buildEnumName(cc)
+	}
+}
+func (this *Translation) buildEnumString(cc *ast.ClassSingle) {
 
-		//3 枚举元素值的String转换
+	//3 枚举元素值的String转换
 
-		//处理类接收
-		recv := &gast.FieldList{
-			Opening: 0,
-			List:    nil,
-			Closing: 0,
-		}
+	//处理类接收
+	recv := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
 
-		gfi := &gast.Field{
-			Doc:   nil,
-			Names: []*gast.Ident{gast.NewIdent("this")},
-			Type: &gast.Ident{
-				NamePos: 0,
-				Name:    this.CurrentClass.GetName(),
-				Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
-			},
-			Tag:     nil,
-			Comment: nil,
-		}
+	gfi := &gast.Field{
+		Doc:   nil,
+		Names: []*gast.Ident{gast.NewIdent("this")},
+		Type: &gast.Ident{
+			NamePos: 0,
+			Name:    this.CurrentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+		},
+		Tag:     nil,
+		Comment: nil,
+	}
 
-		recv.List = append(recv.List, gfi)
+	recv.List = append(recv.List, gfi)
 
-		//处理返回值
-		resType := &gast.Field{
-			Doc:     nil,
-			Names:   nil,
-			Type:    gast.NewIdent("string"),
-			Tag:     nil,
-			Comment: nil,
-		}
+	//处理返回值
+	resType := &gast.Field{
+		Doc:     nil,
+		Names:   nil,
+		Type:    gast.NewIdent("string"),
+		Tag:     nil,
+		Comment: nil,
+	}
 
-		results := &gast.FieldList{
-			Opening: 0,
-			List:    []*gast.Field{resType},
-			Closing: 0,
-		}
+	results := &gast.FieldList{
+		Opening: 0,
+		List:    []*gast.Field{resType},
+		Closing: 0,
+	}
 
-		//处理函数体
-
-		swBlock := &gast.BlockStmt{
-			Lbrace: 0,
-			List:   nil,
-			Rbrace: 0,
-		}
-
-		for _, fi := range cc.Fields {
-			if sf, ok := fi.(*ast.FieldSingle); ok && sf.Value != nil {
-				cause := &gast.CaseClause{
-					Case:  0,
-					List:  nil,
-					Colon: 0,
-					Body:  nil,
-				}
-				getStm := &gast.ReturnStmt{
-					Return:  0,
-					Results: []gast.Expr{this.transExp(sf.Value)},
-				}
-
-				cause.List = append(cause.List, gast.NewIdent(sf.Name))
-				cause.Body = append(cause.Body, getStm)
-
-				swBlock.List = append(swBlock.List, cause)
+	//处理函数体
+	//String
+	swBlock := &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+	for _, fi := range cc.Fields {
+		if sf, ok := fi.(*ast.FieldSingle); ok && sf.Value != nil {
+			//String()
+			cause := &gast.CaseClause{
+				Case:  0,
+				List:  nil,
+				Colon: 0,
+				Body:  nil,
+			}
+			getStm := &gast.ReturnStmt{
+				Return:  0,
+				Results: []gast.Expr{this.transExp(sf.Value)},
 			}
 
+			cause.List = append(cause.List, gast.NewIdent(sf.Name))
+			cause.Body = append(cause.Body, getStm)
+
+			swBlock.List = append(swBlock.List, cause)
+
 		}
-
-		var getBody = &gast.BlockStmt{
-			Lbrace: 0,
-			List:   nil,
-			Rbrace: 0,
-		}
-
-		swStm := &gast.SwitchStmt{
-			Switch: 0,
-			Init:   nil,
-			Tag:    gast.NewIdent("this"),
-			Body:   swBlock,
-		}
-		//switch代码块
-		getBody.List = append(getBody.List, swStm)
-
-		retStm := &gast.ReturnStmt{
-			Return:  0,
-			Results: []gast.Expr{gast.NewIdent("\"\"")},
-		}
-
-		//空return代码块
-		getBody.List = append(getBody.List, retStm)
-
-		stringFun := &gast.FuncDecl{
-			Doc:  nil,
-			Recv: recv,
-			Name: gast.NewIdent("String"),
-			Type: &gast.FuncType{
-				Func:    0,
-				Params:  nil,
-				Results: results,
-			},
-			Body: getBody,
-		}
-
-		this.GolangFile.Decls = append(this.GolangFile.Decls, stringFun)
 
 	}
+
+	var getBody = &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+
+	swStm := &gast.SwitchStmt{
+		Switch: 0,
+		Init:   nil,
+		Tag:    gast.NewIdent("this"),
+		Body:   swBlock,
+	}
+	//switch代码块
+	getBody.List = append(getBody.List, swStm)
+
+	retStm := &gast.ReturnStmt{
+		Return:  0,
+		Results: []gast.Expr{gast.NewIdent("\"\"")},
+	}
+
+	//空return代码块
+	getBody.List = append(getBody.List, retStm)
+
+	stringFun := &gast.FuncDecl{
+		Doc:  nil,
+		Recv: recv,
+		Name: gast.NewIdent("String"),
+		Type: &gast.FuncType{
+			Func:    0,
+			Params:  nil,
+			Results: results,
+		},
+		Body: getBody,
+	}
+	this.GolangFile.Decls = append(this.GolangFile.Decls, stringFun)
+}
+
+func (this *Translation) buildEnumName(cc *ast.ClassSingle) {
+
+	//3 枚举元素值的String转换
+
+	//处理类接收
+	recv := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
+
+	gfi := &gast.Field{
+		Doc:   nil,
+		Names: []*gast.Ident{gast.NewIdent("this")},
+		Type: &gast.Ident{
+			NamePos: 0,
+			Name:    this.CurrentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+		},
+		Tag:     nil,
+		Comment: nil,
+	}
+
+	recv.List = append(recv.List, gfi)
+
+	//处理返回值
+	resType := &gast.Field{
+		Doc:     nil,
+		Names:   nil,
+		Type:    gast.NewIdent("string"),
+		Tag:     nil,
+		Comment: nil,
+	}
+
+	results := &gast.FieldList{
+		Opening: 0,
+		List:    []*gast.Field{resType},
+		Closing: 0,
+	}
+
+	//处理函数体
+	//String
+	swBlock := &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+	for _, fi := range cc.Fields {
+		if sf, ok := fi.(*ast.FieldSingle); ok {
+			//String()
+			cause := &gast.CaseClause{
+				Case:  0,
+				List:  nil,
+				Colon: 0,
+				Body:  nil,
+			}
+			getStm := &gast.ReturnStmt{
+				Return:  0,
+				Results: []gast.Expr{gast.NewIdent("\"" + fi.GetName() + "\"")},
+			}
+
+			cause.List = append(cause.List, gast.NewIdent(sf.Name))
+			cause.Body = append(cause.Body, getStm)
+
+			swBlock.List = append(swBlock.List, cause)
+
+		}
+
+	}
+
+	var getBody = &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+
+	swStm := &gast.SwitchStmt{
+		Switch: 0,
+		Init:   nil,
+		Tag:    gast.NewIdent("this"),
+		Body:   swBlock,
+	}
+	//switch代码块
+	getBody.List = append(getBody.List, swStm)
+
+	retStm := &gast.ReturnStmt{
+		Return:  0,
+		Results: []gast.Expr{gast.NewIdent("\"\"")},
+	}
+
+	//空return代码块
+	getBody.List = append(getBody.List, retStm)
+
+	stringFun := &gast.FuncDecl{
+		Doc:  nil,
+		Recv: recv,
+		Name: gast.NewIdent("Name"),
+		Type: &gast.FuncType{
+			Func:    0,
+			Params:  nil,
+			Results: results,
+		},
+		Body: getBody,
+	}
+	this.GolangFile.Decls = append(this.GolangFile.Decls, stringFun)
+
 }
 
 //

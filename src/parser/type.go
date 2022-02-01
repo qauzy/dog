@@ -5,7 +5,7 @@ import (
 	log "github.com/corgi-kx/logcustom"
 )
 
-func (this *Parser) TypeToken() (b bool) {
+func (this *Parser) IsTypeToken() (b bool) {
 	return this.current.Kind > TOKEN_TYPE_START && this.current.Kind < TOKEN_TYPE_END
 }
 
