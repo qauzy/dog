@@ -151,7 +151,14 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		return result
 	case *ast.Try:
-		return this.transStm(v.Body)
+		block := &gast.BlockStmt{}
+		try := this.transStm(v.Body)
+		block.List = append(block.List, try)
+		for _, vv := range v.Catches {
+			catch := this.transStm(vv.Body)
+			block.List = append(block.List, catch)
+		}
+		return block
 	case *ast.While:
 		stmt = &gast.ForStmt{
 			For:  0,
