@@ -115,3 +115,61 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 	this.eatToken(TOKEN_SEMI)
 	return decl
 }
+
+//检查List的map操作
+func (this *Parser) CheckSelectorExprs(exp ast.Exp, expext *string, call string, mp ast.MapStm) (b bool) {
+	switch e := exp.(type) {
+	case *ast.SelectorExpr:
+		switch e.Sel {
+		case "stream":
+			if *expext == "stream" {
+				return this.CheckSelectorExprs(e.X, expext, "stream", mp)
+			} else {
+				return false
+			}
+		case "map":
+			return this.CheckSelectorExprs(e.X, expext, "map", mp)
+		case "sorted":
+			return this.CheckSelectorExprs(e.X, expext, "sorted", mp)
+		case "collect":
+			return this.CheckSelectorExprs(e.X, expext, "", mp)
+		}
+		return
+	case *ast.CallExpr:
+		switch call {
+		case "stream":
+			this.CheckSelectorExprs(e.Callee, expext, "", mp)
+			return
+		case "map":
+			if len(e.ArgsList) == 1 {
+				mp.Ele = e.ArgsList[0]
+				return this.CheckSelectorExprs(e.Callee, expext, "", mp)
+			}
+		case "sorted":
+			return this.CheckSelectorExprs(e.Callee, expext, "", mp)
+		case "collect":
+			if len(e.ArgsList) == 1 {
+				if cc0, ok := e.ArgsList[0].(*ast.CallExpr); ok {
+					if ssl0, ok := cc0.Callee.(*ast.SelectorExpr); ok {
+						if ssl0.Sel == "toSet" || ssl0.Sel == "toList" {
+							mp.ToAny = ssl0.Sel
+							return this.CheckSelectorExprs(e.Callee, expext, "", mp)
+						}
+					}
+				}
+			}
+			return false
+		}
+		return this.CheckSelectorExprs(e.Callee, expext, "", mp)
+	case *ast.Ident:
+		if this.currentMethod != nil && this.currentMethod.GetLocals(e.Name) != nil {
+			lo := this.currentMethod.GetLocals(e.Name)
+			if _, ok := lo.GetDecType().(*ast.ListType); ok {
+				mp.List = e
+				*expext = "stream"
+				return true
+			}
+		}
+	}
+	return
+}
