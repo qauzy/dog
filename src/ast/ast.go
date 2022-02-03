@@ -63,6 +63,9 @@ type Method interface {
 	GetName() string //获取方法名
 	GetFormal(name string) (f Field)
 	ListFormal() (f []Field)
+	AddLocals(f Field)
+	GetLocals(name string) (f Field)
+	ListLocals() (f []Field)
 	IsConstruct() bool //是否构造方法
 	IsStatic() bool    //是否静态方法
 	IsThrows() bool    //是否抛出异常
@@ -241,6 +244,7 @@ type MethodSingle struct {
 	Formals    []Field
 	FormalsMap map[string]Field
 	Locals     []Field
+	LocalsMap  map[string]Field
 	Stms       []Stm
 	Comment    string
 	Construct  bool
@@ -276,6 +280,19 @@ func (this *MethodSingle) GetFormal(name string) (f Field) {
 }
 func (this *MethodSingle) ListFormal() (f []Field) {
 	f = this.Formals
+	return
+}
+func (this *MethodSingle) AddLocals(f Field) {
+	this.Locals = append(this.Locals, f)
+	this.LocalsMap[f.GetName()] = f
+	return
+}
+func (this *MethodSingle) GetLocals(name string) (f Field) {
+	f = this.LocalsMap[name]
+	return
+}
+func (this *MethodSingle) ListLocals() (f []Field) {
+	f = this.Locals
 	return
 }
 

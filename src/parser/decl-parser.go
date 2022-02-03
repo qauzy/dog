@@ -12,13 +12,25 @@ import (
 func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 	log.Debugf("*******解析临时变量声明语句*******")
 	id := this.current.Lexeme
-	id = util.GetNewId(id)
 	this.eatToken(TOKEN_ID)
 	decl := ast.DeclStmt_new(nil, exp, nil, this.Linenum)
 	this.currentStm = decl
 	defer func() {
 		this.currentStm = nil
 	}()
+
+	//记录本地变量
+	if this.currentMethod != nil {
+		f := &ast.FieldSingle{
+			Access:  0,
+			Tp:      exp,
+			Name:    util.GetNewId(id),
+			Static:  false,
+			IsField: false,
+			Value:   nil,
+		}
+		this.currentMethod.AddLocals(f)
+	}
 
 	decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
 	//有赋值语句
@@ -49,7 +61,6 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 								if c2, ok := sl1.X.(*ast.CallExpr); ok {
 									if sl2, ok := c2.Callee.(*ast.SelectorExpr); ok {
 										if sl2.Sel == "stream" {
-											//this.ParseBug(fmt.Sprintf("====%v", c1.ArgsList))
 											if len(c1.ArgsList) == 1 {
 												log.Debugf("*******解析map语句*******")
 												decl.SetExtra(ast.MapStm_new(decl.Names[0], sl2.X, c1.ArgsList[0], toany, this.Linenum))
@@ -74,6 +85,18 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 		this.advance()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
+		//记录本地变量
+		if this.currentMethod != nil {
+			f := &ast.FieldSingle{
+				Access:  0,
+				Tp:      exp,
+				Name:    util.GetNewId(id),
+				Static:  false,
+				IsField: false,
+				Value:   nil,
+			}
+			this.currentMethod.AddLocals(f)
+		}
 		decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
 
 		if this.current.Kind == TOKEN_ASSIGN {
