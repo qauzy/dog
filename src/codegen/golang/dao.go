@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/util"
 	"fmt"
 	gast "go/ast"
 	"go/token"
@@ -38,7 +39,7 @@ func (this *Translation) getNewDaoFunc(c ast.Class) (fn *gast.FuncDecl) {
 		OpPos: 0,
 		Op:    token.AND,
 		X: &gast.CompositeLit{
-			Type:       gast.NewIdent(DeCapitalize(c.GetName())),
+			Type:       gast.NewIdent(util.DeCapitalize(c.GetName())),
 			Lbrace:     0,
 			Elts:       []gast.Expr{gast.NewIdent("db")},
 			Rbrace:     0,
@@ -85,7 +86,7 @@ func (this *adminAccessLogDao) Save(m *entity.@) (result *entity.AdminAccessLog,
 `
 	src = strings.Replace(src, "@", strings.Replace(c.GetName(), "Dao", "", 1), 1)
 	fn = this.getFunc(src)
-	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Recv.List[0].Type = gast.NewIdent("*" + util.DeCapitalize(c.GetName()))
 	fn.Type.Results.List[0].Type = gast.NewIdent("*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
 	return
 
@@ -100,7 +101,7 @@ func (this *adminDao) FindById(id int64) (result *entity.Admin,err error) {
 }
 `
 	fn = this.getFunc(src)
-	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Recv.List[0].Type = gast.NewIdent("*" + util.DeCapitalize(c.GetName()))
 	fn.Type.Results.List[0].Type = gast.NewIdent("*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
 	return
 }
@@ -116,7 +117,7 @@ func (this *dataDictionaryDao) DeleteById(id int64) (count int64, err error) {
 `
 	src = strings.Replace(src, "@", "entity."+strings.Replace(c.GetName(), "Dao", "", 1)+"{}", 1)
 	fn = this.getFunc(src)
-	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Recv.List[0].Type = gast.NewIdent("*" + util.DeCapitalize(c.GetName()))
 	return
 }
 
@@ -133,7 +134,7 @@ func (this *adminAccessLogDao) FindAll(qp *types.QueryParam) (result []*entity.A
 }
 `
 	fn = this.getFunc(src)
-	fn.Recv.List[0].Type = gast.NewIdent("*" + DeCapitalize(c.GetName()))
+	fn.Recv.List[0].Type = gast.NewIdent("*" + util.DeCapitalize(c.GetName()))
 	fn.Type.Results.List[0].Type = gast.NewIdent("[]*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
 	return
 }
@@ -157,11 +158,11 @@ func NewBusinessAuthApplyService(BusinessAuthApplyDao *dao.BusinessAuthApplyDao)
 		param := this.transField(fi)
 		//参数小写
 		for _, v := range param.Names {
-			v.Name = DeCapitalize(v.Name)
+			v.Name = util.DeCapitalize(v.Name)
 		}
 
 		fn.Type.Params.List = append(fn.Type.Params.List, param)
-		fn.Body.List = append(fn.Body.List, &gast.ExprStmt{gast.NewIdent(fmt.Sprintf("ret.%s = %s", Capitalize(fi.GetName()), DeCapitalize(fi.GetName())))})
+		fn.Body.List = append(fn.Body.List, &gast.ExprStmt{gast.NewIdent(fmt.Sprintf("ret.%s = %s", util.Capitalize(fi.GetName()), util.DeCapitalize(fi.GetName())))})
 	}
 	fn.Body.List = append(fn.Body.List, &gast.ReturnStmt{})
 	fn.Type.Results.List[0].Type = gast.NewIdent("*" + c.GetName())

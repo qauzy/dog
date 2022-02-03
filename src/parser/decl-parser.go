@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -11,7 +12,7 @@ import (
 func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 	log.Debugf("*******解析临时变量声明语句*******")
 	id := this.current.Lexeme
-	id = GetNewId(id)
+	id = util.GetNewId(id)
 	this.eatToken(TOKEN_ID)
 	decl := ast.DeclStmt_new(nil, exp, nil, this.Linenum)
 	this.currentStm = decl
@@ -19,7 +20,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 		this.currentStm = nil
 	}()
 
-	decl.Names = append(decl.Names, ast.NewIdent(GetNewId(id), this.Linenum))
+	decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
 	//有赋值语句
 	if this.current.Kind == TOKEN_ASSIGN {
 		this.assignType = exp
@@ -73,7 +74,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 		this.advance()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		decl.Names = append(decl.Names, ast.NewIdent(GetNewId(id), this.Linenum))
+		decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
 
 		if this.current.Kind == TOKEN_ASSIGN {
 			//临时变量类型

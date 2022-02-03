@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/util"
 	gast "go/ast"
 	"go/token"
 	"strconv"
@@ -25,7 +26,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
 		if this.CurrentClass != nil && (this.CurrentMethod != nil && this.CurrentMethod.GetFormal(v.Name) == nil) && (this.CurrentClass.GetMethod(v.Name) != nil || this.CurrentClass.GetField(v.Name) != nil) {
-			v.Name = "this." + Capitalize(v.Name)
+			v.Name = "this." + util.Capitalize(v.Name)
 		}
 		//是类型标识符,可能需要转换
 		expr = gast.NewIdent(v.Name)
@@ -188,7 +189,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		//	log.Debugf("选择表达式,%v, %s", v.X, v.Sel)
 		expr = &gast.SelectorExpr{
 			X:   this.transExp(v.X),
-			Sel: gast.NewIdent(Capitalize(v.Sel)),
+			Sel: gast.NewIdent(util.Capitalize(v.Sel)),
 		}
 	case *ast.CallExpr:
 		fn := this.transExp(v.Callee)
@@ -214,9 +215,9 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.Id:
 		if _, ok := v.Tp.(*ast.Function); ok {
 			if this.CurrentClass.GetMethod(v.Name) != nil {
-				v.Name = "this." + Capitalize(v.Name)
+				v.Name = "this." + util.Capitalize(v.Name)
 			} else {
-				v.Name = Capitalize(v.Name)
+				v.Name = util.Capitalize(v.Name)
 			}
 
 		}

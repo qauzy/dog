@@ -9,6 +9,6 @@ var (
 	ProjectName        = "bitrade"
 	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
 	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
-	TargetPath         = "/opt/code/bitrade/"                                                      //目标目录
+	TargetPath         = "/opt/code/actadmin"                                                      //目标目录
 	ImportBase         = "bitrade/core"
 )

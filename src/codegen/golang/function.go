@@ -3,6 +3,7 @@ package codegen_go
 import (
 	"dog/ast"
 	"dog/cfg"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
@@ -12,133 +13,132 @@ func (this *Translation) constructBuilderFunc(fi ast.Field) {
 
 }
 
-func (this *Translation) constructFieldFunc(fi ast.Field) {
+func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 	if !cfg.ConstructFieldFunc {
 		return
 	}
-	if field, ok := fi.(*ast.FieldSingle); ok {
-		var recv *gast.FieldList
-		//处理类接收
-		recv = &gast.FieldList{
-			Opening: 0,
-			List:    nil,
-			Closing: 0,
-		}
-
-		gfi := &gast.Field{
-			Doc:   nil,
-			Names: []*gast.Ident{gast.NewIdent("this")},
-			Type: &gast.StarExpr{X: &gast.Ident{
-				NamePos: 0,
-				Name:    this.CurrentClass.GetName(),
-				Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
-			}},
-			Tag:     nil,
-			Comment: nil,
-		}
-
-		recv.List = append(recv.List, gfi)
-
-		//成员值设置函数
-		params := &gast.FieldList{
-			Opening: 0,
-			List:    nil,
-			Closing: 0,
-		}
-		field.IsField = false
-		params.List = append(params.List, this.transField(field))
-		var setBody = &gast.BlockStmt{
-			Lbrace: 0,
-			List:   nil,
-			Rbrace: 0,
-		}
-
-		setStm := &gast.AssignStmt{
-			Lhs:    []gast.Expr{gast.NewIdent("this." + Capitalize(field.Name))},
-			TokPos: 0,
-			Tok:    token.ASSIGN,
-			Rhs:    []gast.Expr{gast.NewIdent(GetNewId(field.Name))},
-		}
-
-		setBody.List = append(setBody.List, setStm)
-
-		setRetStm := &gast.ReturnStmt{
-			Return:  0,
-			Results: []gast.Expr{gast.NewIdent("this")},
-		}
-		setBody.List = append(setBody.List, setRetStm)
-
-		//处理返回值
-		setResult := &gast.FieldList{
-			Opening: 0,
-			List:    nil,
-			Closing: 0,
-		}
-
-		ret := &gast.Field{
-			Doc:   nil,
-			Names: []*gast.Ident{gast.NewIdent("result")},
-			Type: &gast.StarExpr{X: &gast.Ident{
-				NamePos: 0,
-				Name:    this.CurrentClass.GetName(),
-				Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
-			}},
-			Tag:     nil,
-			Comment: nil,
-		}
-
-		setResult.List = append(setResult.List, ret)
-
-		//函数声明
-		setFun := &gast.FuncDecl{
-			Doc:  nil,
-			Recv: recv,
-			Name: gast.NewIdent("Set" + Capitalize(field.Name)),
-			Type: &gast.FuncType{
-				Func:    0,
-				Params:  params,
-				Results: setResult,
-			},
-			Body: setBody,
-		}
-
-		this.GolangFile.Decls = append(this.GolangFile.Decls, setFun)
-
-		//成员值获取函数
-		var getBody = &gast.BlockStmt{
-			Lbrace: 0,
-			List:   nil,
-			Rbrace: 0,
-		}
-
-		getStm := &gast.ReturnStmt{
-			Return:  0,
-			Results: []gast.Expr{gast.NewIdent("this." + Capitalize(field.Name))},
-		}
-
-		getBody.List = append(getBody.List, getStm)
-
-		//处理返回值
-		results := &gast.FieldList{
-			Opening: 0,
-			List:    []*gast.Field{this.transField(fi)},
-			Closing: 0,
-		}
-
-		getFun := &gast.FuncDecl{
-			Doc:  nil,
-			Recv: recv,
-			Name: gast.NewIdent("Get" + Capitalize(field.Name)),
-			Type: &gast.FuncType{
-				Func:    0,
-				Params:  nil,
-				Results: results,
-			},
-			Body: getBody,
-		}
-
-		this.GolangFile.Decls = append(this.GolangFile.Decls, getFun)
+	var recv *gast.FieldList
+	//处理类接收
+	recv = &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
 	}
+
+	recvFi := &gast.Field{
+		Doc:   nil,
+		Names: []*gast.Ident{gast.NewIdent("this")},
+		Type: &gast.StarExpr{X: &gast.Ident{
+			NamePos: 0,
+			Name:    this.CurrentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+		}},
+		Tag:     nil,
+		Comment: nil,
+	}
+
+	recv.List = append(recv.List, recvFi)
+
+	//成员值设置函数
+	params := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
+	var paramFi = *gfi
+	params.List = append(params.List, &paramFi)
+	var setBody = &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+
+	setStm := &gast.AssignStmt{
+		Lhs:    []gast.Expr{gast.NewIdent("this." + util.Capitalize(gfi.Names[0].Name))},
+		TokPos: 0,
+		Tok:    token.ASSIGN,
+		Rhs:    []gast.Expr{paramFi.Names[0]},
+	}
+
+	setBody.List = append(setBody.List, setStm)
+
+	setRetStm := &gast.ReturnStmt{
+		Return:  0,
+		Results: []gast.Expr{gast.NewIdent("this")},
+	}
+	setBody.List = append(setBody.List, setRetStm)
+
+	//处理返回值
+	setResult := &gast.FieldList{
+		Opening: 0,
+		List:    nil,
+		Closing: 0,
+	}
+
+	ret := &gast.Field{
+		Doc:   nil,
+		Names: []*gast.Ident{gast.NewIdent("result")},
+		Type: &gast.StarExpr{X: &gast.Ident{
+			NamePos: 0,
+			Name:    this.CurrentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+		}},
+		Tag:     nil,
+		Comment: nil,
+	}
+
+	setResult.List = append(setResult.List, ret)
+
+	//函数声明
+	setFun := &gast.FuncDecl{
+		Doc:  nil,
+		Recv: recv,
+		Name: gast.NewIdent("Set" + util.Capitalize(gfi.Names[0].Name)),
+		Type: &gast.FuncType{
+			Func:    0,
+			Params:  params,
+			Results: setResult,
+		},
+		Body: setBody,
+	}
+
+	this.GolangFile.Decls = append(this.GolangFile.Decls, setFun)
+
+	//成员值获取函数
+	var getBody = &gast.BlockStmt{
+		Lbrace: 0,
+		List:   nil,
+		Rbrace: 0,
+	}
+
+	getStm := &gast.ReturnStmt{
+		Return:  0,
+		Results: []gast.Expr{gast.NewIdent("this." + util.Capitalize(gfi.Names[0].Name))},
+	}
+
+	getBody.List = append(getBody.List, getStm)
+
+	//处理返回值
+	results := &gast.FieldList{
+		Opening: 0,
+		List:    []*gast.Field{gfi},
+		Closing: 0,
+	}
+
+	getFun := &gast.FuncDecl{
+		Doc:  nil,
+		Recv: recv,
+		Name: gast.NewIdent("Get" + util.Capitalize(gfi.Names[0].Name)),
+		Type: &gast.FuncType{
+			Func:    0,
+			Params:  nil,
+			Results: results,
+		},
+		Body: getBody,
+	}
+
+	this.GolangFile.Decls = append(this.GolangFile.Decls, getFun)
+
 	return
 }
 
@@ -314,7 +314,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		fn = &gast.FuncDecl{
 			Doc:  cm,
 			Recv: recv,
-			Name: gast.NewIdent(Capitalize(method.Name)),
+			Name: gast.NewIdent(util.Capitalize(method.Name)),
 			Type: &gast.FuncType{
 				Func:    0,
 				Params:  params,
@@ -442,18 +442,5 @@ func (this *Translation) transLambda(fi ast.Exp) (fn *gast.FuncLit) {
 		}
 
 	}
-	return
-}
-func GetNewId(id string) (nId string) {
-	if id == "map" {
-		nId = "oMap"
-	} else if id == "type" {
-		nId = "oType"
-	} else if id == "var" {
-		nId = "vari"
-	} else {
-		nId = id
-	}
-
 	return
 }

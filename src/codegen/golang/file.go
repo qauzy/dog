@@ -5,6 +5,7 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/optimize/golang"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/format"
@@ -107,7 +108,7 @@ func (this *Translation) transGlobalField(fi ast.Field) (value *gast.ValueSpec) 
 		//只处理成员变量
 		var name = field.Name
 		if field.IsField {
-			name = Capitalize(field.Name)
+			name = util.Capitalize(field.Name)
 		}
 		value = &gast.ValueSpec{
 			Doc:     nil,

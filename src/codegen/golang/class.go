@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/util"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
@@ -56,7 +57,7 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 				}
 
 				Type.Fields.List = append(Type.Fields.List, gfi)
-				this.constructFieldFunc(fi)
+				this.constructFieldFunc(gfi)
 			}
 		}
 		for _, m := range cc.Methods {
@@ -481,7 +482,7 @@ func (this *Translation) buildDao(c ast.Class) {
 
 	sp := &gast.TypeSpec{
 		Doc:     nil,
-		Name:    gast.NewIdent(DeCapitalize(c.GetName())),
+		Name:    gast.NewIdent(util.DeCapitalize(c.GetName())),
 		Assign:  0,
 		Type:    nil,
 		Comment: nil,
@@ -523,9 +524,9 @@ func (this *Translation) buildDao(c ast.Class) {
 			for k, v := range ss {
 				if strings.HasSuffix(v, "Not") {
 					v = strings.Replace(v, "Not", "", 1)
-					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				} else {
-					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s = ?\", %s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				}
 			}
 			q += ".First(&result).Error"
@@ -542,9 +543,9 @@ func (this *Translation) buildDao(c ast.Class) {
 			for k, v := range ss {
 				if strings.HasSuffix(v, "Not") {
 					v = strings.Replace(v, "Not", "", 1)
-					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				} else {
-					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				}
 			}
 			q += ".Find(&result).Error"
@@ -561,9 +562,9 @@ func (this *Translation) buildDao(c ast.Class) {
 			for k, v := range ss {
 				if strings.HasSuffix(v, "Not") {
 					v = strings.Replace(v, "Not", "", 1)
-					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s <> ?\",%s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				} else {
-					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", SnakeString(v), gmeth.Type.Params.List[k].Names[0])
+					q += fmt.Sprintf(".Where(\"%s = ?\",%s)", util.SnakeString(v), gmeth.Type.Params.List[k].Names[0])
 				}
 			}
 			q += ".First(&result).Error"
@@ -579,7 +580,7 @@ func (this *Translation) buildDao(c ast.Class) {
 		log.Warn(n, gmeth.Name.Name, len(n))
 		for _, v := range gmeth.Recv.List {
 			//实现接口的struct名字小写开口
-			v.Type = &gast.StarExpr{X: gast.NewIdent(DeCapitalize(c.GetName()))}
+			v.Type = &gast.StarExpr{X: gast.NewIdent(util.DeCapitalize(c.GetName()))}
 		}
 
 		//每个函数末尾加err 返回

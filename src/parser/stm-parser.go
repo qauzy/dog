@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -61,7 +62,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		//4 泛型类型声明
 		id := this.current.Lexeme
 		this.advance()
-		x := ast.NewIdent(GetNewId(id), this.Linenum)
+		x := ast.NewIdent(util.GetNewId(id), this.Linenum)
 		exp := this.parseCallExp(x)
 		switch this.current.Kind {
 		//处理声明临时变量和赋值语句
@@ -112,11 +113,11 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 			//三元表达式
 			if q, ok := exp.(*ast.Question); ok {
-				assign1 := ast.Assign_new(ast.NewIdent(GetNewId(id), this.Linenum), q.One, false, this.Linenum)
-				assign2 := ast.Assign_new(ast.NewIdent(GetNewId(id), this.Linenum), q.Two, false, this.Linenum)
+				assign1 := ast.Assign_new(ast.NewIdent(util.GetNewId(id), this.Linenum), q.One, false, this.Linenum)
+				assign2 := ast.Assign_new(ast.NewIdent(util.GetNewId(id), this.Linenum), q.Two, false, this.Linenum)
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
-			assign.Left = ast.NewIdent(GetNewId(id), this.Linenum)
+			assign.Left = ast.NewIdent(util.GetNewId(id), this.Linenum)
 			var toany string
 			if c0, ok := exp.(*ast.CallExpr); ok {
 				if sl0, ok := c0.Callee.(*ast.SelectorExpr); ok {
@@ -160,7 +161,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			return assign
 
 		case TOKEN_QUO_ASSIGN:
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			this.eatToken(TOKEN_QUO_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -168,27 +169,27 @@ func (this *Parser) parseStatement() ast.Stm {
 			return ast.Binary_new(left, right, "/=", this.Linenum)
 		case TOKEN_MUL_ASSIGN:
 
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			this.eatToken(TOKEN_MUL_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "*=", this.Linenum)
 		case TOKEN_SUB_ASSIGN:
 
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			this.eatToken(TOKEN_SUB_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "-=", this.Linenum)
 		case TOKEN_ADD_ASSIGN:
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			this.eatToken(TOKEN_ADD_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "+=", this.Linenum)
 		case TOKEN_REM_ASSIGN:
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			this.eatToken(TOKEN_REM_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -205,7 +206,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			} else {
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
 			//处理的是后缀减
@@ -215,7 +216,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				this.isSpecial = false
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.NewIdent(GetNewId(id), this.Linenum)
+			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "-=", this.Linenum)
 		case TOKEN_LBRACK:
 			this.eatToken(TOKEN_LBRACK) //[
@@ -237,7 +238,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			decl := ast.DeclStmt_new(nil, tp, nil, this.Linenum)
-			decl.Names = append(decl.Names, ast.NewIdent(GetNewId(id), this.Linenum))
+			decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
 			//有赋值语句
 			if this.current.Kind == TOKEN_ASSIGN {
 				//临时变量类型
