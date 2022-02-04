@@ -118,43 +118,14 @@ func (this *Parser) parseStatement() ast.Stm {
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
 			assign.Left = ast.NewIdent(util.GetNewId(id), this.Linenum)
-			var toany string
-			if c0, ok := exp.(*ast.CallExpr); ok {
-				if sl0, ok := c0.Callee.(*ast.SelectorExpr); ok {
-					if sl0.Sel == "collect" {
-						if len(c0.ArgsList) == 1 {
-							if cc0, ok := c0.ArgsList[0].(*ast.CallExpr); ok {
-								if ssl0, ok := cc0.Callee.(*ast.SelectorExpr); ok {
-									if ssl0.Sel == "toSet" || ssl0.Sel == "toList" {
-										toany = ssl0.Sel
-									}
+			//var toany string
 
-								}
-							}
-
-						}
-
-						if c1, ok := sl0.X.(*ast.CallExpr); ok {
-							if sl1, ok := c1.Callee.(*ast.SelectorExpr); ok {
-								if sl1.Sel == "oMap" || sl1.Sel == "map" || sl1.Sel == "Map" || sl1.Sel == "sorted" {
-									if c2, ok := sl1.X.(*ast.CallExpr); ok {
-										if sl2, ok := c2.Callee.(*ast.SelectorExpr); ok {
-											if sl2.Sel == "stream" {
-
-												if len(c1.ArgsList) == 1 {
-													return ast.MapStm_new(assign.Left, sl2.X, c1.ArgsList[0], toany, this.Linenum)
-												}
-											}
-										}
-									}
-
-								} else {
-									this.ParseBug(sl1.Sel)
-								}
-							}
-						}
-					}
-				}
+			var call string
+			var mp = new(ast.StreamStm)
+			if this.CheckStreamExprs(exp, &call, mp) {
+				mp.Left = assign.Left
+				mp.LineNum = this.Linenum
+				return mp
 			}
 			assign.Value = exp
 

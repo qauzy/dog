@@ -273,7 +273,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 	case *ast.Print:
 	//stmt = &gast.ExprStmt{X: gast.NewIdent("fmt.Print")}
-	case *ast.MapStm:
+	case *ast.StreamStm:
 		block := new(gast.BlockStmt)
 
 		stmt = &gast.RangeStmt{

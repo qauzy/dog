@@ -221,14 +221,17 @@ func NewFieldSingle(Access int, Tp Exp, Name string, Value Exp, Static bool, IsF
 func NewMethodSingle(RetType Exp, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
 
 	FormalsMap := make(map[string]Field)
+	LocalsMap := make(map[string]Field)
 	for _, f := range Formals {
 		FormalsMap[f.GetName()] = f
+		LocalsMap[f.GetName()] = f
 	}
 	m = &MethodSingle{
 		RetType:    RetType,
 		Name:       Name,
 		Formals:    Formals,
 		FormalsMap: FormalsMap,
+		LocalsMap:  LocalsMap,
 		Stms:       Stms,
 		Construct:  Construct,
 		Static:     Static,
@@ -1556,17 +1559,18 @@ func (this *Assign) _stm() {
 
 /*}}}*/
 
-//Stm.MapStm    /*{{{*/
-type MapStm struct {
+//Stm.StreamStm    /*{{{*/
+type StreamStm struct {
 	Left  Exp //左边可能是一个包含声明语句的
 	List  Exp
+	Func  string
 	Ele   Exp
 	ToAny string
 	Stm_T
 }
 
-func MapStm_new(Left Exp, exp Exp, Ele Exp, ToAny string, line int) *MapStm {
-	s := new(MapStm)
+func MapStm_new(Left Exp, exp Exp, Ele Exp, ToAny string, line int) *StreamStm {
+	s := new(StreamStm)
 	s.Left = Left
 	s.List = exp
 	s.Ele = Ele
@@ -1575,10 +1579,10 @@ func MapStm_new(Left Exp, exp Exp, Ele Exp, ToAny string, line int) *MapStm {
 	return s
 }
 
-func (this *MapStm) accept(v Visitor) {
+func (this *StreamStm) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *MapStm) _stm() {
+func (this *StreamStm) _stm() {
 }
 
 /*}}}*/
