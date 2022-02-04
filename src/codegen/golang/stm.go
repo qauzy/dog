@@ -130,10 +130,9 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		//log.Debugf("表达式语句:%v", v)
 		stmt = &gast.ExprStmt{X: this.transExp(v.E)}
 	case *ast.Throw:
-		log.Debugf("Throw语句:%v", v)
 		stmt = &gast.ReturnStmt{
 			Return:  0,
-			Results: nil,
+			Results: []gast.Expr{this.transExp(v.E)},
 		}
 	case *ast.Return:
 		//log.Debugf("Return语句:%v", v)
@@ -146,8 +145,6 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			if ret != nil {
 				result.Results = append(result.Results, ret)
 			}
-		} else {
-			log.Debugf("空Return语句")
 		}
 		return result
 	case *ast.Try:
@@ -220,7 +217,6 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	case *ast.Comment:
 		stmt = &gast.ExprStmt{X: gast.NewIdent(v.C)}
 	case *ast.Assert:
-		//stmt = &gast.ExprStmt{X: gast.NewIdent("************************************")}
 		cond := this.transExp(v.Cond)
 		block := new(gast.BlockStmt)
 		block.List = append(block.List, &gast.ExprStmt{X: this.transExp(v.E)})
