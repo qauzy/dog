@@ -114,6 +114,8 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 			}
 		case "stream":
 			return
+		case "Stream":
+			return
 		case "filter":
 			mp.Func = "filter"
 			return
@@ -133,6 +135,14 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 			} else {
 				return false
 			}
+			// Stream.of(xxxx)
+		case "of":
+			if len(e.ArgsList) == 1 {
+				mp.List = e.ArgsList[0]
+				return
+			} else {
+				return false
+			}
 		default:
 			return false
 		}
@@ -146,6 +156,8 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 				return false
 				//this.ParseBug(fmt.Sprintf(e.Name))
 			}
+		} else if e.Name == "Stream" {
+			return true
 		}
 
 	default:

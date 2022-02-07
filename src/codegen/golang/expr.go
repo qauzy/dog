@@ -437,6 +437,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		return clit
 	case *ast.MethodReference:
+		return gast.NewIdent("####################################################")
 		this.TranslationBug(v)
 	default:
 		this.TranslationBug(v)

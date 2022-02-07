@@ -162,7 +162,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			Closing: 0,
 		}
 		//添加gin
-		if AppendContext {
+		if cfg.AppendContext {
 			params.List = append(params.List, this.getField(gast.NewIdent("ctx"), gast.NewIdent("*gin.Context")))
 		}
 
@@ -307,7 +307,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		if method.Comment == "" {
 			cm = nil
 		}
-		if DropResult {
+		if cfg.DropResult {
 			results = nil
 		}
 

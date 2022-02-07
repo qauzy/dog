@@ -258,7 +258,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 // return:
 func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, IsStatic bool, comment string) (meth ast.Method) {
 	var IsThrows bool
-	log.Debugf("*******解析成员函数*******")
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
 	//解析参数

@@ -1169,12 +1169,12 @@ func (this *Neq) _exp() {
 //Exp.NewObjectArray   /*{{{*/
 type NewObjectArray struct {
 	T    Exp
-	Eles Exp
+	Eles []Exp
 	Size Exp
 	Exp_T
 }
 
-func NewObjectArray_new(t Exp, eles Exp, Size Exp, line int) *NewObjectArray {
+func NewObjectArray_new(t Exp, eles []Exp, Size Exp, line int) *NewObjectArray {
 	e := new(NewObjectArray)
 	e.T = t
 	e.Eles = eles
@@ -1262,13 +1262,15 @@ func (this *NewDate) _exp() {
 
 //Exp.NewStringArray   /*{{{*/
 type NewStringArray struct {
+	Eles []Exp
 	Size Exp
 	Exp_T
 }
 
-func NewStringArray_new(size Exp, line int) *NewStringArray {
+func NewStringArray_new(size Exp, Eles []Exp, line int) *NewStringArray {
 	e := new(NewStringArray)
 	e.Size = size
+	e.Eles = Eles
 	e.LineNum = line
 	return e
 }
@@ -2386,7 +2388,7 @@ func (this *ListType) Gettype() int {
 }
 
 func (this *ListType) String() string {
-	return "@" + this.Name
+	return "@" + this.Name + "[]"
 }
 func (this *ListType) _exp() {
 }

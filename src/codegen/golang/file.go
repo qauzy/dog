@@ -16,19 +16,6 @@ import (
 	"strings"
 )
 
-var (
-	ConstructFieldFunc = true  //构建Get,Set函数
-	AppendContext      = false //添加*gin.Contex
-	DropResult         = false //去掉返回值
-	OneFold            = false //独立文件夹
-	ConstructNewFunc   = false //是否构建构造New函数
-	ProjectName        = "bitrade"
-	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
-	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
-	TargetPath         = "/opt/code/bitrade/core"                                                  //目标目录
-	ImportBase         = "bitrade/core"
-)
-
 type Translation struct {
 	file          string
 	CurrentFile   ast.File
@@ -172,10 +159,9 @@ func (this *Translation) WriteFile(base string, file string) (err error) {
 
 	var suffix = strings.Replace(path.Dir(file), path.Dir(base), "", -1)
 	//var suffix = path.Base(base)
-	log.Debugf("suffix ------> %v", suffix)
 	var dir = cfg.TargetPath + suffix
 
-	if OneFold {
+	if cfg.OneFold {
 		dir += "/" + this.PkgName
 	}
 

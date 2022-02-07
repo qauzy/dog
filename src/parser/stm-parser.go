@@ -39,6 +39,12 @@ func (this *Parser) parseStatement() ast.Stm {
 		exp := this.parseExp()
 		if this.current.Kind == TOKEN_ASSIGN {
 			this.eatToken(TOKEN_ASSIGN)
+			if vv, ok := exp.(*ast.SelectorExpr); ok {
+				if this.currentClass.GetField(vv.Sel) != nil {
+					f := this.currentClass.GetField(vv.Sel)
+					this.assignType = f.GetDecType()
+				}
+			}
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
@@ -103,7 +109,11 @@ func (this *Parser) parseStatement() ast.Stm {
 
 		case TOKEN_ASSIGN:
 			this.eatToken(TOKEN_ASSIGN)
+			if this.currentMethod.GetLocals(id) != nil {
+				this.assignType = this.currentMethod.GetLocals(id).GetDecType()
+			}
 			exp := this.parseExp()
+
 			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
 
@@ -111,6 +121,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			if this.currentClass.GetField(id) != nil {
 				id = "this." + id
 			}
+
 			//三元表达式
 			if q, ok := exp.(*ast.Question); ok {
 				assign1 := ast.Assign_new(ast.NewIdent(util.GetNewId(id), this.Linenum), q.One, false, this.Linenum)

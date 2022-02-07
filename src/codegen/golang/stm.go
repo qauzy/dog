@@ -42,6 +42,7 @@ func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
 // param: s
 // return:
 func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
+	log.Debugf("transStm = %v", s)
 	switch v := s.(type) {
 	//变量声明
 	case *ast.DeclStmt:
@@ -62,7 +63,13 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Comment: nil,
 		}
 		if len(v.Names) == len(v.Values) && v.GetExtra() == nil {
-			sp.Type = nil
+			if len(v.Values) == 1 {
+				_, ok := v.Values[0].(*ast.Null)
+				if !ok {
+					sp.Type = nil
+				}
+			}
+
 		}
 		for _, name := range v.Names {
 			sp.Names = append(sp.Names, this.transNameExp(name))
@@ -340,7 +347,21 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			block.List = append(block.List, as)
 
 		}
+	case *ast.AssignArray:
+		idx := &gast.IndexExpr{
+			X:      gast.NewIdent(v.Name),
+			Lbrack: 0,
+			Index:  this.transExp(v.Index),
+			Rbrack: 0,
+		}
 
+		as := &gast.AssignStmt{
+			Lhs:    []gast.Expr{idx},
+			TokPos: 0,
+			Tok:    token.ASSIGN,
+			Rhs:    []gast.Expr{this.transExp(v.E)},
+		}
+		return as
 	case *ast.Query:
 		stm, err := sqlparser.Parse(v.SQL)
 		if err != nil {

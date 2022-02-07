@@ -3,12 +3,14 @@ package parser
 import (
 	"dog/ast"
 	"dog/control"
+	"dog/storage"
 	"dog/util"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"os"
 	"path"
 	"strconv"
+	"strings"
 )
 
 type Parser struct {
@@ -237,6 +239,14 @@ func (this *Parser) parseType() ast.Exp {
 			name = this.current.Lexeme
 		}
 
+		//数组类型
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ListType{name, &ast.ClassType{name, ast.TYPE_CLASS}, ast.TYPE_LIST}
+			return this.currentType
+		}
+
 		if this.current.Kind != TOKEN_LT {
 			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
 		} else {
@@ -392,7 +402,6 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			this.eatToken(TOKEN_LPAREN)
 			this.eatToken(TOKEN_RPAREN)
 		} else if builder {
-
 			x = ast.SelectorExpr_new(x, "Set"+util.Capitalize(this.current.Lexeme), this.Linenum)
 			this.eatToken(TOKEN_ID)
 		} else {
@@ -402,6 +411,17 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 		if this.current.Kind == TOKEN_LPAREN {
 			this.eatToken(TOKEN_LPAREN)
 			args := this.parseExpList()
+			for idx, v := range args {
+				var call string
+				var mp = new(ast.StreamStm)
+				if this.CheckStreamExprs(v, &call, mp) {
+					arg := ast.NewIdent(fmt.Sprintf("arg%d", idx), this.Linenum)
+					mp.Left = arg
+					mp.LineNum = this.Linenum
+					v = arg
+				}
+			}
+
 			this.eatToken(TOKEN_RPAREN)
 			x = ast.CallExpr_new(x, args, this.Linenum)
 		}
@@ -410,6 +430,16 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 		}
 	}
 	return x
+}
+
+func (this *Parser) CovertExp(exp ast.Exp) (dst ast.Exp) {
+	switch exp.(type) {
+	case *ast.SelectorExpr:
+
+	case *ast.Ident:
+
+	}
+	return
 }
 
 //AtomExp   -> (exp)
@@ -530,7 +560,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		id := this.current.Lexeme
 		newId := util.GetNewId(id)
 		this.advance()
-		log.Infof("------------->TOKEN_ID-->%v", this.current.Lexeme)
+		log.Infof("------------->TOKEN_ID-->%v", id)
 		//可能是new 泛型表达式
 		if this.current.Kind == TOKEN_LT {
 			if this.currentFile.GetImport(id) != nil {
@@ -578,6 +608,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 //
 // return:
 func (this *Parser) parseNewExp() ast.Exp {
+	log.Debugf("解析 parseNewExp")
 	this.advance()
 	switch this.current.Kind {
 	case TOKEN_BYTE:
@@ -601,9 +632,20 @@ func (this *Parser) parseNewExp() ast.Exp {
 			return ast.CallExpr_new(ast.NewIdent("string", this.Linenum), args, this.Linenum)
 		}
 		this.eatToken(TOKEN_LBRACK)
+		//new String[]{xxx, xxxx};
+		if this.current.Kind == TOKEN_RBRACK {
+			this.eatToken(TOKEN_RBRACK)
+			if this.current.Kind == TOKEN_LBRACE {
+				this.eatToken(TOKEN_LBRACE)
+				args := this.parseExpList()
+				this.eatToken(TOKEN_RBRACE)
+				return ast.NewStringArray_new(nil, args, this.Linenum)
+			}
+			return ast.NewStringArray_new(nil, nil, this.Linenum)
+		}
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RBRACK)
-		return ast.NewStringArray_new(exp, this.Linenum)
+		return ast.NewStringArray_new(exp, nil, this.Linenum)
 	case TOKEN_HASHMAP:
 		this.eatToken(TOKEN_HASHMAP)
 		//非泛型
@@ -622,10 +664,12 @@ func (this *Parser) parseNewExp() ast.Exp {
 			ele = this.parseType()
 			//类型推到
 		} else {
-			t, ok := this.currentType.(*ast.HashType)
+			t, ok := this.assignType.(*ast.HashType)
 			if ok {
 				key = t.Key
 				ele = t.Value
+			} else {
+				this.ParseBug("Hash类型存在空")
 			}
 		}
 		this.eatToken(TOKEN_GT)
@@ -633,6 +677,8 @@ func (this *Parser) parseNewExp() ast.Exp {
 		if this.current.Kind == TOKEN_NUM {
 			//FIXME 处理map容量
 			this.eatToken(TOKEN_NUM)
+		} else if this.current.Kind != TOKEN_RPAREN {
+			this.parseNotExp()
 		}
 		this.eatToken(TOKEN_RPAREN)
 		return ast.NewHash_new(key, ele, this.Linenum)
@@ -644,7 +690,14 @@ func (this *Parser) parseNewExp() ast.Exp {
 			if this.current.Kind != TOKEN_GT {
 				ele = this.parseType()
 			} else {
-				ele = this.assignType.(*ast.ListType).Ele
+				_, ok := this.assignType.(*ast.ListType)
+				if !ok {
+					this.ParseBug("Hash类型存在空")
+				} else {
+					ele = this.assignType.(*ast.ListType).Ele
+					this.assignType = nil
+				}
+
 			}
 			this.eatToken(TOKEN_GT)
 
@@ -675,7 +728,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 			if this.current.Kind != TOKEN_GT {
 				ele = this.parseType()
 			} else {
-				ele = this.assignType.(*ast.ListType).Ele
+				ele = this.assignType.(*ast.SetType).Ele
 			}
 
 			this.eatToken(TOKEN_GT)
@@ -692,19 +745,10 @@ func (this *Parser) parseNewExp() ast.Exp {
 		var typeName string
 		var args []ast.Exp
 		log.Debugf("-------------> %v", this.current.Lexeme)
-		exp := this.parseNotExp()
-		log.Debugf("-------------> %v", this.current.Lexeme)
-		switch v := exp.(type) {
-		case *ast.Id:
-			typeName = v.Name
-		case *ast.Ident:
-			typeName = v.Name
-		case *ast.SelectorExpr:
-			typeName = v.Sel
-		case *ast.CallExpr:
-			//调用构造函数
-			return v
-		}
+		id := ast.NewIdent(util.GetNewId(this.current.Lexeme), this.Linenum)
+		this.eatToken(TOKEN_ID)
+		exp := this.parseCallExp(id)
+
 		//模板
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
@@ -720,17 +764,29 @@ func (this *Parser) parseNewExp() ast.Exp {
 		//数组
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
-			size := this.parseNotExp()
-			this.eatToken(TOKEN_RBRACK)
-			if this.current.Kind == TOKEN_LBRACE {
-				this.eatToken(TOKEN_LBRACE)
-				eles := this.parseNotExp()
-				this.eatToken(TOKEN_RBRACE)
-				return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, eles, size, this.Linenum)
+			// new xxx[]{xxx, xxx,xxx....};
+			if this.current.Kind == TOKEN_RBRACK {
+				this.eatToken(TOKEN_RBRACK)
+				if this.current.Kind == TOKEN_LBRACE {
+					this.eatToken(TOKEN_LBRACE)
+					args = this.parseExpList()
+					this.eatToken(TOKEN_RBRACE)
+					return ast.NewObjectWithArgsList_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, args, this.Linenum)
+				}
+
+			} else {
+				size := this.parseExp()
+				this.eatToken(TOKEN_RBRACK)
+				if this.current.Kind == TOKEN_LBRACE {
+					this.eatToken(TOKEN_LBRACE)
+					eles := this.parseExpList()
+					this.eatToken(TOKEN_RBRACE)
+					return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, eles, size, this.Linenum)
+				}
+				return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, nil, size, this.Linenum)
 			}
-			return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, nil, size, this.Linenum)
 		}
-		return ast.NewObjectWithArgsList_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, args, this.Linenum)
+		return exp
 	default:
 		this.ParseBug("未处理New类型")
 		return nil
@@ -832,9 +888,15 @@ func (this *Parser) parseNotExp() ast.Exp {
 		case TOKEN_DOUBLE_COLON:
 			log.Debugf("方法引用")
 			this.eatToken(TOKEN_DOUBLE_COLON)
-			m := ast.NewIdent(util.Capitalize(this.current.Lexeme), this.Linenum)
-			this.eatToken(TOKEN_ID)
-			exp = ast.MethodReference_new(exp, m, this.Linenum)
+			if this.current.Kind == TOKEN_NEW {
+				this.eatToken(TOKEN_NEW)
+				exp = ast.NewObjectWithArgsList_new(exp, nil, this.Linenum)
+			} else {
+				m := ast.NewIdent(util.Capitalize(this.current.Lexeme), this.Linenum)
+				this.eatToken(TOKEN_ID)
+				exp = ast.MethodReference_new(exp, m, this.Linenum)
+			}
+
 			//数组索引操作
 		case TOKEN_LBRACK: //[exp]
 			this.advance()
@@ -1220,6 +1282,21 @@ func (this *Parser) parseProgram() ast.File {
 				this.eatToken(TOKEN_ID)
 			} else if this.current.Kind == TOKEN_STAR {
 				this.eatToken(TOKEN_STAR)
+				path = strings.TrimSuffix(path, ".")
+				cls, err := storage.FindByPack(path)
+				if err != nil {
+					this.ParseBug(path)
+				}
+				for _, vv := range cls {
+					im := &ast.ImportSingle{
+						Pack: pack,
+						Name: vv.Name,
+						Path: path,
+					}
+					log.Debugf("导入:%v --> %v", path, vv.Name)
+					this.currentFile.AddImport(im)
+				}
+				continue
 			} else if this.current.Kind == TOKEN_ARRAYLIST ||
 				this.current.Kind == TOKEN_LIST ||
 				this.current.Kind == TOKEN_DATE ||

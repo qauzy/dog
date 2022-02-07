@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	"dog/util"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
@@ -69,7 +70,7 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 	}
 	//构建New函数
-	if ConstructNewFunc {
+	if cfg.ConstructNewFunc {
 		this.GolangFile.Decls = append(this.GolangFile.Decls, this.getNewService(c))
 
 	}
@@ -86,7 +87,7 @@ func (this *Translation) transEnum(c ast.Class) {
 		this.CurrentClass = nil
 	}()
 
-	if OneFold {
+	if cfg.OneFold {
 		this.PkgName = c.GetName()
 		this.GolangFile.Name.Name = c.GetName()
 	}
