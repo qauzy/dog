@@ -54,7 +54,6 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 				if fi.GetName() == "SerialVersionUID" {
 					continue
 				}
-				log.Debugf("=====================================================================%v", fi.GetName())
 				gfi := this.transField(fi)
 				if _, ok := fi.GetDecType().(*ast.ClassType); ok {
 					gfi.Type = &gast.StarExpr{X: gfi.Type}
@@ -64,6 +63,24 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 				this.constructFieldFunc(gfi)
 			}
 		}
+
+		//如果是枚举类型加一个枚举序号变量 和 枚举序号获取函数
+		if cc.GetType() == ast.ENUM_TYPE {
+			gfi := &gast.Field{
+				Doc:     nil,
+				Names:   []*gast.Ident{gast.NewIdent("ordinal")},
+				Type:    gast.NewIdent("int"),
+				Tag:     nil,
+				Comment: nil,
+			}
+			Type.Fields.List = append(Type.Fields.List, gfi)
+
+			//枚举序号获取函数
+			or := this.getOrdinalFN(c)
+
+			this.GolangFile.Decls = append(this.GolangFile.Decls, or)
+		}
+
 		for _, m := range cc.Methods {
 			gmeth := this.transFunc(m)
 			this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
@@ -73,10 +90,21 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 	}
 	//构建New函数
-	if cfg.ConstructNewFunc {
+	if cfg.ConstructNewFunc && c.GetType() == ast.CLASS_TYPE {
 		this.GolangFile.Decls = append(this.GolangFile.Decls, this.getNewService(c))
 
 	}
+
+	return
+}
+
+func (this *Translation) getOrdinalFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *######) Ordinal() (result int) {
+		return this.ordinal
+}`
+	src = strings.Replace(src, "######", c.GetName(), 1)
+	fn = this.getFunc(src)
 
 	return
 }
@@ -95,24 +123,6 @@ func (this *Translation) transEnum(c ast.Class) {
 		this.GolangFile.Name.Name = c.GetName()
 	}
 	if cc, ok := c.(*ast.ClassSingle); ok {
-		////1 定义枚举类型为int
-		//t := &gast.GenDecl{
-		//	Doc:    nil,
-		//	TokPos: 0,
-		//	Tok:    token.TYPE,
-		//	Lparen: 0,
-		//	Specs:  nil,
-		//	Rparen: 0,
-		//}
-		//sp := &gast.TypeSpec{
-		//	Doc:     nil,
-		//	Name:    gast.NewIdent(cc.GetName()),
-		//	Assign:  0,
-		//	Type:    gast.NewIdent("int"),
-		//	Comment: nil,
-		//}
-		//t.Specs = append(t.Specs, sp)
-		//this.GolangFile.Decls = append(this.GolangFile.Decls, t)
 
 		//2 解析枚举元素
 		v := &gast.GenDecl{
@@ -124,6 +134,7 @@ func (this *Translation) transEnum(c ast.Class) {
 			Rparen: 0,
 		}
 		this.GolangFile.Decls = append(this.GolangFile.Decls, v)
+		var enumIdx = 0
 		for idx, fi := range cc.Fields {
 			if fiEn, ok := fi.(*ast.FieldEnum); ok {
 				value := &gast.ValueSpec{
@@ -135,19 +146,22 @@ func (this *Translation) transEnum(c ast.Class) {
 				}
 				if len(fiEn.Values) > 0 {
 					//value.Type = gast.NewIdent(cc.GetName())
-					call := &gast.CallExpr{
-						Fun:      gast.NewIdent("New" + cc.GetName()),
-						Lparen:   0,
-						Args:     nil,
-						Ellipsis: 0,
-						Rparen:   0,
+					val := &gast.CompositeLit{
+						Type:       gast.NewIdent(cc.GetName()),
+						Lbrace:     0,
+						Elts:       nil,
+						Rbrace:     0,
+						Incomplete: false,
 					}
 
 					for _, vv := range fiEn.Values {
-						call.Args = append(call.Args, this.transExp(vv))
-
+						val.Elts = append(val.Elts, this.transExp(vv))
 					}
-					value.Values = append(value.Values, call)
+					//末尾添加一个枚举序号
+					val.Elts = append(val.Elts, gast.NewIdent(fmt.Sprintf("%v", enumIdx)))
+					enumIdx++
+
+					value.Values = append(value.Values, val)
 				} else {
 					if idx == 0 {
 						value.Type = gast.NewIdent(cc.GetName())
@@ -160,7 +174,9 @@ func (this *Translation) transEnum(c ast.Class) {
 
 		}
 		cl := this.transClass(c)
+
 		this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
+
 		//this.buildEnumString(cc)
 		//this.buildEnumName(cc)
 		//this.buildEnumGetCode(cc)

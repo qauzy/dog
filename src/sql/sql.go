@@ -3,6 +3,7 @@ package sql
 import (
 	"dog/sql/query"
 	"fmt"
+	log "github.com/corgi-kx/logcustom"
 	"regexp"
 	"strings"
 )
@@ -117,8 +118,35 @@ func (p *parser) doParse() (query.Query, error) {
 			if !isIdentifierOrAsterisk(identifier) {
 				return p.query, fmt.Errorf("at SELECT: expected field to SELECT")
 			}
-			p.query.Fields = append(p.query.Fields, identifier)
-			p.pop()
+			if strings.ToUpper(identifier) == "COUNT" || strings.ToUpper(identifier) == "SUM" || strings.ToUpper(identifier) == "MAX" {
+				p.pop()
+				lp := p.pop()
+				if lp != "(" {
+					return p.query, fmt.Errorf("at SELECT: expected ( to COUNT")
+				}
+				identifier += lp
+				identifier += p.pop()
+				dot := p.peek()
+				if dot == "." {
+					identifier += p.pop()
+					identifier += p.pop()
+				}
+				p.query.Fields = append(p.query.Fields, identifier)
+
+				rp := p.pop()
+				if rp != ")" {
+					return p.query, fmt.Errorf("at SELECT: expected ) to COUNT")
+				}
+				identifier += rp
+			} else {
+				p.pop()
+				dot := p.peek()
+				if dot == "." {
+					identifier += p.pop()
+					identifier += p.pop()
+				}
+				p.query.Fields = append(p.query.Fields, identifier)
+			}
 			maybeFrom := p.peek()
 			if strings.ToUpper(maybeFrom) == "AS" {
 				p.pop()
@@ -159,6 +187,12 @@ func (p *parser) doParse() (query.Query, error) {
 			}
 			p.query.TableName = tableName
 			p.pop()
+			tableAliase := p.peek()
+
+			if strings.ToUpper(tableAliase) != "WHERE" {
+				p.query.TableAliase = p.pop()
+			}
+
 			p.step = stepWhere
 		case stepInsertTable:
 			tableName := p.peek()
@@ -183,6 +217,12 @@ func (p *parser) doParse() (query.Query, error) {
 			}
 			p.query.TableName = tableName
 			p.pop()
+			tableAliase := p.peek()
+
+			if strings.ToUpper(tableAliase) != "SET" {
+				p.query.TableAliase = p.pop()
+			}
+
 			p.step = stepUpdateSet
 		case stepUpdateSet:
 			setRWord := p.peek()
@@ -239,8 +279,13 @@ func (p *parser) doParse() (query.Query, error) {
 			if !isIdentifier(identifier) {
 				return p.query, fmt.Errorf("at WHERE: expected field")
 			}
-			p.query.Conditions = append(p.query.Conditions, query.Condition{Operand1: identifier, Operand1IsField: true})
 			p.pop()
+			dot := p.peek()
+			if dot == "." {
+				identifier += p.pop()
+				identifier += p.pop()
+			}
+			p.query.Conditions = append(p.query.Conditions, query.Condition{Operand1: identifier, Operand1IsField: true})
 			p.step = stepWhereOperator
 		case stepWhereOperator:
 			operator := p.peek()
@@ -258,6 +303,8 @@ func (p *parser) doParse() (query.Query, error) {
 				currentCondition.Operator = query.Lte
 			case "!=":
 				currentCondition.Operator = query.Ne
+			case "<>":
+				currentCondition.Operator = query.Ne
 			default:
 				return p.query, fmt.Errorf("at WHERE: unknown operator")
 			}
@@ -267,7 +314,8 @@ func (p *parser) doParse() (query.Query, error) {
 		case stepWhereValue:
 			currentCondition := p.query.Conditions[len(p.query.Conditions)-1]
 			identifier := p.peek()
-			if isIdentifier(identifier) {
+			log.Errorf(identifier)
+			if isIdentifier(identifier) || isNumber(identifier) || identifier == "?" {
 				currentCondition.Operand2 = identifier
 				currentCondition.Operand2IsField = true
 			} else {
@@ -381,7 +429,7 @@ func (p *parser) popWhitespace() {
 }
 
 var reservedWords = []string{
-	"(", ")", ">=", "<=", "!=", ",", "=", ">", "<", "SELECT", "INSERT INTO", "VALUES", "UPDATE", "DELETE FROM",
+	"(", ")", ">=", "<=", "!=", ",", "=", ">", "<", "<>", "SELECT", "INSERT INTO", "VALUES", "UPDATE", "DELETE FROM", ".", "?",
 	"WHERE", "FROM", "SET", "AS",
 }
 
@@ -475,6 +523,11 @@ func isIdentifier(s string) bool {
 		}
 	}
 	matched, _ := regexp.MatchString("[a-zA-Z_][a-zA-Z_0-9]*", s)
+	return matched
+}
+func isNumber(s string) bool {
+
+	matched, _ := regexp.MatchString("[0-9]*", s)
 	return matched
 }
 

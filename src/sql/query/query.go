@@ -1,14 +1,57 @@
 package query
 
+import (
+	"dog/ast"
+	"dog/util"
+	"fmt"
+)
+
 // Query represents a parsed sql
 type Query struct {
-	Type       Type
-	TableName  string
-	Conditions []Condition
-	Updates    map[string]string
-	Inserts    [][]string
-	Fields     []string // Used for SELECT (i.e. SELECTed field names) and INSERT (INSERTEDed field names)
-	Aliases    map[string]string
+	Type        Type
+	TableName   string
+	TableAliase string
+	Conditions  []Condition
+	Updates     map[string]string
+	Inserts     [][]string
+	Fields      []string // Used for SELECT (i.e. SELECTed field names) and INSERT (INSERTEDed field names)
+	Aliases     map[string]string
+}
+
+func (q *Query) ToQorm(f []ast.Field) (exe string, err error) {
+	tail := `
+	err = eng.Error`
+
+	exe = `
+	eng := this.DBRead().Table("` + util.SnakeString(q.TableName) + `")`
+
+	switch q.Type {
+	case Select:
+		exe = `
+	//FIXME 非原生sql1，需要处理
+	eng := this.DBRead().Table("` + util.SnakeString(q.TableName) + `")`
+		conds := ""
+
+		for idx, v := range q.Conditions {
+			if v.Operand2 != "?" {
+				conds += fmt.Sprintf(".Where(\"%s %s %s\")", v.Operand1, OperatorSrc[v.Operator], v.Operand2)
+			} else if len(f) > idx {
+				conds += fmt.Sprintf(".Where(\"%s %s %s\",%s)", v.Operand1, OperatorSrc[v.Operator], v.Operand2, f[idx].GetName())
+			}
+
+		}
+		exe += conds
+
+	// Update represents an UPDATE sql
+	case Update:
+	// Insert represents an INSERT sql
+	case Insert:
+	// Delete represents a DELETE sql
+	case Delete:
+	}
+	exe += tail
+
+	return
 }
 
 // Type is the type of SQL sql, e.g. SELECT/UPDATE
@@ -65,6 +108,16 @@ var OperatorString = []string{
 	"Lt",
 	"Gte",
 	"Lte",
+}
+
+var OperatorSrc = []string{
+	"UnknownOperator",
+	"=",
+	"!=",
+	">",
+	"<",
+	">=",
+	"<=",
 }
 
 // Condition is a single boolean condition in a WHERE clause
