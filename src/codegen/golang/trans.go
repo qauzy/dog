@@ -220,7 +220,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.StringArray:
 		return gast.NewIdent("[]string")
 	case *ast.Integer:
-		return gast.NewIdent("int64")
+		return gast.NewIdent("int")
 	case *ast.Int:
 		return gast.NewIdent("int")
 	case *ast.IntArray:
@@ -248,7 +248,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			pack := this.CurrentFile.GetImport(v.Name).GetPack()
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
-				Sel: gast.NewIdent(v.Name),
+				Sel: gast.NewIdent(util.GetNewId(v.Name)),
 			}
 
 			return expr

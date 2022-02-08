@@ -65,7 +65,7 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 
 	}
 	//
-	this.parseClassContext(ast.NewClassSingle(access, id, extends, ast.ENUM_TYPE))
+	this.parseClassContext(classSingle)
 
 	this.eatToken(TOKEN_RBRACE)
 

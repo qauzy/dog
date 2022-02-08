@@ -48,10 +48,13 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 		for _, fi := range cc.Fields {
 			//FIXME 是否排除static
-			if !fi.IsStatic() && cc.GetType() == ast.CLASS_TYPE {
+
+			_, ok := fi.(*ast.FieldEnum)
+			if !fi.IsStatic() && (cc.GetType() == ast.CLASS_TYPE || (cc.GetType() == ast.ENUM_TYPE && !ok)) {
 				if fi.GetName() == "SerialVersionUID" {
 					continue
 				}
+				log.Debugf("=====================================================================%v", fi.GetName())
 				gfi := this.transField(fi)
 				if _, ok := fi.GetDecType().(*ast.ClassType); ok {
 					gfi.Type = &gast.StarExpr{X: gfi.Type}
@@ -92,30 +95,30 @@ func (this *Translation) transEnum(c ast.Class) {
 		this.GolangFile.Name.Name = c.GetName()
 	}
 	if cc, ok := c.(*ast.ClassSingle); ok {
-		//1 定义枚举类型为int
-		t := &gast.GenDecl{
-			Doc:    nil,
-			TokPos: 0,
-			Tok:    token.TYPE,
-			Lparen: 0,
-			Specs:  nil,
-			Rparen: 0,
-		}
-		sp := &gast.TypeSpec{
-			Doc:     nil,
-			Name:    gast.NewIdent(cc.GetName()),
-			Assign:  0,
-			Type:    gast.NewIdent("int"),
-			Comment: nil,
-		}
-		t.Specs = append(t.Specs, sp)
-		this.GolangFile.Decls = append(this.GolangFile.Decls, t)
+		////1 定义枚举类型为int
+		//t := &gast.GenDecl{
+		//	Doc:    nil,
+		//	TokPos: 0,
+		//	Tok:    token.TYPE,
+		//	Lparen: 0,
+		//	Specs:  nil,
+		//	Rparen: 0,
+		//}
+		//sp := &gast.TypeSpec{
+		//	Doc:     nil,
+		//	Name:    gast.NewIdent(cc.GetName()),
+		//	Assign:  0,
+		//	Type:    gast.NewIdent("int"),
+		//	Comment: nil,
+		//}
+		//t.Specs = append(t.Specs, sp)
+		//this.GolangFile.Decls = append(this.GolangFile.Decls, t)
 
 		//2 解析枚举元素
 		v := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
-			Tok:    token.CONST,
+			Tok:    token.VAR,
 			Lparen: 0,
 			Specs:  nil,
 			Rparen: 0,
@@ -131,8 +134,20 @@ func (this *Translation) transEnum(c ast.Class) {
 					Comment: nil,
 				}
 				if len(fiEn.Values) > 0 {
-					value.Type = gast.NewIdent(cc.GetName())
-					value.Values = append(value.Values, this.transExp(fiEn.Values[0]))
+					//value.Type = gast.NewIdent(cc.GetName())
+					call := &gast.CallExpr{
+						Fun:      gast.NewIdent("New" + cc.GetName()),
+						Lparen:   0,
+						Args:     nil,
+						Ellipsis: 0,
+						Rparen:   0,
+					}
+
+					for _, vv := range fiEn.Values {
+						call.Args = append(call.Args, this.transExp(vv))
+
+					}
+					value.Values = append(value.Values, call)
 				} else {
 					if idx == 0 {
 						value.Type = gast.NewIdent(cc.GetName())
@@ -144,9 +159,11 @@ func (this *Translation) transEnum(c ast.Class) {
 			}
 
 		}
-		this.buildEnumString(cc)
-		this.buildEnumName(cc)
-		this.buildEnumGetCode(cc)
+		cl := this.transClass(c)
+		this.GolangFile.Decls = append(this.GolangFile.Decls, cl)
+		//this.buildEnumString(cc)
+		//this.buildEnumName(cc)
+		//this.buildEnumGetCode(cc)
 	}
 }
 func (this *Translation) buildEnumName(cc *ast.ClassSingle) {

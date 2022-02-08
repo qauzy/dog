@@ -5,5 +5,5 @@ var (
 )
 
 func init() {
-	IdMapper["StringBuffer"] = "strutils.NewStringBuilder"
+	IdMapper["StringBuffer"] = "StringUtils.NewStringBuilder"
 }

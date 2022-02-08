@@ -2,10 +2,12 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	"dog/util"
 	gast "go/ast"
 	"go/token"
 	"strconv"
+	"strings"
 )
 
 func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
@@ -193,6 +195,38 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 	case *ast.CallExpr:
 		fn := this.transExp(v.Callee)
+		//调用无参构造函数转化为new
+		if cfg.Construct2New && len(v.ArgsList) == 0 {
+			if id, ok := fn.(*gast.Ident); ok {
+				if im := this.CurrentFile.GetImport(id.Name); im != nil {
+					call := &gast.CallExpr{
+						Fun:      gast.NewIdent("new"),
+						Lparen:   0,
+						Args:     nil,
+						Ellipsis: 0,
+						Rparen:   0,
+					}
+					call.Args = append(call.Args, gast.NewIdent(im.GetPack()+"."+im.GetName()))
+					return call
+				}
+			}
+		}
+		//替换日志打印语句中的 {}
+		if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Info" || vv.Sel.Name == "Error") {
+			if vvv, ok := vv.X.(*gast.Ident); ok && vvv.Name == "log" {
+				if len(v.ArgsList) >= 1 {
+					if vvvv, ok := v.ArgsList[0].(*ast.Ident); ok {
+						if strings.Contains(vvvv.Name, "{}") {
+							vvvv.Name = strings.ReplaceAll(vvvv.Name, "{}", "%v")
+							vv.Sel.Name += "f"
+						}
+
+					}
+				}
+			}
+
+		}
+
 		//替换name
 		if f, ok := fn.(*gast.Ident); ok {
 			if IdMapper[f.Name] != "" {
@@ -360,7 +394,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			Rparen: 0,
 		}
 	case *ast.Integer:
-		return gast.NewIdent("int64")
+		return gast.NewIdent("int")
 	case *ast.Float:
 		return gast.NewIdent("float64")
 	case *ast.NewDate:

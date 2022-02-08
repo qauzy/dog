@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	log "github.com/corgi-kx/logcustom"
 	"github.com/xwb1989/sqlparser"
 	gast "go/ast"
@@ -134,8 +135,28 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Body:   this.transBlock(v.Body),
 		}
 	case *ast.ExprStm:
+		expp := this.transExp(v.E)
+		if v, ok := expp.(*gast.CallExpr); ok && len(v.Args) == 2 {
+			if vv, ok := v.Fun.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Put") && cfg.FieldAccess {
+				idx := &gast.IndexExpr{
+					X:      vv.X,
+					Lbrack: 0,
+					Index:  v.Args[0],
+					Rbrack: 0,
+				}
+
+				as := &gast.AssignStmt{
+					Lhs:    []gast.Expr{idx},
+					TokPos: 0,
+					Tok:    token.ASSIGN,
+					Rhs:    []gast.Expr{v.Args[1]},
+				}
+				return as
+			}
+		}
 		//log.Debugf("表达式语句:%v", v)
-		stmt = &gast.ExprStmt{X: this.transExp(v.E)}
+
+		stmt = &gast.ExprStmt{X: expp}
 	case *ast.Throw:
 		stmt = &gast.ReturnStmt{
 			Return:  0,
