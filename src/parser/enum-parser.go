@@ -45,12 +45,11 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 		//FIXME 只支持一个值枚举
 		if this.current.Kind == TOKEN_LPAREN {
 			this.eatToken(TOKEN_LPAREN)
-			l := this.parseExpList()
-			value := l[0]
-			classSingle.AddField(ast.NewFieldSingle(access, nil, id, value, false, true))
+			args := this.parseExpList()
+			classSingle.AddField(ast.NewFieldEnum(access, nil, id, args, false, true))
 			this.eatToken(TOKEN_RPAREN)
 		} else {
-			classSingle.AddField(ast.NewFieldSingle(access, nil, id, nil, false, true))
+			classSingle.AddField(ast.NewFieldEnum(access, nil, id, nil, false, true))
 		}
 
 		for this.current.Kind == TOKEN_COMMENT {

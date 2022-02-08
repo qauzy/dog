@@ -214,6 +214,48 @@ func NewFieldSingle(Access int, Tp Exp, Name string, Value Exp, Static bool, IsF
 	return
 }
 
+/*Field*/ /*{{{*/
+type FieldEnum struct {
+	Access  int
+	Tp      Exp
+	Name    string
+	Static  bool
+	IsField bool
+	Values  []Exp //处理声明变量时的初始化语句
+}
+
+func (this *FieldEnum) accept(v Visitor) {
+	v.visit(this)
+}
+
+func (this *FieldEnum) GetDecType() Exp {
+	return this.Tp
+}
+
+func (this *FieldEnum) GetValues() []Exp {
+	return this.Values
+}
+
+func (this *FieldEnum) GetName() string {
+	return this.Name
+}
+
+func (this *FieldEnum) IsStatic() bool {
+	return this.Static
+}
+
+func NewFieldEnum(Access int, Tp Exp, Name string, Values []Exp, Static bool, IsField bool) (f *FieldEnum) {
+	f = &FieldEnum{
+		Access:  Access,
+		Tp:      Tp,
+		Name:    Name,
+		Static:  Static,
+		IsField: IsField,
+		Values:  Values,
+	}
+	return
+}
+
 /*}}}*/
 
 //Method  /*{{{*/
