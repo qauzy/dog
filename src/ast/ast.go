@@ -1610,6 +1610,7 @@ type StreamStm struct {
 	Func  string
 	Ele   Exp
 	ToAny string
+	Extra Stm
 	Stm_T
 }
 

@@ -10,10 +10,46 @@ type OptimizeFunc func(n ast.Node)
 
 var StandardRules = []OptimizeFunc{
 	TimeOp,
-	ConstantOp, //处理枚举
+	ConstantOp,   //处理枚举
+	BigDecimalOp, //
+	StringsOp,    //
 	//TypeOp,     //变量声明类型加*号
 }
 
+func StringsOp(n ast.Node) {
+	switch t := n.(type) {
+	case *ast.SelectorExpr:
+		sl, ok := t.X.(*ast.Ident)
+		if ok && sl.Name == "Strings" && t.Sel.Name == "IsNullOrEmpty" {
+			t.X = ast.NewIdent("StringUtils")
+			t.Sel.Name = "IsEmpty"
+		}
+	case *ast.CallExpr:
+		sl, ok := t.Fun.(*ast.SelectorExpr)
+		if ok && sl.Sel.Name == "Split" && len(t.Args) == 1 {
+			t.Fun = ast.NewIdent("strings.Split")
+			t.Args = append([]ast.Expr{}, sl.X, t.Args[0])
+		} else if ok && sl.Sel.Name == "Length" && len(t.Args) == 0 {
+			t.Fun = ast.NewIdent("len")
+			t.Args = append([]ast.Expr{}, sl.X)
+		}
+	}
+}
+
+func BigDecimalOp(n ast.Node) {
+	switch t := n.(type) {
+	case *ast.SelectorExpr:
+		sl, ok := t.X.(*ast.Ident)
+		if ok && sl.Name == "BigDecimal" && t.Sel.Name == "ZERO" {
+			t.X = ast.NewIdent("decimal")
+			t.Sel.Name = "Zero"
+		} else if ok && sl.Name == "math" && t.Sel.Name == "BigDecimal" {
+			t.X = ast.NewIdent("decimal")
+			t.Sel.Name = "Decimal"
+		}
+
+	}
+}
 func TimeOp(n ast.Node) {
 	sl, ok := n.(*ast.SelectorExpr)
 	if ok {

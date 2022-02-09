@@ -129,8 +129,6 @@ func (this *Parser) parseStatement() ast.Stm {
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
 			assign.Left = ast.NewIdent(util.GetNewId(id), this.Linenum)
-			//var toany string
-
 			var call string
 			var mp = new(ast.StreamStm)
 			if this.CheckStreamExprs(exp, &call, mp) {

@@ -126,7 +126,7 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 			if len(e.ArgsList) == 1 {
 				if cc0, ok := e.ArgsList[0].(*ast.CallExpr); ok {
 					if ssl0, ok := cc0.Callee.(*ast.SelectorExpr); ok {
-						if ssl0.Sel == "toSet" || ssl0.Sel == "toList" {
+						if ssl0.Sel == "toSet" || ssl0.Sel == "toList" || ssl0.Sel == "joining" {
 							mp.ToAny = ssl0.Sel
 							return
 						}
@@ -144,17 +144,18 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 				return false
 			}
 		default:
-			return false
+			log.Debugf("false--%v-%v", *call, b)
+			return
 		}
 	case *ast.Ident:
 		if this.currentMethod != nil && this.currentMethod.GetLocals(e.Name) != nil {
 			lo := this.currentMethod.GetLocals(e.Name)
-			if _, ok := lo.GetDecType().(*ast.ListType); ok {
+			if _, ok := lo.GetDecType().(*ast.ListType); ok || *call == "stream" {
 				mp.List = e
 				return true
 			} else {
 				return false
-				//this.ParseBug(fmt.Sprintf(e.Name))
+
 			}
 		} else if e.Name == "Stream" {
 			return true

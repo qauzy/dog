@@ -366,7 +366,23 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				}},
 			}
 			block.List = append(block.List, as)
+		} else if v.ToAny == "joining" {
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("strconv.Itoa"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			call.Args = append(call.Args, gast.NewIdent("vo"))
 
+			as := &gast.AssignStmt{
+				Lhs:    []gast.Expr{lf},
+				TokPos: 0,
+				Tok:    token.ADD_ASSIGN,
+				Rhs:    []gast.Expr{call},
+			}
+			block.List = append(block.List, as)
 		}
 	case *ast.AssignArray:
 		idx := &gast.IndexExpr{

@@ -1,7 +1,7 @@
 package cfg
 
 var (
-	ConstructFieldFunc = true  //构建Get,Set函数
+	ConstructFieldFunc = false //构建Get,Set函数
 	AppendContext      = false //添加*gin.Contex
 	FieldAccess        = true  //Get,Set函数转换为直接成员访问
 	DropResult         = false //去掉返回值
@@ -11,6 +11,6 @@ var (
 	ProjectName        = "bitrade"
 	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
 	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
-	TargetPath         = "/opt/3code/actJob/memberxxl/mdata"                                       //目标目录
+	TargetPath         = "/opt/3code/actJob/memberxxl/service"                                     //目标目录
 	ImportBase         = "bitrade/core"
 )

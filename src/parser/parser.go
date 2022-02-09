@@ -335,6 +335,12 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 
 		}
 	}
+	for _, vv := range flist {
+		if this.currentMethod != nil {
+			this.currentMethod.AddLocals(vv)
+		}
+
+	}
 	return flist
 }
 
