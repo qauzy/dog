@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -227,8 +228,8 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				//类型
 				tmp.Tp = this.parseType()
 				this.assignType = tmp.Tp
-				//变量/函数名
-				tmp.Name = this.current.Lexeme
+				//变量/函数名 --> 转为开头大写
+				tmp.Name = util.Capitalize(this.current.Lexeme)
 				this.eatToken(TOKEN_ID)
 			}
 

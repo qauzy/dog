@@ -92,10 +92,12 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamStm) (b bool) {
 	switch e := exp.(type) {
 	case *ast.SelectorExpr:
+		log.Debugf("CheckStreamExprs %v", e.Sel)
 		b = this.CheckStreamExprs(e.X, call, mp)
 		*call = e.Sel
 		return
 	case *ast.CallExpr:
+		log.Debugf("CheckStreamExprs %v", *call)
 		b = this.CheckStreamExprs(e.Callee, call, mp)
 		switch *call {
 		case "Map":
@@ -112,6 +114,17 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 				//time.Sleep(3 * time.Second)
 				return false
 			}
+		case "forEach":
+			if len(e.ArgsList) == 1 {
+				mp.Func = "forEach"
+				mp.Ele = e.ArgsList[0]
+				return
+			} else {
+				//log.Debugf("CheckStreamExprs %v", e)
+				//time.Sleep(3 * time.Second)
+				return false
+			}
+
 		case "stream":
 			return
 		case "Stream":

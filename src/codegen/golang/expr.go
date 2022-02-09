@@ -27,7 +27,7 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
-		if this.CurrentClass != nil && (this.CurrentMethod != nil && this.CurrentMethod.GetFormal(v.Name) == nil) && (this.CurrentClass.GetMethod(v.Name) != nil || this.CurrentClass.GetField(v.Name) != nil) {
+		if this.CurrentClass != nil && (this.CurrentClass.GetMethod(util.Capitalize(v.Name)) != nil || this.CurrentClass.GetField(util.Capitalize(v.Name)) != nil) {
 			v.Name = "this." + util.Capitalize(v.Name)
 		}
 		//是类型标识符,可能需要转换
@@ -221,6 +221,23 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 							vv.Sel.Name += "f"
 						}
 
+					}
+				}
+			}
+
+		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get") {
+			if vvv, ok := vv.X.(*gast.Ident); ok && this.CurrentClass.GetField(vvv.Name) != nil {
+				if len(v.ArgsList) == 1 {
+					f := this.CurrentClass.GetField(vvv.Name).GetDecType()
+					_, ok1 := f.(*ast.ListType)
+					_, ok2 := f.(*ast.HashType)
+					if ok1 || ok2 {
+						return &gast.IndexExpr{
+							X:      vv.X,
+							Lbrack: 0,
+							Index:  this.transExp(v.ArgsList[0]),
+							Rbrack: 0,
+						}
 					}
 				}
 			}

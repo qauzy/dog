@@ -374,6 +374,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 		this.eatToken(TOKEN_RPAREN)
 		x = ast.CallExpr_new(x, args, this.Linenum)
 	}
+	var streamProbability int
 	for this.current.Kind == TOKEN_DOT {
 		this.eatToken(TOKEN_DOT)
 		if this.current.Kind == TOKEN_LENGTH {
@@ -394,7 +395,25 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			this.advance()
 			return ast.ClassExp_new(x, this.Linenum)
 		}
-
+		if this.current.Lexeme == "stream" ||
+			this.current.Lexeme == "filter" ||
+			this.current.Lexeme == "map" ||
+			this.current.Lexeme == "mapToInt" ||
+			this.current.Lexeme == "mapToLong" ||
+			this.current.Lexeme == "mapToDouble" ||
+			this.current.Lexeme == "flatMap" ||
+			this.current.Lexeme == "sorted" ||
+			this.current.Lexeme == "peek" ||
+			this.current.Lexeme == "limit" ||
+			this.current.Lexeme == "forEachOrdered" ||
+			this.current.Lexeme == "toList" ||
+			this.current.Lexeme == "toArray" ||
+			this.current.Lexeme == "min" ||
+			this.current.Lexeme == "max" ||
+			this.current.Lexeme == "collect" ||
+			this.current.Lexeme == "forEach" {
+			streamProbability++
+		}
 		//处理builder注解函数
 		if this.current.Lexeme == "builder" {
 			builder = true
