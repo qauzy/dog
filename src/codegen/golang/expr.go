@@ -225,12 +225,18 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 				}
 			}
 
-		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get") {
-			if vvv, ok := vv.X.(*gast.Ident); ok && this.CurrentClass.GetField(vvv.Name) != nil {
+		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") {
+			if vvv, ok := vv.X.(*gast.Ident); ok && (this.CurrentFile.GetField(vvv.Name) != nil || this.CurrentClass.GetField(vvv.Name) != nil || this.CurrentMethod.GetLocals(vvv.Name) != nil) {
 				if len(v.ArgsList) == 1 {
-					f := this.CurrentClass.GetField(vvv.Name).GetDecType()
-					_, ok1 := f.(*ast.ListType)
-					_, ok2 := f.(*ast.HashType)
+					f := this.CurrentClass.GetField(vvv.Name)
+					if f == nil {
+						f = this.CurrentMethod.GetLocals(vvv.Name)
+						if f == nil {
+							this.CurrentFile.GetField(vvv.Name)
+						}
+					}
+					_, ok1 := f.GetDecType().(*ast.ListType)
+					_, ok2 := f.GetDecType().(*ast.HashType)
 					if ok1 || ok2 {
 						return &gast.IndexExpr{
 							X:      vv.X,
