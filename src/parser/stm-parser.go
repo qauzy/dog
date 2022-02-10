@@ -2,7 +2,6 @@ package parser
 
 import (
 	"dog/ast"
-	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -68,7 +67,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		//4 泛型类型声明
 		id := this.current.Lexeme
 		this.advance()
-		x := ast.NewIdent(util.GetNewId(id), this.Linenum)
+		x := ast.NewIdent(id, this.Linenum)
 		exp := this.parseCallExp(x)
 		switch this.current.Kind {
 		//处理声明临时变量和赋值语句
@@ -109,26 +108,21 @@ func (this *Parser) parseStatement() ast.Stm {
 
 		case TOKEN_ASSIGN:
 			this.eatToken(TOKEN_ASSIGN)
-			if this.currentMethod.GetLocals(id) != nil {
-				this.assignType = this.currentMethod.GetLocals(id).GetDecType()
+			if this.currentMethod.GetField(id) != nil {
+				this.assignType = this.currentMethod.GetField(id).GetDecType()
 			}
 			exp := this.parseExp()
 
 			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
 
-			//说明是成员变量
-			if this.currentClass.GetField(id) != nil {
-				id = "this." + id
-			}
-
 			//三元表达式
 			if q, ok := exp.(*ast.Question); ok {
-				assign1 := ast.Assign_new(ast.NewIdent(util.GetNewId(id), this.Linenum), q.One, false, this.Linenum)
-				assign2 := ast.Assign_new(ast.NewIdent(util.GetNewId(id), this.Linenum), q.Two, false, this.Linenum)
+				assign1 := ast.Assign_new(ast.NewIdent(id, this.Linenum), q.One, false, this.Linenum)
+				assign2 := ast.Assign_new(ast.NewIdent(id, this.Linenum), q.Two, false, this.Linenum)
 				return ast.If_new(q.E, ast.Block_new([]ast.Stm{assign1}, this.Linenum), ast.Block_new([]ast.Stm{assign2}, this.Linenum), this.Linenum)
 			}
-			assign.Left = ast.NewIdent(util.GetNewId(id), this.Linenum)
+			assign.Left = ast.NewIdent(id, this.Linenum)
 			var call string
 			var mp = new(ast.StreamStm)
 			if this.CheckStreamExprs(exp, &call, mp) {
@@ -141,7 +135,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			return assign
 
 		case TOKEN_QUO_ASSIGN:
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_QUO_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -149,27 +143,27 @@ func (this *Parser) parseStatement() ast.Stm {
 			return ast.Binary_new(left, right, "/=", this.Linenum)
 		case TOKEN_MUL_ASSIGN:
 
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_MUL_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "*=", this.Linenum)
 		case TOKEN_SUB_ASSIGN:
 
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_SUB_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 			return ast.Binary_new(left, right, "-=", this.Linenum)
 		case TOKEN_ADD_ASSIGN:
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_ADD_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "+=", this.Linenum)
 		case TOKEN_REM_ASSIGN:
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_REM_ASSIGN)
 			right := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
@@ -186,7 +180,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			} else {
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
 			//处理的是后缀减
@@ -196,7 +190,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				this.isSpecial = false
 				this.eatToken(TOKEN_SEMI)
 			}
-			left := ast.NewIdent(util.GetNewId(id), this.Linenum)
+			left := ast.NewIdent(id, this.Linenum)
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "-=", this.Linenum)
 		case TOKEN_LBRACK:
 			this.eatToken(TOKEN_LBRACK) //[
@@ -218,7 +212,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			decl := ast.DeclStmt_new(nil, tp, nil, this.Linenum)
-			decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
+			decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
 			//有赋值语句
 			if this.current.Kind == TOKEN_ASSIGN {
 				//临时变量类型
@@ -244,6 +238,14 @@ func (this *Parser) parseStatement() ast.Stm {
 		}
 	case TOKEN_IF:
 		log.Debugf("********TOKEN_IF***********")
+		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
+		this.currentStm = fake
+		this.Push(fake)
+		defer func() {
+			this.Pop()
+			this.currentStm = nil
+		}()
+
 		this.eatToken(TOKEN_IF)
 		this.eatToken(TOKEN_LPAREN)
 		condition := this.parseExp()
@@ -267,6 +269,13 @@ func (this *Parser) parseStatement() ast.Stm {
 		}
 	case TOKEN_TRY:
 		log.Debugf("********TOKEN_TRY***********")
+		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
+		this.currentStm = fake
+		this.Push(fake)
+		defer func() {
+			this.Pop()
+			this.currentStm = nil
+		}()
 		this.eatToken(TOKEN_TRY)
 		body := this.parseStatement()
 		var catches []*ast.Catch
@@ -300,6 +309,18 @@ func (this *Parser) parseStatement() ast.Stm {
 		return ast.Try_new(body, catches, finally, this.Linenum)
 	case TOKEN_WHILE:
 		log.Debugf("********TOKEN_WHILE***********")
+		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
+		this.currentStm = fake
+		this.Push(fake)
+		defer func() {
+			this.Pop()
+			if this.currentMethod != nil {
+				this.GetField = this.currentMethod.GetField
+			} else {
+				this.GetField = nil
+			}
+			this.currentStm = nil
+		}()
 		this.eatToken(TOKEN_WHILE)
 		this.eatToken(TOKEN_LPAREN)
 		exp := this.parseExp()
@@ -309,11 +330,17 @@ func (this *Parser) parseStatement() ast.Stm {
 
 	case TOKEN_SWITCH:
 		log.Debugf("********TOKEN_SWITCH***********")
+		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
+		this.currentStm = fake
+		this.Push(fake)
+		defer func() {
+			this.Pop()
+			this.currentStm = nil
+		}()
 		this.eatToken(TOKEN_SWITCH)
 		this.eatToken(TOKEN_LPAREN)
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RPAREN)
-
 		this.eatToken(TOKEN_LBRACE)
 		body := this.parseStatements()
 		this.eatToken(TOKEN_RBRACE)
@@ -331,6 +358,13 @@ func (this *Parser) parseStatement() ast.Stm {
 		return ast.Case_new(nil, ast.Block_new(body, this.Linenum), this.Linenum)
 	case TOKEN_FOR:
 		log.Debugf("********TOKEN_FOR***********")
+		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
+		this.currentStm = fake
+		this.Push(fake)
+		defer func() {
+			this.Pop()
+			this.currentStm = nil
+		}()
 		this.eatToken(TOKEN_FOR)
 		this.eatToken(TOKEN_LPAREN)
 		var exp = this.parseExp()
@@ -340,7 +374,6 @@ func (this *Parser) parseStatement() ast.Stm {
 		if this.current.Kind == TOKEN_ID {
 			id = this.parseExp()
 		}
-
 		//for循环三段式
 		if this.current.Kind == TOKEN_ASSIGN {
 			log.Debugf("********TOKEN_FOR--> 解析初始化语句 ***********")
@@ -459,7 +492,6 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_CASE ||
 		this.current.Kind == TOKEN_DEFAULT ||
 		this.current.Kind == TOKEN_SYSTEM {
-		log.Infof("****************** parseStatements **********************-->%v", this.current.Lexeme)
 		stms = append(stms, this.parseStatement())
 	}
 	return stms

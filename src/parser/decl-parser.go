@@ -2,7 +2,6 @@ package parser
 
 import (
 	"dog/ast"
-	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -14,25 +13,31 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 	id := this.current.Lexeme
 	this.eatToken(TOKEN_ID)
 	decl := ast.DeclStmt_new(nil, exp, nil, this.Linenum)
-	this.currentStm = decl
-	defer func() {
-		this.currentStm = nil
-	}()
 
 	//记录本地变量
-	if this.currentMethod != nil {
+	if this.currentStm != nil {
 		f := &ast.FieldSingle{
 			Access:  0,
 			Tp:      exp,
-			Name:    util.GetNewId(id),
+			Name:    ast.NewIdent(id, this.Linenum),
 			Static:  false,
 			IsField: false,
 			Value:   nil,
 		}
-		this.currentMethod.AddLocals(f)
+		this.currentMethod.AddField(f)
+	} else if this.currentMethod != nil {
+		f := &ast.FieldSingle{
+			Access:  0,
+			Tp:      exp,
+			Name:    ast.NewIdent(id, this.Linenum),
+			Static:  false,
+			IsField: false,
+			Value:   nil,
+		}
+		this.currentMethod.AddField(f)
 	}
 
-	decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
+	decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
 	//有赋值语句
 	if this.current.Kind == TOKEN_ASSIGN {
 		this.assignType = exp
@@ -62,14 +67,14 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 			f := &ast.FieldSingle{
 				Access:  0,
 				Tp:      exp,
-				Name:    util.GetNewId(id),
+				Name:    ast.NewIdent(id, this.Linenum),
 				Static:  false,
 				IsField: false,
 				Value:   nil,
 			}
-			this.currentMethod.AddLocals(f)
+			this.currentMethod.AddField(f)
 		}
-		decl.Names = append(decl.Names, ast.NewIdent(util.GetNewId(id), this.Linenum))
+		decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
 
 		if this.current.Kind == TOKEN_ASSIGN {
 			//临时变量类型
@@ -161,8 +166,8 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 			return
 		}
 	case *ast.Ident:
-		if this.currentMethod != nil && this.currentMethod.GetLocals(e.Name) != nil {
-			lo := this.currentMethod.GetLocals(e.Name)
+		if this.currentMethod != nil && this.currentMethod.GetField(e.Name) != nil {
+			lo := this.currentMethod.GetField(e.Name)
 			if _, ok := lo.GetDecType().(*ast.ListType); ok || *call == "stream" {
 				mp.List = e
 				return true

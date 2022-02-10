@@ -106,7 +106,7 @@ package cfg
 //			f_operand = &Var{dst, false} //XXX IsField now unknow
 //		case *codegen_c.ArraySelect:
 //			dst := genVar()
-//			trans(e.Arrayref)
+//			trans(e.X)
 //			array := f_operand
 //			trans(e.Index)
 //			index := f_operand
@@ -138,7 +138,7 @@ package cfg
 //			f_operand = &Var{e.Names, e.IsField}
 //		case *codegen_c.Length:
 //			dst := genVar()
-//			trans(e.Arrayref)
+//			trans(e.X)
 //			array := f_operand
 //			emit(&Length{dst, array})
 //			f_operand = &Var{dst, false}

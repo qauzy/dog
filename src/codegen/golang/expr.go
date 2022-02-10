@@ -13,11 +13,14 @@ import (
 func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 	switch v := e.(type) {
 	case *ast.Ident:
+		//是类型标识符, 可能需要转换
+		if cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+			return gast.NewIdent(util.Capitalize(v.Name))
+		}
+		expr = gast.NewIdent(util.GetNewId(v.Name))
+	case *ast.DefExpr:
 		//是类型标识符,可能需要转换
-		expr = gast.NewIdent(v.Name)
-	case *ast.Id:
-		//是类型标识符,可能需要转换
-		expr = gast.NewIdent(v.Name)
+		expr = gast.NewIdent(v.Name.Name)
 	default:
 		this.TranslationBug("transNameExp")
 	}
@@ -27,11 +30,14 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
-		if this.CurrentClass != nil && (this.CurrentClass.GetMethod(util.Capitalize(v.Name)) != nil || this.CurrentClass.GetField(util.Capitalize(v.Name)) != nil) {
-			v.Name = "this." + util.Capitalize(v.Name)
+		//是类型标识符, 可能需要转换
+		if cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+			return gast.NewIdent("this." + util.Capitalize(v.Name))
+		} else if !cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+			return gast.NewIdent("this." + v.Name)
 		}
 		//是类型标识符,可能需要转换
-		expr = gast.NewIdent(v.Name)
+		expr = gast.NewIdent(util.GetNewId(v.Name))
 	case *ast.Not:
 		expr = &gast.UnaryExpr{
 			OpPos: 0,
@@ -198,7 +204,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		//调用无参构造函数转化为new
 		if cfg.Construct2New && len(v.ArgsList) == 0 {
 			if id, ok := fn.(*gast.Ident); ok {
-				if im := this.CurrentFile.GetImport(id.Name); im != nil {
+				if im := this.currentFile.GetImport(id.Name); im != nil {
 					call := &gast.CallExpr{
 						Fun:      gast.NewIdent("new"),
 						Lparen:   0,
@@ -226,17 +232,17 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			}
 
 		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") {
-			if vvv, ok := vv.X.(*gast.Ident); ok && (this.CurrentFile.GetField(vvv.Name) != nil || this.CurrentClass.GetField(vvv.Name) != nil || this.CurrentMethod.GetLocals(vvv.Name) != nil) {
+			if vvv, ok := vv.X.(*gast.Ident); ok && (this.currentFile.GetField(vvv.Name) != nil || this.currentClass.GetField(vvv.Name) != nil || this.currentMethod.GetField(vvv.Name) != nil) {
 				if len(v.ArgsList) == 1 {
-					f := this.CurrentClass.GetField(vvv.Name)
+					f := this.currentClass.GetField(vvv.Name)
 					if f == nil {
-						f = this.CurrentMethod.GetLocals(vvv.Name)
+						f = this.currentMethod.GetField(vvv.Name)
 						if f == nil {
-							this.CurrentFile.GetField(vvv.Name)
+							this.currentFile.GetField(vvv.Name)
 						}
 					}
 					_, ok1 := f.GetDecType().(*ast.ListType)
-					_, ok2 := f.GetDecType().(*ast.HashType)
+					_, ok2 := f.GetDecType().(*ast.MapType)
 					if ok1 || ok2 {
 						return &gast.IndexExpr{
 							X:      vv.X,
@@ -269,16 +275,13 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			call.Args = append(call.Args, this.transExp(a))
 		}
 		return call
-	case *ast.Id:
-		if _, ok := v.Tp.(*ast.Function); ok {
-			if this.CurrentClass.GetMethod(v.Name) != nil {
-				v.Name = "this." + util.Capitalize(v.Name)
-			} else {
-				v.Name = util.Capitalize(v.Name)
-			}
-
-		}
-		return gast.NewIdent(v.Name)
+	case *ast.DefExpr:
+		//if _, ok := v.Tp.(*ast.Function); ok {
+		//	if (nil != this.currentClass.GetField(v.Name.Name) && nil == this.currentMethod.GetFormal(v.Name.Name)) || nil != this.currentClass.GetMethod(v.Name.Name) {
+		//		return gast.NewIdent("this." + util.Capitalize(v.Name.Name))
+		//	}
+		//}
+		return gast.NewIdent(v.Name.Name)
 	case *ast.Num:
 		return &gast.BasicLit{
 			ValuePos: 0,
@@ -304,9 +307,9 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return call
 
 	//数组索引表达式
-	case *ast.ArraySelect:
+	case *ast.IndexExpr:
 		return &gast.IndexExpr{
-			X:      this.transExp(v.Arrayref),
+			X:      this.transExp(v.X),
 			Lbrack: 0,
 			Index:  this.transExp(v.Index),
 			Rbrack: 0,

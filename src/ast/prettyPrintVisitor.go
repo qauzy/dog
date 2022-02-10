@@ -175,8 +175,8 @@ package ast
 //		v.Left.accept(this)
 //		this.say(" * ")
 //		v.Right.accept(this)
-//	case *ArraySelect:
-//		v.Arrayref.accept(this)
+//	case *IndexExpr:
+//		v.X.accept(this)
 //		this.say("[")
 //		v.Index.accept(this)
 //		this.say("]")
@@ -194,10 +194,10 @@ package ast
 //		this.say("false")
 //	case *True:
 //		this.say("true")
-//	case *Id:
+//	case *DefExpr:
 //		this.say(v.Names)
 //	case *Length:
-//		v.Arrayref.accept(this)
+//		v.X.accept(this)
 //		this.say(".length")
 //	case *Lt:
 //		v.Left.accept(this)

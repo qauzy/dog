@@ -52,7 +52,7 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	}
 
 	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends, ast.INTERFACE_TYPE)
+	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.INTERFACE_TYPE)
 	this.currentClass = classSingle
 	defer func() {
 		this.currentClass = nil
@@ -97,7 +97,7 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		formals := this.parseFormalList(false)
 		this.eatToken(TOKEN_RPAREN)
 		this.eatToken(TOKEN_SEMI)
-		this.currentMethod = ast.NewMethodSingle(tp, id, formals, stms, false, false, false, "")
+		this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, false, "")
 		classSingle.AddMethod(this.currentMethod)
 	}
 	this.eatToken(TOKEN_RBRACE)

@@ -17,7 +17,7 @@ import (
 // param: c
 // return:
 func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
-	this.CurrentClass = c
+	this.currentClass = c
 	if cc, ok := c.(*ast.ClassSingle); ok {
 		cl = &gast.GenDecl{
 			Doc:    nil,
@@ -113,9 +113,9 @@ func (this *######) Ordinal() (result int) {
 //
 // param: c
 func (this *Translation) transEnum(c ast.Class) {
-	this.CurrentClass = c
+	this.currentClass = c
 	defer func() {
-		this.CurrentClass = nil
+		this.currentClass = nil
 	}()
 
 	if cfg.OneFold {
@@ -198,8 +198,8 @@ func (this *Translation) buildEnumName(cc *ast.ClassSingle) {
 		Names: []*gast.Ident{gast.NewIdent("this")},
 		Type: &gast.Ident{
 			NamePos: 0,
-			Name:    this.CurrentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			Name:    this.currentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 		},
 		Tag:     nil,
 		Comment: nil,
@@ -305,8 +305,8 @@ func (this *Translation) buildEnumString(cc *ast.ClassSingle) {
 		Names: []*gast.Ident{gast.NewIdent("this")},
 		Type: &gast.Ident{
 			NamePos: 0,
-			Name:    this.CurrentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			Name:    this.currentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 		},
 		Tag:     nil,
 		Comment: nil,
@@ -413,8 +413,8 @@ func (this *Translation) buildEnumGetCode(cc *ast.ClassSingle) {
 		Names: []*gast.Ident{gast.NewIdent("this")},
 		Type: &gast.Ident{
 			NamePos: 0,
-			Name:    this.CurrentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			Name:    this.currentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 		},
 		Tag:     nil,
 		Comment: nil,
@@ -470,9 +470,9 @@ func (this *Translation) buildEnumGetCode(cc *ast.ClassSingle) {
 
 //
 func (this *Translation) transInterface(c ast.Class) {
-	this.CurrentClass = c
+	this.currentClass = c
 	defer func() {
-		this.CurrentClass = nil
+		this.currentClass = nil
 	}()
 
 	it := &gast.GenDecl{

@@ -124,9 +124,9 @@ func (this *Parser) parseTypeV2() ast.Exp {
 			this.eatToken(TOKEN_COMMER)
 			value := this.parseType()
 			this.eatToken(TOKEN_GT)
-			this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
+			this.currentType = &ast.MapType{name, key, value, ast.TYPE_MAP}
 		} else {
-			this.currentType = &ast.HashType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
+			this.currentType = &ast.MapType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
 		}
 	case TOKEN_HASHMAP:
 		name := this.current.Lexeme
@@ -136,16 +136,16 @@ func (this *Parser) parseTypeV2() ast.Exp {
 			key := this.parseType()
 			if key == nil {
 				this.eatToken(TOKEN_GT)
-				this.currentType = &ast.HashType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
+				this.currentType = &ast.MapType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
 			} else {
 				this.eatToken(TOKEN_COMMER)
 				value := this.parseType()
 				this.eatToken(TOKEN_GT)
-				this.currentType = &ast.HashType{name, key, value, ast.TYPE_MAP}
+				this.currentType = &ast.MapType{name, key, value, ast.TYPE_MAP}
 			}
 
 		} else {
-			this.currentType = &ast.HashType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
+			this.currentType = &ast.MapType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
 		}
 
 	default:

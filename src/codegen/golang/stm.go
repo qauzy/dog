@@ -18,7 +18,7 @@ func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
 	case *ast.DeclStmt:
 		var names, values []gast.Expr
 		for _, name := range v.Names {
-			names = append(names, this.transNameExp(name))
+			names = append(names, this.transExp(name))
 		}
 
 		for _, value := range v.Values {
@@ -413,7 +413,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 
 		var args string
-		for idx, arg := range this.CurrentMethod.ListFormal() {
+		for idx, arg := range this.currentMethod.ListFormal() {
 			args += ","
 			args += arg.GetName()
 			//不是原生的要处理下

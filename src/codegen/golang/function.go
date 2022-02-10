@@ -30,8 +30,8 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 		Names: []*gast.Ident{gast.NewIdent("this")},
 		Type: &gast.StarExpr{X: &gast.Ident{
 			NamePos: 0,
-			Name:    this.CurrentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			Name:    this.currentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 		}},
 		Tag:     nil,
 		Comment: nil,
@@ -80,8 +80,8 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 		Names: []*gast.Ident{gast.NewIdent("result")},
 		Type: &gast.StarExpr{X: &gast.Ident{
 			NamePos: 0,
-			Name:    this.CurrentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+			Name:    this.currentClass.GetName(),
+			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 		}},
 		Tag:     nil,
 		Comment: nil,
@@ -147,9 +147,9 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 // param: fi
 // return:
 func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
-	this.CurrentMethod = fi
+	this.currentMethod = fi
 	defer func() {
-		this.CurrentMethod = nil
+		this.currentMethod = nil
 	}()
 	if method, ok := fi.(*ast.MethodSingle); ok {
 		var recv *gast.FieldList
@@ -195,8 +195,8 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Names: []*gast.Ident{gast.NewIdent("this")},
 				Type: &gast.StarExpr{X: &gast.Ident{
 					NamePos: 0,
-					Name:    this.CurrentClass.GetName(),
-					Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+					Name:    this.currentClass.GetName(),
+					Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 				}},
 				Tag:     nil,
 				Comment: nil,
@@ -209,20 +209,19 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		if !fi.IsConstruct() {
 
 			//处理返回值
-			rel := &ast.FieldSingle{
-				Access:  0,
-				Tp:      method.RetType,
-				Name:    "result",
-				IsField: false,
-				Value:   nil,
+			ret := &gast.Field{
+				Doc:     nil,
+				Names:   []*gast.Ident{gast.NewIdent("result")},
+				Type:    this.transType(method.RetType),
+				Tag:     nil,
+				Comment: nil,
 			}
 			//如果是void则没有返回值
-			ret := this.transField(rel)
 			if ret.Type != nil {
 				results.List = append(results.List, ret)
 			}
 
-			if this.CurrentMethod.IsThrows() {
+			if this.currentMethod.IsThrows() {
 				results.List = append(results.List, this.getErrRet())
 			}
 
@@ -240,7 +239,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Rparen:   0,
 			}
 
-			call.Args = append(call.Args, gast.NewIdent(this.CurrentClass.GetName()))
+			call.Args = append(call.Args, gast.NewIdent(this.currentClass.GetName()))
 			init = &gast.AssignStmt{
 				Lhs:    []gast.Expr{gast.NewIdent("this")},
 				TokPos: 0,
@@ -256,8 +255,8 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Names: []*gast.Ident{gast.NewIdent("this")},
 				Type: &gast.StarExpr{X: &gast.Ident{
 					NamePos: 0,
-					Name:    this.CurrentClass.GetName(),
-					Obj:     gast.NewObj(gast.Typ, this.CurrentClass.GetName()),
+					Name:    this.currentClass.GetName(),
+					Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
 				}},
 				Tag:     nil,
 				Comment: nil,
@@ -314,7 +313,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		fn = &gast.FuncDecl{
 			Doc:  cm,
 			Recv: recv,
-			Name: gast.NewIdent(util.Capitalize(method.Name)),
+			Name: gast.NewIdent(util.Capitalize(method.Name.Name)),
 			Type: &gast.FuncType{
 				Func:    0,
 				Params:  params,

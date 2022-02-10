@@ -1,16 +1,12 @@
 package parser
 
 import (
+	"dog/ast"
 	"sync"
 )
 
-type DocumentInfo struct {
-	fp      int    //用于记录测试前的指针
-	current *Token //用于记录测试前的token
-}
-
 type Stack struct {
-	data     []*DocumentInfo
+	data     []ast.Container
 	length   int
 	capacity int
 	sync.Mutex
@@ -18,18 +14,18 @@ type Stack struct {
 
 // 构建一个空栈
 func InitStack() *Stack {
-	return &Stack{data: make([]*DocumentInfo, 200), length: 0, capacity: 200}
+	return &Stack{data: make([]ast.Container, 200), length: 0, capacity: 200}
 }
 
 // 压栈操作
-func (s *Stack) Push(data *DocumentInfo) {
+func (s *Stack) Push(data ast.Container) {
 	s.Lock()
 	defer s.Unlock()
 
 	if s.length+1 >= s.capacity {
 		s.capacity <<= 1
 		t := s.data
-		s.data = make([]*DocumentInfo, s.capacity)
+		s.data = make([]ast.Container, s.capacity)
 		copy(s.data, t)
 	}
 
@@ -38,7 +34,7 @@ func (s *Stack) Push(data *DocumentInfo) {
 }
 
 // 出栈操作
-func (s *Stack) Pop() *DocumentInfo {
+func (s *Stack) Pop() ast.Container {
 	s.Lock()
 	defer s.Unlock()
 
@@ -53,7 +49,7 @@ func (s *Stack) Pop() *DocumentInfo {
 }
 
 // 返回栈顶元素
-func (s *Stack) Peek() *DocumentInfo {
+func (s *Stack) Peek() ast.Container {
 	s.Lock()
 	defer s.Unlock()
 
@@ -62,6 +58,16 @@ func (s *Stack) Peek() *DocumentInfo {
 	}
 
 	return s.data[s.length-1]
+}
+func (s *Stack) List() []ast.Container {
+	s.Lock()
+	defer s.Unlock()
+
+	if s.length <= 0 {
+		return nil
+	}
+
+	return s.data[:s.length]
 }
 
 // 返回当前栈元素个数
@@ -79,7 +85,7 @@ func (s *Stack) Clear() {
 	s.Lock()
 	defer s.Unlock()
 
-	s.data = make([]*DocumentInfo, 8)
+	s.data = make([]ast.Container, 8)
 	s.length = 0
 	s.capacity = 8
 }

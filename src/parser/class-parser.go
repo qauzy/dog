@@ -2,9 +2,10 @@ package parser
 
 import (
 	"dog/ast"
-	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 )
+
+type FieldFunc func(string) ast.Field
 
 // 解析类
 //
@@ -82,10 +83,13 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	}
 
 	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends, ast.CLASS_TYPE)
+	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.CLASS_TYPE)
+
 	this.currentClass = classSingle
+	this.Push(this.currentClass)
 	defer func() {
 		this.currentClass = nil
+		this.Pop()
 	}()
 	this.parseClassContext(classSingle)
 	this.eatToken(TOKEN_RBRACE)
@@ -211,7 +215,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 					IsConstruct = true
 					tmp.Tp = &ast.Void{ast.TYPE_VOID}
 					//变量/函数名
-					tmp.Name = "New" + id
+					tmp.Name = ast.NewIdent("New"+id, this.Linenum)
 				} else {
 					tmp.Tp = &ast.ClassType{
 						Name:     id,
@@ -220,7 +224,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 
 					this.assignType = tmp.Tp
 					//变量/函数名
-					tmp.Name = this.current.Lexeme
+					tmp.Name = ast.NewIdent(this.current.Lexeme, this.Linenum)
 					this.eatToken(TOKEN_ID)
 				}
 
@@ -229,7 +233,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				tmp.Tp = this.parseType()
 				this.assignType = tmp.Tp
 				//变量/函数名 --> 转为开头大写
-				tmp.Name = util.Capitalize(this.current.Lexeme)
+				tmp.Name = ast.NewIdent(this.current.Lexeme, this.Linenum)
 				this.eatToken(TOKEN_ID)
 			}
 
@@ -261,10 +265,17 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 	var IsThrows bool
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
-	//解析参数
-	formals := this.parseFormalList(false)
-
-	this.currentMethod = ast.NewMethodSingle(dec.Tp, dec.Name, formals, nil, IsConstruct, IsStatic, IsThrows, comment)
+	var methodSingle = ast.NewMethodSingle(this.currentClass, dec.Tp, dec.Name, nil, nil, IsConstruct, IsStatic, IsThrows, comment)
+	this.currentMethod = methodSingle
+	this.GetField = this.currentMethod.GetField
+	this.Push(this.currentMethod)
+	defer func() {
+		this.currentMethod = nil
+		this.GetField = this.currentClass.GetField
+		this.Pop()
+	}()
+	//解析参数必须在生成currentMethod之后，因为解析需要参数作为本地变量信息 --> 函数参数会作为本地变量加入本地变量表
+	methodSingle.Formals = this.parseFormalList(false)
 	//右括号
 	this.eatToken(TOKEN_RPAREN)
 
@@ -275,16 +286,15 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 			this.eatToken(TOKEN_COMMER)
 			this.eatToken(TOKEN_ID)
 		}
-		IsThrows = true
+		methodSingle.Throws = true
 	}
 	//左大括号
 	this.eatToken(TOKEN_LBRACE)
-	var stms []ast.Stm
 
 	//解析本地变量和表达式
-	stms = this.parseStatements()
+	methodSingle.Stms = this.parseStatements()
 
 	this.eatToken(TOKEN_RBRACE)
 
-	return ast.NewMethodSingle(dec.Tp, dec.Name, formals, stms, IsConstruct, IsStatic, IsThrows, comment)
+	return methodSingle
 }

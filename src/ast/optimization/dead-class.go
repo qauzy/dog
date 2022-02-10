@@ -22,7 +22,7 @@ package ast_opt
 //		this.opt(v.Left)
 //		this.opt(v.Right)
 //	case *ast.ArraySelect:
-//		this.opt(v.Arrayref)
+//		this.opt(v.X)
 //		this.opt(v.Index)
 //	case *ast.Call:
 //		this.opt(v.Callee)
@@ -33,7 +33,7 @@ package ast_opt
 //	case *ast.False:
 //	case *ast.Id:
 //	case *ast.Length:
-//		this.opt(v.Arrayref)
+//		this.opt(v.X)
 //	case *ast.Lt:
 //		this.opt(v.Left)
 //		this.opt(v.Right)

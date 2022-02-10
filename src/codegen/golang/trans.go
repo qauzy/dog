@@ -25,16 +25,12 @@ func TransGo(p ast.File, base string, file string) (f *gast.File) {
 // param: fi
 // return:
 func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
-	this.CurrentField = fi
+	this.currentField = fi
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		//只处理成员变量
-		var name = field.Name
-		if field.IsField {
-			name = util.Capitalize(field.Name)
-		}
 		gfi = &gast.Field{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(util.GetNewId(name))},
+			Names:   []*gast.Ident{this.transNameExp(field.Name)},
 			Type:    this.transType(field.Tp),
 			Tag:     nil,
 			Comment: nil,
@@ -42,7 +38,7 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 
 		tag := &gast.BasicLit{
 			Kind:  token.STRING,
-			Value: fmt.Sprintf("`gorm:\"column:%s\" json:\"%s\"`", util.SnakeString(name), field.Name),
+			Value: fmt.Sprintf("`gorm:\"column:%s\" json:\"%s\"`", util.SnakeString(field.Name.Name), field.Name),
 		}
 		gfi.Tag = tag
 	}
@@ -191,20 +187,9 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			X:   this.transExp(v.X),
 			Sel: gast.NewIdent(v.Sel),
 		}
-	case *ast.Id:
-		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
-			pack := this.CurrentFile.GetImport(v.Name).GetPack()
-			expr := &gast.SelectorExpr{
-				X:   gast.NewIdent(pack),
-				Sel: gast.NewIdent(v.Name),
-			}
-
-			return expr
-		}
-		return gast.NewIdent(v.Name)
 	case *ast.Ident:
-		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
-			pack := this.CurrentFile.GetImport(v.Name).GetPack()
+		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
+			pack := this.currentFile.GetImport(v.Name).GetPack()
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
 				Sel: gast.NewIdent(v.Name),
@@ -225,7 +210,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return gast.NewIdent("int")
 	case *ast.IntArray:
 		return gast.NewIdent("[]int")
-	case *ast.HashType:
+	case *ast.MapType:
 		return &gast.MapType{
 			Map:   0,
 			Key:   this.transType(v.Key),
@@ -244,8 +229,8 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			Value: gast.NewIdent("string"),
 		}
 	case *ast.ClassType:
-		if this.CurrentFile != nil && (this.CurrentFile.GetImport(v.Name) != nil) {
-			pack := this.CurrentFile.GetImport(v.Name).GetPack()
+		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
+			pack := this.currentFile.GetImport(v.Name).GetPack()
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
 				Sel: gast.NewIdent(util.GetNewId(v.Name)),

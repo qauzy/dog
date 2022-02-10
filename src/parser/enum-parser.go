@@ -18,7 +18,7 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 		this.eatToken(TOKEN_ID)
 	}
 	this.eatToken(TOKEN_LBRACE)
-	classSingle := ast.NewClassSingle(access, id, extends, ast.ENUM_TYPE)
+	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.ENUM_TYPE)
 
 	this.currentClass = classSingle
 	defer func() {

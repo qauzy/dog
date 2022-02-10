@@ -5,7 +5,6 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/optimize/golang"
-	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/format"
@@ -18,12 +17,12 @@ import (
 
 type Translation struct {
 	file          string
-	CurrentFile   ast.File
-	CurrentClass  ast.Class
-	CurrentMethod ast.Method
-	CurrentField  ast.Field
-	CurrentStm    ast.Stm
-	CurrentExp    ast.Exp
+	currentFile   ast.File
+	currentClass  ast.Class
+	currentMethod ast.Method
+	currentField  ast.Field
+	currentStm    ast.Stm
+	currentExp    ast.Exp
 	GolangFile    *gast.File
 	PkgName       string
 }
@@ -31,7 +30,7 @@ type Translation struct {
 func NewTranslation(file string, j ast.File) (translation *Translation) {
 	translation = &Translation{
 		file:        file,
-		CurrentFile: j,
+		currentFile: j,
 		GolangFile: &gast.File{
 			Doc:        nil,
 			Package:    0,
@@ -49,7 +48,7 @@ func NewTranslation(file string, j ast.File) (translation *Translation) {
 func (this *Translation) ParseClasses() {
 
 	//处理全局变量
-	if this.CurrentFile.ListFields() != nil {
+	if this.currentFile.ListFields() != nil {
 		v := &gast.GenDecl{
 			Doc:    nil,
 			TokPos: 0,
@@ -59,7 +58,7 @@ func (this *Translation) ParseClasses() {
 			Rparen: 0,
 		}
 
-		for _, f := range this.CurrentFile.ListFields() {
+		for _, f := range this.currentFile.ListFields() {
 			if f.GetName() == "serialVersionUID" {
 				continue
 			}
@@ -72,7 +71,7 @@ func (this *Translation) ParseClasses() {
 
 	}
 
-	for _, c := range this.CurrentFile.ListClasses() {
+	for _, c := range this.currentFile.ListClasses() {
 		if c.GetType() == ast.ENUM_TYPE {
 			this.transEnum(c)
 		} else if c.GetType() == ast.INTERFACE_TYPE {
@@ -90,16 +89,12 @@ func (this *Translation) ParseClasses() {
 // param: fi
 // return:
 func (this *Translation) transGlobalField(fi ast.Field) (value *gast.ValueSpec) {
-	this.CurrentField = fi
+	this.currentField = fi
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		//只处理成员变量
-		var name = field.Name
-		if field.IsField {
-			name = util.Capitalize(field.Name)
-		}
 		value = &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{gast.NewIdent(name)},
+			Names:   []*gast.Ident{this.transNameExp(field.Name)},
 			Type:    this.transType(field.Tp),
 			Values:  nil,
 			Comment: nil,

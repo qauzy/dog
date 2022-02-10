@@ -56,7 +56,7 @@ package ast_opt
 //		case *ast.ArraySelect:
 //			opt(e.Index)
 //			index := exp
-//			exp = ast.ArraySelect_new(e.Arrayref, index, e.LineNum)
+//			exp = ast.ArraySelect_new(e.X, index, e.LineNum)
 //		case *ast.Call:
 //			is_0 = false
 //			args := make([]ast.Exp, 0)
@@ -81,7 +81,7 @@ package ast_opt
 //			exp = e
 //		case *ast.Length:
 //			is_0 = false
-//			opt(e.Arrayref)
+//			opt(e.X)
 //			array := exp
 //			exp = ast.Length_new(array, e.LineNum)
 //		case *ast.Lt:

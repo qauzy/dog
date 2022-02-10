@@ -264,7 +264,7 @@ package elaborator
 //	if _, ok := current_type.(*ast.Int); !ok {
 //		elab_error(MISTYPE)
 //	}
-//	elaborate(e.Arrayref)
+//	elaborate(e.X)
 //	current_type = &ast.Int{ast.TYPE_INT}
 //}
 //
@@ -282,7 +282,7 @@ package elaborator
 //}
 //
 //func elabExp_Length(e *ast.Length) {
-//	elaborate(e.Arrayref)
+//	elaborate(e.X)
 //	current_type = &ast.Int{ast.TYPE_INT}
 //}
 //

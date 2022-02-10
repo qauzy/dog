@@ -21,9 +21,13 @@ type File interface {
 	GetName() string
 	ListClasses() []Class
 }
+type Container interface {
+	GetField(name string) (f Field)
+}
 type Import interface {
 	GetName() string
 	GetPack() string
+	GetType() int
 	accept(v Visitor)
 }
 type Class interface {
@@ -63,8 +67,8 @@ type Method interface {
 	GetName() string //获取方法名
 	GetFormal(name string) (f Field)
 	ListFormal() (f []Field)
-	AddLocals(f Field)
-	GetLocals(name string) (f Field)
+	AddField(f Field)
+	GetField(name string) (f Field)
 	ListLocals() (f []Field)
 	IsConstruct() bool //是否构造方法
 	IsStatic() bool    //是否静态方法
@@ -104,6 +108,7 @@ func (this *MainClassSingle) _mainclass() {
 
 /* ClassSingle {{{*/
 type ClassSingle struct {
+	Container  File
 	Access     int
 	Name       string
 	Extends    string
@@ -123,6 +128,9 @@ func (this *ClassSingle) _class() {
 func (this *ClassSingle) GetName() string {
 	return this.Name
 }
+func (this *ClassSingle) GetContainer() File {
+	return this.Container
+}
 
 func (this *ClassSingle) AddField(f Field) {
 	this.FieldsMap[f.GetName()] = f
@@ -131,6 +139,9 @@ func (this *ClassSingle) AddField(f Field) {
 
 func (this *ClassSingle) GetField(name string) (f Field) {
 	f = this.FieldsMap[name]
+	if f == nil && this.Container != nil {
+		f = this.Container.GetField(name)
+	}
 	return
 }
 
@@ -155,8 +166,9 @@ func (this *ClassSingle) GetType() KEY {
 	return this.Key
 }
 
-func NewClassSingle(Access int, Name string, Extends string, key KEY) (cl *ClassSingle) {
+func NewClassSingle(Container File, Access int, Name string, Extends string, key KEY) (cl *ClassSingle) {
 	cl = &ClassSingle{
+		Container:  Container,
 		Access:     Access,
 		Name:       Name,
 		Extends:    Extends,
@@ -175,7 +187,7 @@ func NewClassSingle(Access int, Name string, Extends string, key KEY) (cl *Class
 type FieldSingle struct {
 	Access  int
 	Tp      Exp
-	Name    string
+	Name    *Ident
 	Static  bool
 	IsField bool
 	Value   Exp //处理声明变量时的初始化语句
@@ -195,14 +207,14 @@ func (this *FieldSingle) GetDecType() Exp {
 //}
 
 func (this *FieldSingle) GetName() string {
-	return this.Name
+	return this.Name.Name
 }
 
 func (this *FieldSingle) IsStatic() bool {
 	return this.Static
 }
 
-func NewFieldSingle(Access int, Tp Exp, Name string, Value Exp, Static bool, IsField bool) (f *FieldSingle) {
+func NewFieldSingle(Access int, Tp Exp, Name *Ident, Value Exp, Static bool, IsField bool) (f *FieldSingle) {
 	f = &FieldSingle{
 		Access:  Access,
 		Tp:      Tp,
@@ -260,7 +272,7 @@ func NewFieldEnum(Access int, Tp Exp, Name string, Values []Exp, Static bool, Is
 
 //Method  /*{{{*/
 
-func NewMethodSingle(RetType Exp, Name string, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
+func NewMethodSingle(Container Class, RetType Exp, Name *Ident, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
 
 	FormalsMap := make(map[string]Field)
 	LocalsMap := make(map[string]Field)
@@ -269,6 +281,7 @@ func NewMethodSingle(RetType Exp, Name string, Formals []Field, Stms []Stm, Cons
 		LocalsMap[f.GetName()] = f
 	}
 	m = &MethodSingle{
+		Container:  Container,
 		RetType:    RetType,
 		Name:       Name,
 		Formals:    Formals,
@@ -284,8 +297,9 @@ func NewMethodSingle(RetType Exp, Name string, Formals []Field, Stms []Stm, Cons
 }
 
 type MethodSingle struct {
+	Container  Class
 	RetType    Exp
-	Name       string // the name of whitch class belong to
+	Name       *Ident // the name of whitch class belong to
 	Formals    []Field
 	FormalsMap map[string]Field
 	Locals     []Field
@@ -304,7 +318,7 @@ func (this *MethodSingle) _method() {
 }
 
 func (this *MethodSingle) GetName() string {
-	return this.Name
+	return this.Name.Name
 }
 
 func (this *MethodSingle) IsConstruct() bool {
@@ -327,13 +341,16 @@ func (this *MethodSingle) ListFormal() (f []Field) {
 	f = this.Formals
 	return
 }
-func (this *MethodSingle) AddLocals(f Field) {
+func (this *MethodSingle) AddField(f Field) {
 	this.Locals = append(this.Locals, f)
 	this.LocalsMap[f.GetName()] = f
 	return
 }
-func (this *MethodSingle) GetLocals(name string) (f Field) {
+func (this *MethodSingle) GetField(name string) (f Field) {
 	f = this.LocalsMap[name]
+	if f == nil && this.Container != nil {
+		f = this.Container.GetField(name)
+	}
 	return
 }
 func (this *MethodSingle) ListLocals() (f []Field) {
@@ -346,6 +363,7 @@ func (this *MethodSingle) ListLocals() (f []Field) {
 //描述包导入
 type ImportSingle struct {
 	Pack string
+	Type int
 	Name string // identifier name
 	Path string // identifier name
 }
@@ -356,6 +374,10 @@ func (this *ImportSingle) GetName() string {
 func (this *ImportSingle) GetPack() string {
 	return this.Pack
 }
+func (this *ImportSingle) GetType() int {
+	return this.Type
+}
+
 func (this *ImportSingle) accept(v Visitor) {
 	v.visit(this)
 }
@@ -772,25 +794,25 @@ func (this *Division) _exp() {
 
 /*}}}*/
 
-//Exp.ArraySelect /*{{{*/
-type ArraySelect struct {
-	Arrayref Exp
-	Index    Exp
+//Exp.IndexExpr /*{{{*/
+type IndexExpr struct {
+	X     Exp
+	Index Exp
 	Exp_T
 }
 
-func ArraySelect_new(array Exp, index Exp, line int) *ArraySelect {
-	e := new(ArraySelect)
-	e.Arrayref = array
+func IndexExpr_new(X Exp, index Exp, line int) *IndexExpr {
+	e := new(IndexExpr)
+	e.X = X
 	e.Index = index
 	e.LineNum = line
 	return e
 }
 
-func (this *ArraySelect) accept(v Visitor) {
+func (this *IndexExpr) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *ArraySelect) _exp() {
+func (this *IndexExpr) _exp() {
 }
 
 /*}}}*/
@@ -975,28 +997,26 @@ func (this *Null) _exp() {
 
 /*}}}*/
 
-//Exp.Id /*{{{*/
-type Id struct {
-	Name      string
+//Exp.DefExpr /*{{{*/
+type DefExpr struct {
+	Name      *Ident
 	Tp        Exp
-	IsField   bool
 	Statement bool //指示是否同时声明
 	Exp_T
 }
 
-func Id_new(name string, tp Exp, isField bool, line int) *Id {
-	e := new(Id)
+func DefExpr_new(name *Ident, tp Exp, line int) *DefExpr {
+	e := new(DefExpr)
 	e.Name = name
 	e.Tp = tp
-	e.IsField = isField
 	e.LineNum = line
 	return e
 }
 
-func (this *Id) accept(v Visitor) {
+func (this *DefExpr) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *Id) _exp() {
+func (this *DefExpr) _exp() {
 }
 
 /*}}}*/
@@ -1012,6 +1032,13 @@ func NewIdent(name string, line int) *Ident {
 	e := new(Ident)
 	e.Name = name
 	e.LineNum = line
+	return e
+}
+func NewIdentObj(name string, Obj Exp, line int) *Ident {
+	e := new(Ident)
+	e.Name = name
+	e.LineNum = line
+	e.Obj = Obj
 	return e
 }
 
@@ -1534,9 +1561,12 @@ func (this *This) _exp() {
 
 //Stm   /*{{{*/
 type Stm_T struct {
-	isTriple bool
-	Extra    Stm
-	LineNum  int
+	Container Container
+	Locals    []Field
+	LocalsMap map[string]Field
+	isTriple  bool
+	Extra     Stm
+	LineNum   int
 }
 
 func (this *Stm_T) GetExtra() (Extra Stm) {
@@ -1550,6 +1580,22 @@ func (this *Stm_T) IsTriple() bool {
 }
 func (this *Stm_T) SetTriple() {
 	this.isTriple = true
+}
+func (this *Stm_T) AddLocals(f Field) {
+	this.Locals = append(this.Locals, f)
+	this.LocalsMap[f.GetName()] = f
+	return
+}
+func (this *Stm_T) GetField(name string) (f Field) {
+	f = this.LocalsMap[name]
+	if f == nil && this.Container != nil {
+		f = this.Container.GetField(name)
+	}
+	return
+}
+func (this *Stm_T) ListLocals() (f []Field) {
+	f = this.Locals
+	return
 }
 
 //Stm.DeclStmt    /*{{{*/
@@ -1776,6 +1822,30 @@ func (this *Query) _stm() {
 }
 
 /*}}}*/
+//Stm.FakeStm /*{{{*/
+type FakeStm struct {
+	Stm_T
+}
+
+func FakeStm_new(Container Container, line int) *FakeStm {
+	LocalsMap := make(map[string]Field)
+	s := &FakeStm{Stm_T{
+		Container: Container,
+		Locals:    nil,
+		LocalsMap: LocalsMap,
+		isTriple:  false,
+		Extra:     nil,
+		LineNum:   line,
+	}}
+	s.LineNum = line
+	return s
+}
+
+func (this *FakeStm) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *FakeStm) _stm() {
+}
 
 //Stm.Block /*{{{*/
 type Block struct {
@@ -2372,7 +2442,7 @@ func (this *ClassType) Gettype() int {
 }
 
 func (this *ClassType) String() string {
-	return "@" + this.Name
+	return this.Name
 }
 func (this *ClassType) _exp() {
 }
@@ -2456,22 +2526,22 @@ func (this *SetType) String() string {
 func (this *SetType) _exp() {
 }
 
-type HashType struct {
+type MapType struct {
 	Name     string
 	Key      Exp
 	Value    Exp
 	TypeKind int
 }
 
-func (this *HashType) accept(v Visitor) {
+func (this *MapType) accept(v Visitor) {
 	v.visit(this)
 }
-func (this *HashType) Gettype() int {
+func (this *MapType) Gettype() int {
 	return this.TypeKind
 }
 
-func (this *HashType) String() string {
+func (this *MapType) String() string {
 	return "@" + this.Name
 }
-func (this *HashType) _exp() {
+func (this *MapType) _exp() {
 }

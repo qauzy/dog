@@ -17,7 +17,7 @@ package ast_opt
 //			do(e.Right)
 //			size++
 //		case *ast.ArraySelect:
-//			do(e.Arrayref)
+//			do(e.X)
 //			do(e.Index)
 //			size++
 //		case *ast.Call:
@@ -28,7 +28,7 @@ package ast_opt
 //		case *ast.Id:
 //			size++
 //		case *ast.Length:
-//			do(e.Arrayref)
+//			do(e.X)
 //			size++
 //		case *ast.Lt:
 //			do(e.Left)
