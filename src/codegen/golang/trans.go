@@ -190,6 +190,9 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.Ident:
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
+			if pack == "time" && (v.Name == "LocalDate" || v.Name == "LocalDateTime") {
+				pack = "timex"
+			}
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
 				Sel: gast.NewIdent(v.Name),
@@ -231,6 +234,9 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.ClassType:
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
+			if pack == "time" && (v.Name == "LocalDate" || v.Name == "LocalDateTime") {
+				pack = "timex"
+			}
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
 				Sel: gast.NewIdent(util.GetNewId(v.Name)),

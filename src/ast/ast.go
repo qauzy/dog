@@ -938,6 +938,24 @@ func (this *CallExpr) accept(v Visitor) {
 func (this *CallExpr) _exp() {
 }
 
+type FakeExpr struct {
+	Stm Stm //new Sub().MethodName(ArgsList)
+	Exp_T
+}
+
+func FakeExpr_new(Stm Stm, line int) *FakeExpr {
+	e := new(FakeExpr)
+	e.Stm = Stm
+	e.LineNum = line
+	return e
+}
+
+func (this *FakeExpr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *FakeExpr) _exp() {
+}
+
 /*}}}*/
 
 //Exp.False /*{{{*/
@@ -1942,6 +1960,7 @@ func (this *Catch) _stm() {
 //Stm.If    /*{{{*/
 type If struct {
 	Stm_T
+	Init      Exp
 	Condition Exp
 	Body      Stm
 	Elsee     Stm
@@ -1949,6 +1968,16 @@ type If struct {
 
 func If_new(cond Exp, Body Stm, elsee Stm, line int) *If {
 	s := new(If)
+	s.Condition = cond
+	s.Body = Body
+	s.Elsee = elsee
+	s.LineNum = line
+	return s
+}
+
+func If_newEx(Init Exp, cond Exp, Body Stm, elsee Stm, line int) *If {
+	s := new(If)
+	s.Init = Init
 	s.Condition = cond
 	s.Body = Body
 	s.Elsee = elsee

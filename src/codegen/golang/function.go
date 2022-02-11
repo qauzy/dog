@@ -167,7 +167,15 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		}
 
 		for _, p := range method.Formals {
-			params.List = append(params.List, this.transField(p))
+			pa := this.transField(p)
+			_, ok := pa.Type.(*gast.SelectorExpr)
+			if ok && cfg.StarClassTypeParam {
+				pa.Type = &gast.StarExpr{
+					Star: 0,
+					X:    pa.Type,
+				}
+			}
+			params.List = append(params.List, pa)
 		}
 		//处理返回值
 		results := &gast.FieldList{
@@ -216,6 +224,14 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Tag:     nil,
 				Comment: nil,
 			}
+			_, ok := ret.Type.(*gast.SelectorExpr)
+			if ok && cfg.StarClassTypeParam {
+				ret.Type = &gast.StarExpr{
+					Star: 0,
+					X:    ret.Type,
+				}
+			}
+
 			//如果是void则没有返回值
 			if ret.Type != nil {
 				results.List = append(results.List, ret)

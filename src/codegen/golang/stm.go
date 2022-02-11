@@ -63,11 +63,21 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Values:  nil,
 			Comment: nil,
 		}
+
+		_, ok := sp.Type.(*gast.SelectorExpr)
+		if ok && cfg.StarClassTypeDecl {
+			sp.Type = &gast.StarExpr{
+				Star: 0,
+				X:    sp.Type,
+			}
+		}
 		if len(v.Names) == len(v.Values) && v.GetExtra() == nil {
 			if len(v.Values) == 1 {
 				_, ok := v.Values[0].(*ast.Null)
 				if !ok {
 					sp.Type = nil
+				} else if ok {
+					v.Values = nil
 				}
 			}
 
@@ -98,15 +108,27 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 	case *ast.If:
 		var el gast.Stmt
+		var Init gast.Stmt
 		if v.Elsee != nil {
 			el = this.transBlock(v.Elsee)
 		} else {
 			el = nil
 		}
+		if v.Init != nil {
+			Init = &gast.AssignStmt{
+				Lhs: []gast.Expr{
+					gast.NewIdent("_"),
+					gast.NewIdent("ok"),
+				},
+				TokPos: 0,
+				Tok:    token.DEFINE,
+				Rhs:    []gast.Expr{this.transExp(v.Init)},
+			}
+		}
 
 		stmt = &gast.IfStmt{
 			If:   0,
-			Init: nil,
+			Init: Init,
 			Cond: this.transExp(v.Condition),
 			Body: this.transBlock(v.Body),
 			Else: el,

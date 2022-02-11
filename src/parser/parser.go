@@ -360,7 +360,9 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 
 	for this.current.Kind == TOKEN_DOT {
 		var old = x
-		var isListOrMap bool
+		var isListOrMapGetSet bool
+		var isListAdd bool
+		var isListRemove bool
 		this.eatToken(TOKEN_DOT)
 		if this.current.Kind == TOKEN_LENGTH {
 			this.advance()
@@ -423,10 +425,24 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 					if this.CheckField(id.Name) != nil {
 						_, ok1 := this.CheckField(id.Name).GetDecType().(*ast.MapType)
 						_, ok2 := this.CheckField(id.Name).GetDecType().(*ast.ListType)
-						isListOrMap = ok1 || ok2
+						isListOrMapGetSet = ok1 || ok2
 					}
 				}
 
+			} else if cfg.MapListIdxAccess && this.current.Lexeme == "add" {
+				if id, ok := x.(*ast.Ident); ok {
+					if this.CheckField(id.Name) != nil {
+						_, isListAdd = this.CheckField(id.Name).GetDecType().(*ast.ListType)
+
+					}
+				}
+			} else if cfg.MapListIdxAccess && this.current.Lexeme == "remove" {
+				if id, ok := x.(*ast.Ident); ok {
+					if this.CheckField(id.Name) != nil {
+						_, isListRemove = this.CheckField(id.Name).GetDecType().(*ast.MapType)
+
+					}
+				}
 			}
 			x = ast.SelectorExpr_new(x, this.current.Lexeme, this.Linenum)
 
@@ -447,8 +463,24 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			}
 
 			this.eatToken(TOKEN_RPAREN)
-			if isListOrMap && len(args) == 1 {
+			if isListOrMapGetSet && len(args) == 1 {
 				x = ast.IndexExpr_new(old, args[0], this.Linenum)
+				//处理List Map Get&&Set操作
+			} else if isListOrMapGetSet && len(args) == 2 {
+				x = ast.FakeExpr_new(ast.Assign_new(ast.IndexExpr_new(old, args[0], this.Linenum), args[1], false, this.Linenum), this.Linenum)
+				//处理List Add操作
+			} else if isListAdd && len(args) == 1 {
+				var args1 []ast.Exp
+				args1 = append(args1, old)
+				args1 = append(args1, args[0])
+				x = ast.FakeExpr_new(ast.Assign_new(old, ast.CallExpr_new(ast.NewIdent("append", this.Linenum), args1, this.Linenum), false, this.Linenum), this.Linenum)
+
+			} else if isListRemove && len(args) == 1 {
+				var args1 []ast.Exp
+				args1 = append(args1, old)
+				args1 = append(args1, args[0])
+				x = ast.CallExpr_new(ast.NewIdent("delete", this.Linenum), args1, this.Linenum)
+
 			} else {
 				x = ast.CallExpr_new(x, args, this.Linenum)
 			}

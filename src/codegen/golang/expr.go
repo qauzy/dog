@@ -14,7 +14,7 @@ func (this *Translation) transNameExp(e ast.Exp) (expr *gast.Ident) {
 	switch v := e.(type) {
 	case *ast.Ident:
 		//是类型标识符, 可能需要转换
-		if cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+		if cfg.Capitalize && nil != this.currentFile && nil != this.currentClass && (nil != this.currentFile.GetField(v.Name) || nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
 			return gast.NewIdent(util.Capitalize(v.Name))
 		}
 		expr = gast.NewIdent(util.GetNewId(v.Name))
@@ -31,9 +31,11 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
 		//是类型标识符, 可能需要转换
-		if cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+		if cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent("this." + util.Capitalize(v.Name))
-		} else if !cfg.Capitalize && nil != this.currentClass && (nil != this.currentClass.GetField(v.Name) || nil != this.currentClass.GetMethod(v.Name)) {
+		} else if cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && this.currentClass.GetMethod(v.Name).IsStatic())) {
+			return gast.NewIdent(util.Capitalize(v.Name))
+		} else if !cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent("this." + v.Name)
 		}
 		//是类型标识符,可能需要转换

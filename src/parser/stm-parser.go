@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -230,6 +231,10 @@ func (this *Parser) parseStatement() ast.Stm {
 
 		case TOKEN_SEMI:
 			this.eatToken(TOKEN_SEMI)
+			//因为List && Map Set 转换中间产物
+			if fk, ok := exp.(*ast.FakeExpr); ok {
+				return fk.Stm
+			}
 			return ast.ExprStm_new(exp, this.Linenum)
 		case TOKEN_COMMENT:
 			this.advance()
@@ -249,6 +254,27 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_IF)
 		this.eatToken(TOKEN_LPAREN)
 		condition := this.parseExp()
+		var Init ast.Exp
+		if cfg.MapListIdxAccess {
+			if cl, ok := condition.(*ast.CallExpr); ok && len(cl.ArgsList) == 1 {
+				if sl, ok := cl.Callee.(*ast.SelectorExpr); ok {
+					if sl.Sel == "containsKey" {
+						if ident, ok := sl.X.(*ast.Ident); ok {
+							if this.CheckField(ident.Name) != nil {
+								if _, ok := this.CheckField(ident.Name).GetDecType().(*ast.MapType); ok {
+									Init = ast.IndexExpr_new(ident, cl.ArgsList[0], this.Linenum)
+									condition = ast.NewIdent("ok", this.Linenum)
+								}
+
+							}
+						}
+					}
+
+				}
+
+			}
+		}
+
 		this.eatToken(TOKEN_RPAREN)
 		body := this.parseStatement()
 
@@ -263,8 +289,15 @@ func (this *Parser) parseStatement() ast.Stm {
 			if _, ok := elsee.(*ast.Block); !ok {
 				elsee = ast.Block_new([]ast.Stm{elsee}, this.Linenum)
 			}
+			if Init != nil {
+				return ast.If_newEx(Init, condition, body, elsee, this.Linenum)
+			}
+
 			return ast.If_new(condition, body, elsee, this.Linenum)
 		} else {
+			if Init != nil {
+				return ast.If_newEx(Init, condition, body, nil, this.Linenum)
+			}
 			return ast.If_new(condition, body, nil, this.Linenum)
 		}
 	case TOKEN_TRY:

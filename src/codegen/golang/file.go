@@ -5,6 +5,7 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/optimize/golang"
+	"dog/util"
 	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/format"
@@ -91,10 +92,14 @@ func (this *Translation) ParseClasses() {
 func (this *Translation) transGlobalField(fi ast.Field) (value *gast.ValueSpec) {
 	this.currentField = fi
 	if field, ok := fi.(*ast.FieldSingle); ok {
+		name := this.transNameExp(field.Name)
+		if cfg.Capitalize {
+			name.Name = util.Capitalize(name.Name)
+		}
 		//只处理成员变量
 		value = &gast.ValueSpec{
 			Doc:     nil,
-			Names:   []*gast.Ident{this.transNameExp(field.Name)},
+			Names:   []*gast.Ident{name},
 			Type:    this.transType(field.Tp),
 			Values:  nil,
 			Comment: nil,

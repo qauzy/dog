@@ -106,6 +106,8 @@ func GetNewId(id string) (nId string) {
 		nId = "oType"
 	} else if id == "var" {
 		nId = "vari"
+	} else if id == "compareTo" {
+		nId = "Cmp"
 	} else {
 		nId = id
 	}
