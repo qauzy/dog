@@ -93,12 +93,22 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		tp := this.parseType()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
-		this.eatToken(TOKEN_LPAREN)
-		formals := this.parseFormalList(false)
-		this.eatToken(TOKEN_RPAREN)
-		this.eatToken(TOKEN_SEMI)
-		this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, false, "")
-		classSingle.AddMethod(this.currentMethod)
+		if this.current.Kind == TOKEN_LPAREN {
+			this.eatToken(TOKEN_LPAREN)
+			formals := this.parseFormalList(false)
+			this.eatToken(TOKEN_RPAREN)
+			this.eatToken(TOKEN_SEMI)
+			this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, false, "")
+			classSingle.AddMethod(this.currentMethod)
+			//变量
+		} else {
+			var tmp ast.FieldSingle
+			tmp.Tp = tp
+			tmp.Name = ast.NewIdent(id, this.Linenum)
+			this.currentFile.AddField(this.parseMemberVarDecl(&tmp, true))
+
+		}
+
 	}
 	this.eatToken(TOKEN_RBRACE)
 	return classSingle

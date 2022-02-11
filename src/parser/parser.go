@@ -1270,6 +1270,7 @@ func (this *Parser) parseMemberVarDecl(tmp *ast.FieldSingle, IsStatic bool) (dec
 	var value ast.Exp
 	if this.current.Kind == TOKEN_ASSIGN {
 		this.eatToken(TOKEN_ASSIGN)
+		this.assignType = tmp.Tp
 		value = this.parseExp()
 	}
 	this.eatToken(TOKEN_SEMI)

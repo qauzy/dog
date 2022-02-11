@@ -2,6 +2,7 @@ package main
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	codegen_go "dog/codegen/golang"
 	"dog/control"
 
@@ -91,7 +92,7 @@ func PareseJava(file string, info os.FileInfo, err error) error {
 				tk = lex.NextToken()
 
 				pk := &storage.PackInfo{
-					Project: "kk",
+					Project: cfg.ProjectName,
 					Name:    tk.Lexeme,
 					Path:    path,
 					Kind:    kind,
@@ -107,6 +108,9 @@ func PareseJava(file string, info os.FileInfo, err error) error {
 	control.Verbose("parser", func() {
 		Ast = dog_Parser(file, buf)
 	}, control.VERBOSE_PASS)
+	if cfg.ParseOnly {
+		return nil
+	}
 
 	//set3: trans -- 翻译
 	var Ast_go *gast.File
