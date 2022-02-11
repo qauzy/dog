@@ -24,6 +24,17 @@ func StringsOp(n ast.Node) {
 			t.X = ast.NewIdent("StringUtils")
 			t.Sel.Name = "IsEmpty"
 		}
+	//	else if ok && t.Sel.Name == "Length" {
+	//	t.X = &ast.CallExpr{
+	//		Fun:      ast.NewIdent("len"),
+	//		Lparen:   0,
+	//		Args:     []ast.Expr{t.X},
+	//		Ellipsis: 0,
+	//		Rparen:   0,
+	//	}
+	//
+	//	t.Sel = ast.NewIdent("")
+	//}
 	case *ast.CallExpr:
 		sl, ok := t.Fun.(*ast.SelectorExpr)
 		if ok && sl.Sel.Name == "Split" && len(t.Args) == 1 {

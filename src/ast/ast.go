@@ -796,8 +796,9 @@ func (this *Division) _exp() {
 
 //Exp.IndexExpr /*{{{*/
 type IndexExpr struct {
-	X     Exp
-	Index Exp
+	EleType Exp //元素类型
+	X       Exp
+	Index   Exp
 	Exp_T
 }
 
@@ -805,6 +806,14 @@ func IndexExpr_new(X Exp, index Exp, line int) *IndexExpr {
 	e := new(IndexExpr)
 	e.X = X
 	e.Index = index
+	e.LineNum = line
+	return e
+}
+func IndexExpr_newEx(X Exp, index Exp, EleType Exp, line int) *IndexExpr {
+	e := new(IndexExpr)
+	e.X = X
+	e.Index = index
+	e.EleType = EleType
 	e.LineNum = line
 	return e
 }

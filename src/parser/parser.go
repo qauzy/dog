@@ -361,8 +361,11 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 	for this.current.Kind == TOKEN_DOT {
 		var old = x
 		var isListOrMapGetSet bool
+		var eleType ast.Exp
 		var isListAdd bool
 		var isListRemove bool
+		var isListOrMapClear bool
+
 		this.eatToken(TOKEN_DOT)
 		if this.current.Kind == TOKEN_LENGTH {
 			this.advance()
@@ -423,10 +426,29 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 
 				if id, ok := x.(*ast.Ident); ok {
 					if this.CheckField(id.Name) != nil {
-						_, ok1 := this.CheckField(id.Name).GetDecType().(*ast.MapType)
-						_, ok2 := this.CheckField(id.Name).GetDecType().(*ast.ListType)
+						el1, ok1 := this.CheckField(id.Name).GetDecType().(*ast.MapType)
+						el2, ok2 := this.CheckField(id.Name).GetDecType().(*ast.ListType)
+
+						if ok1 {
+							eleType = el1.Value
+						} else if ok2 {
+							eleType = el2.Ele
+						}
 						isListOrMapGetSet = ok1 || ok2
 					}
+				} else if idx, ok := x.(*ast.IndexExpr); ok {
+					if idx.EleType != nil {
+						el1, ok1 := idx.EleType.(*ast.MapType)
+						el2, ok2 := idx.EleType.(*ast.ListType)
+
+						if ok1 {
+							eleType = el1.Value
+						} else if ok2 {
+							eleType = el2.Ele
+						}
+						isListOrMapGetSet = ok1 || ok2
+					}
+
 				}
 
 			} else if cfg.MapListIdxAccess && this.current.Lexeme == "add" {
@@ -441,6 +463,21 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 					if this.CheckField(id.Name) != nil {
 						_, isListRemove = this.CheckField(id.Name).GetDecType().(*ast.MapType)
 
+					}
+				}
+			} else if cfg.MapListIdxAccess && (this.current.Lexeme == "clear") {
+				if id, ok := x.(*ast.Ident); ok {
+					if this.CheckField(id.Name) != nil {
+
+						el1, ok1 := this.CheckField(id.Name).GetDecType().(*ast.MapType)
+						el2, ok2 := this.CheckField(id.Name).GetDecType().(*ast.ListType)
+
+						if ok1 {
+							eleType = ast.NewHash_new(el1.Key, el1.Value, this.Linenum)
+						} else if ok2 {
+							eleType = ast.NewList_new(el2.Ele, nil, this.Linenum)
+						}
+						isListOrMapClear = ok1 || ok2
 					}
 				}
 			}
@@ -464,7 +501,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 
 			this.eatToken(TOKEN_RPAREN)
 			if isListOrMapGetSet && len(args) == 1 {
-				x = ast.IndexExpr_new(old, args[0], this.Linenum)
+				x = ast.IndexExpr_newEx(old, args[0], eleType, this.Linenum)
 				//处理List Map Get&&Set操作
 			} else if isListOrMapGetSet && len(args) == 2 {
 				x = ast.FakeExpr_new(ast.Assign_new(ast.IndexExpr_new(old, args[0], this.Linenum), args[1], false, this.Linenum), this.Linenum)
@@ -480,6 +517,9 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 				args1 = append(args1, old)
 				args1 = append(args1, args[0])
 				x = ast.CallExpr_new(ast.NewIdent("delete", this.Linenum), args1, this.Linenum)
+
+			} else if isListOrMapClear && len(args) == 0 {
+				x = ast.FakeExpr_new(ast.Assign_new(old, eleType, false, this.Linenum), this.Linenum)
 
 			} else {
 				x = ast.CallExpr_new(x, args, this.Linenum)
