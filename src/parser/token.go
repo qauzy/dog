@@ -107,7 +107,7 @@ func initTokenMap() {
 	tokenMap["System"] = TOKEN_SYSTEM
 
 	//tokenMap["out"] = TOKEN_OUT
-	tokenMap["println"] = TOKEN_PRINTLN
+	//tokenMap["println"] = TOKEN_PRINTLN
 	tokenMap["EOF"] = TOKEN_EOF
 
 	//类型关键字

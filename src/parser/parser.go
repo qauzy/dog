@@ -9,7 +9,6 @@ import (
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 )
@@ -233,6 +232,13 @@ func (this *Parser) parseType() ast.Exp {
 			this.currentType = &ast.MapType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
 		}
 
+		//泛型
+	case TOKEN_LT:
+		this.eatToken(TOKEN_LT)
+		tp := this.parseTypeList()
+		this.eatToken(TOKEN_GT)
+		//
+		this.currentType = &ast.GenericType{ast.NewIdent("", this.Linenum), tp, ast.TYPE_GENERIC}
 	default:
 		//FIXME 类型可能带包名前缀
 		name := this.current.Lexeme
@@ -255,7 +261,13 @@ func (this *Parser) parseType() ast.Exp {
 			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
 		} else {
 			this.eatToken(TOKEN_LT)
-			tp := this.parseTypeList()
+			var tp []ast.Exp
+			if this.current.Kind == TOKEN_QUESTION {
+				this.eatToken(TOKEN_QUESTION)
+				tp = append(tp, ast.NewIdent("?", this.Linenum))
+			} else {
+				tp = this.parseTypeList()
+			}
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.GenericType{ast.NewIdent(name, this.Linenum), tp, ast.TYPE_GENERIC}
 		}
@@ -298,6 +310,12 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 
 	tp = this.parseType()
 	id = this.current.Lexeme
+	//可变参数
+	if this.current.Kind == TOKEN_DOT {
+		this.eatToken(TOKEN_DOT)
+		this.eatToken(TOKEN_DOT)
+		this.eatToken(TOKEN_DOT)
+	}
 	this.eatToken(TOKEN_ID)
 	flist = append(flist, ast.NewFieldSingle(access, tp, ast.NewIdent(id, this.Linenum), nil, false, false))
 	//处理注释
@@ -312,6 +330,12 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 			this.advance()
 		}
 		tp = this.parseType()
+		//可变参数
+		if this.current.Kind == TOKEN_DOT {
+			this.eatToken(TOKEN_DOT)
+			this.eatToken(TOKEN_DOT)
+			this.eatToken(TOKEN_DOT)
+		}
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		flist = append(flist, ast.NewFieldSingle(access, tp, ast.NewIdent(id, this.Linenum), nil, false, false))
@@ -1240,6 +1264,10 @@ func (this *Parser) parseExp() ast.Exp {
 	if this.current.Kind == TOKEN_LBRACE {
 		log.Infof("TOKEN_LBRACK --> 数组赋值语句")
 		this.eatToken(TOKEN_LBRACE)
+		if this.current.Kind == TOKEN_RBRACE {
+			this.eatToken(TOKEN_RBRACE)
+			return ast.ArrayAssign_new([]ast.Exp{ast.NewIdent("", this.Linenum)}, this.currentType, this.Linenum)
+		}
 		exps := this.parseExpList()
 		this.eatToken(TOKEN_RBRACE)
 		return ast.ArrayAssign_new(exps, this.currentType, this.Linenum)
@@ -1468,6 +1496,6 @@ func (this *Parser) Parser() ast.File {
 }
 
 func (this *Parser) ParseBug(info string) {
-	var msg = fmt.Sprintf("[%v] %s:%d:%s\n", this.current.Lexeme, path.Base(this.lexer.fname), this.Linenum, info)
+	var msg = fmt.Sprintf("[%v] %s:%d:%s\n", this.current.Lexeme, this.lexer.fname, this.Linenum, info)
 	util.Bug(msg)
 }

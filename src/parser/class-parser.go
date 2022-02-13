@@ -147,7 +147,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				comment += "\n" + this.current.Lexeme
 				this.advance()
 			}
-			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
+			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED && this.current.Kind != TOKEN_ID) {
 				return
 			}
 		}
@@ -234,7 +234,12 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				this.assignType = tmp.Tp
 				//变量/函数名 --> 转为开头大写
 				tmp.Name = ast.NewIdent(this.current.Lexeme, this.Linenum)
-				this.eatToken(TOKEN_ID)
+				if this.current.Kind == TOKEN_MAIN {
+					this.eatToken(TOKEN_MAIN)
+				} else {
+					this.eatToken(TOKEN_ID)
+				}
+
 			}
 
 			//成员方法
@@ -262,6 +267,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 // param: IsConstruct
 // return:
 func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, IsStatic bool, comment string) (meth ast.Method) {
+	log.Infof("解析函数")
 	var IsThrows bool
 	//左括号
 	this.eatToken(TOKEN_LPAREN)
@@ -293,7 +299,16 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 
 	//解析本地变量和表达式
 	methodSingle.Stms = this.parseStatements()
-
+	if this.current.Kind == TOKEN_COMMENT {
+		comment = ""
+		for this.current.Kind == TOKEN_COMMENT {
+			comment += "\n" + this.current.Lexeme
+			this.advance()
+		}
+		if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED) {
+			return
+		}
+	}
 	this.eatToken(TOKEN_RBRACE)
 
 	return methodSingle

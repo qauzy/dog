@@ -1,7 +1,7 @@
 package cfg
 
 var (
-	ConstructFieldFunc = false //构建Get,Set函数
+	ConstructFieldFunc = true  //构建Get,Set函数
 	AppendContext      = false //添加*gin.Contex
 	FieldAccess        = true  //Get,Set函数转换为直接成员访问
 	MapListIdxAccess   = true  //索引形式访问Map和List
@@ -12,6 +12,7 @@ var (
 	Capitalize         = true  //类成员大写开头
 	StarClassTypeParam = true  //非原生类型函数参数带*
 	StarClassTypeDecl  = true  //非原生类型变量带*
+	ParseOnly          = true  //只解析，不翻译(获取全局信息)
 	ProjectName        = "bitrade"
 	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
 	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录

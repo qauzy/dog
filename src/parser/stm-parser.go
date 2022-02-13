@@ -434,8 +434,14 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.eatToken(TOKEN_SEMI)
 
 			log.Debugf("********TOKEN_FOR--> 解析更新语句 ***********")
-			this.isSpecial = true
-			Post := this.parseStatement()
+			var Post ast.Stm
+			if this.current.Kind == TOKEN_RPAREN {
+				log.Debugf("********TOKEN_FOR--> 空更新语句 ***********")
+			} else {
+				this.isSpecial = true
+				Post = this.parseStatement()
+			}
+
 			this.eatToken(TOKEN_RPAREN)
 			body := this.parseStatement()
 			return ast.For_new(Init, Condition, Post, body, this.Linenum)
@@ -479,6 +485,21 @@ func (this *Parser) parseStatement() ast.Stm {
 		e := this.parseExp()
 		this.eatToken(TOKEN_SEMI)
 		return ast.Throw_new(e, this.Linenum)
+		//处理的是后缀加
+	case TOKEN_AUTOADD:
+		log.Debugf("处理累加")
+		this.eatToken(TOKEN_AUTOADD)
+		id := this.current.Lexeme
+		this.eatToken(TOKEN_ID)
+		//特殊的for语句才不需要分号
+		if this.isSpecial {
+			this.isSpecial = false
+		} else {
+			this.eatToken(TOKEN_SEMI)
+		}
+		left := ast.NewIdent(id, this.Linenum)
+
+		return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
 	case TOKEN_RETURN:
 		this.eatToken(TOKEN_RETURN)
 		//空return
