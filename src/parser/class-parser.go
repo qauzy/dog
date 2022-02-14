@@ -19,6 +19,11 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 		access = this.current.Kind
 		this.advance()
 	}
+	//
+	if this.isAnnotationClass {
+		log.Infof("注解类，不处理")
+		return nil
+	}
 	//枚举类型
 	if this.current.Kind == TOKEN_ENUM {
 
@@ -73,10 +78,10 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 		//FIXME 泛型忽略
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
-			this.eatToken(TOKEN_ID)
+			this.parseType()
 			for this.current.Kind == TOKEN_COMMER {
 				this.eatToken(TOKEN_COMMER)
-				this.eatToken(TOKEN_ID)
+				this.parseType()
 			}
 			this.eatToken(TOKEN_GT)
 		}
@@ -116,7 +121,11 @@ func (this *Parser) parseClassDecls() {
 
 		}
 		if this.currentFile != nil {
-			this.currentFile.AddClass(this.parseClassDecl())
+			cl := this.parseClassDecl()
+			if cl != nil {
+				this.currentFile.AddClass(cl)
+			}
+
 		} else {
 			panic("currentFile is nil")
 		}

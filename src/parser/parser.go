@@ -15,20 +15,21 @@ import (
 
 type Parser struct {
 	*Stack
-	lexer         *Lexer
-	current       *Token
-	pending       []*Token
-	currentType   ast.Exp
-	assignType    ast.Exp
-	isSpecial     bool
-	isField       bool
-	GetField      FieldFunc
-	currentFile   ast.File   //当前解析的File
-	currentClass  ast.Class  //当前解析的class TODO 类嵌套
-	currentMethod ast.Method //当前解析的Method	TODO 函数嵌套
-	currentStm    ast.Stm    //当前解析的Stm
-	Linenum       int
-	ProjectPath   string //项目路径
+	lexer             *Lexer
+	current           *Token
+	pending           []*Token
+	currentType       ast.Exp
+	assignType        ast.Exp
+	isSpecial         bool
+	isField           bool
+	isAnnotationClass bool
+	GetField          FieldFunc
+	currentFile       ast.File   //当前解析的File
+	currentClass      ast.Class  //当前解析的class TODO 类嵌套
+	currentMethod     ast.Method //当前解析的Method	TODO 函数嵌套
+	currentStm        ast.Stm    //当前解析的Stm
+	Linenum           int
+	ProjectPath       string //项目路径
 }
 
 func NewParse(fname string, buf []byte) *Parser {
@@ -41,6 +42,10 @@ func NewParse(fname string, buf []byte) *Parser {
 }
 
 func (this *Parser) advance() {
+	if this.isAnnotationClass {
+		log.Infof("注解类，不处理")
+		return
+	}
 	if control.Lexer_dump == true {
 		util.Debug(this.current.ToString())
 	}
@@ -62,6 +67,10 @@ func (this *Parser) advanceOnly() {
 }
 
 func (this *Parser) eatToken(kind int) {
+	if this.isAnnotationClass {
+		log.Infof("注解类，不处理")
+		return
+	}
 	if kind == this.current.Kind {
 		this.advance()
 	} else if TOKEN_COMMENT == this.current.Kind {
@@ -179,9 +188,26 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_LIST)
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
-			ele := this.parseType()
-			this.eatToken(TOKEN_GT)
-			this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+			if this.current.Kind == TOKEN_QUESTION {
+				this.eatToken(TOKEN_QUESTION)
+				//TODO 有继承规范
+				if this.current.Kind == TOKEN_EXTENDS {
+					this.eatToken(TOKEN_EXTENDS)
+					ele := this.parseType()
+					this.eatToken(TOKEN_GT)
+					this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+					//没有继承规范
+				} else {
+					this.eatToken(TOKEN_GT)
+					this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+				}
+
+			} else {
+				ele := this.parseType()
+				this.eatToken(TOKEN_GT)
+				this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+			}
+
 		} else {
 			this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
 		}
@@ -740,6 +766,12 @@ func (this *Parser) parseNewExp() ast.Exp {
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RBRACK)
 		return ast.NewIntArray_new(exp, this.Linenum)
+	case TOKEN_INTEGER:
+		this.advance()
+		this.eatToken(TOKEN_LBRACK)
+		exp := this.parseExp()
+		this.eatToken(TOKEN_RBRACK)
+		return ast.NewObject_new(exp, this.Linenum)
 	case TOKEN_STRING:
 		this.advance()
 		if this.current.Kind == TOKEN_LPAREN {
@@ -1332,6 +1364,11 @@ func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
 
 func (this *Parser) parseAnnotation() {
 	this.eatToken(TOKEN_AT)
+	if this.current.Kind == TOKEN_INTERFACE {
+		this.isAnnotationClass = true
+		log.Infof("发现注解类，不处理")
+		return
+	}
 	//TODO 不忽略的注解
 	if this.current.Lexeme == "Query" {
 		this.current.Kind = TOKEN_QUERY
