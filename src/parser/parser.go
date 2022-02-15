@@ -104,7 +104,7 @@ func (this *Parser) parseType() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
 		} else {
 			this.currentType = &ast.Int{}
 		}
@@ -113,7 +113,7 @@ func (this *Parser) parseType() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.ObjectArray{ast.TYPE_OBJECTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.ObjectType{}}
 		} else {
 			this.currentType = &ast.ObjectType{ast.TYPE_OBJECT}
 		}
@@ -124,7 +124,7 @@ func (this *Parser) parseType() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.Integer{}}
 		} else {
 			this.currentType = &ast.Integer{ast.TYPE_INT}
 		}
@@ -159,7 +159,7 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_LBRACK)
 		this.eatToken(TOKEN_RBRACK)
 		this.eatToken(TOKEN_INT)
-		this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+		this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
 	case TOKEN_SET:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_SET)
@@ -298,7 +298,7 @@ func (this *Parser) parseType() ast.Exp {
 			this.currentType = &ast.GenericType{ast.NewIdent(name, this.Linenum), tp, ast.TYPE_GENERIC}
 		}
 	}
-	log.Debugf("解析类型:%s", this.currentType)
+	log.Debugf("解析类型:%v", this.currentType)
 	return this.currentType
 }
 
@@ -417,7 +417,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 		var isListOrMapClear bool
 
 		this.eatToken(TOKEN_DOT)
-		if this.current.Kind == TOKEN_LENGTH {
+		if this.current.Lexeme == "Length" || this.current.Lexeme == "length" {
 			this.advance()
 			if this.current.Kind == TOKEN_LPAREN {
 				this.eatToken(TOKEN_LPAREN)
@@ -425,7 +425,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			}
 
 			return ast.Length_new(x, this.Linenum)
-		} else if this.current.Kind == TOKEN_SIZE {
+		} else if this.current.Lexeme == "Size" || this.current.Lexeme == "size" {
 			this.advance()
 			this.eatToken(TOKEN_LPAREN)
 			this.eatToken(TOKEN_RPAREN)
@@ -768,9 +768,9 @@ func (this *Parser) parseNewExp() ast.Exp {
 		return ast.NewIntArray_new(exp, this.Linenum)
 	case TOKEN_INTEGER:
 		this.advance()
-		this.eatToken(TOKEN_LBRACK)
+		this.eatToken(TOKEN_LPAREN)
 		exp := this.parseExp()
-		this.eatToken(TOKEN_RBRACK)
+		this.eatToken(TOKEN_RPAREN)
 		return ast.NewObject_new(exp, this.Linenum)
 	case TOKEN_STRING:
 		this.advance()
@@ -841,7 +841,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 			} else {
 				_, ok := this.assignType.(*ast.ListType)
 				if !ok {
-					this.ParseBug("Hash类型存在空")
+					ele = &ast.ObjectType{ast.TYPE_OBJECT}
 				} else {
 					ele = this.assignType.(*ast.ListType).Ele
 					this.assignType = nil

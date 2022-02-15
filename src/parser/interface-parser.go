@@ -62,6 +62,7 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		this.current.Kind == TOKEN_COMMENT ||
 		this.current.Kind == TOKEN_QUERY || //解析jpa的  @Query 注解,
 		this.current.Kind == TOKEN_PUBLIC ||
+		this.current.Kind == TOKEN_LT || //泛型方法
 		this.current.Kind == TOKEN_ID {
 
 		for this.current.Kind == TOKEN_COMMENT {
@@ -90,6 +91,13 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 			this.eatToken(TOKEN_RBRACE)
 			return classSingle
 		}
+		//泛型方法
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			this.eatToken(TOKEN_ID)
+			this.eatToken(TOKEN_GT)
+		}
+
 		tp := this.parseType()
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)

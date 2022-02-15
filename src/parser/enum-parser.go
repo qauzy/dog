@@ -34,8 +34,8 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 				comment += "\n" + this.current.Lexeme
 				this.advance()
 			}
-			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED && this.current.Kind != TOKEN_ID) {
-				return
+			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_COMMENT) {
+				continue
 			}
 			log.Infof("注释-->%v", comment)
 		}
@@ -57,9 +57,13 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 		}
 		if this.current.Kind == TOKEN_SEMI {
 			this.eatToken(TOKEN_SEMI)
+			//兼容多一个SEMI
+			if this.current.Kind == TOKEN_SEMI {
+				this.eatToken(TOKEN_SEMI)
+			}
 			break
-		} else {
-
+			//兼容多一个逗号的情况
+		} else if this.current.Kind == TOKEN_COMMER {
 			this.eatToken(TOKEN_COMMER)
 		}
 

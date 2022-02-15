@@ -99,10 +99,10 @@ func initTokenMap() {
 	tokenMap["transient"] = TOKEN_TRANSIENT
 	tokenMap["this"] = TOKEN_THIS
 	tokenMap["static"] = TOKEN_STATIC
-	tokenMap["Length"] = TOKEN_LENGTH
-	tokenMap["length"] = TOKEN_LENGTH
-	tokenMap["Size"] = TOKEN_SIZE
-	tokenMap["size"] = TOKEN_SIZE
+	//tokenMap["Length"] = TOKEN_LENGTH
+	//tokenMap["length"] = TOKEN_LENGTH
+	//tokenMap["Size"] = TOKEN_SIZE
+	//tokenMap["size"] = TOKEN_SIZE
 	tokenMap["return"] = TOKEN_RETURN
 	tokenMap["System"] = TOKEN_SYSTEM
 

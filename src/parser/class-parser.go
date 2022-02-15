@@ -156,8 +156,8 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				comment += "\n" + this.current.Lexeme
 				this.advance()
 			}
-			if this.current.Kind == TOKEN_EOF || (this.current.Kind != TOKEN_PRIVATE && this.current.Kind != TOKEN_PUBLIC && this.current.Kind != TOKEN_PROTECTED && this.current.Kind != TOKEN_ID) {
-				return
+			if this.current.Kind == TOKEN_EOF || this.current.Kind != TOKEN_COMMENT {
+				continue
 			}
 		}
 		var tmp ast.FieldSingle
@@ -214,6 +214,12 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			classSingle.AddMethod(this.parseMemberStatic(comment))
 
 		} else {
+			//泛型方法
+			if this.current.Kind == TOKEN_LT {
+				this.eatToken(TOKEN_LT)
+				this.eatToken(TOKEN_ID)
+				this.eatToken(TOKEN_GT)
+			}
 
 			id := this.current.Lexeme
 			//处理类构造函数

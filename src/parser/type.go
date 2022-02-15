@@ -27,7 +27,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
 		} else {
 			this.currentType = &ast.Int{}
 		}
@@ -47,7 +47,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
 		} else {
 			this.currentType = &ast.Integer{ast.TYPE_INT}
 		}
@@ -82,7 +82,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		this.eatToken(TOKEN_LBRACK)
 		this.eatToken(TOKEN_RBRACK)
 		this.eatToken(TOKEN_INT)
-		this.currentType = &ast.IntArray{ast.TYPE_INTARRAY}
+		this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
 	case TOKEN_SET:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_SET)

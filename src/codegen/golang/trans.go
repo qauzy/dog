@@ -211,8 +211,6 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return gast.NewIdent("int")
 	case *ast.Int:
 		return gast.NewIdent("int")
-	case *ast.IntArray:
-		return gast.NewIdent("[]int")
 	case *ast.MapType:
 		return &gast.MapType{
 			Map:   0,

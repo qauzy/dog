@@ -2343,24 +2343,6 @@ func (this *Void) String() string {
 func (this *Void) _exp() {
 }
 
-//Type.IntArray /*{{{*/
-type IntArray struct {
-	TypeKind int
-}
-
-func (this *IntArray) accept(v Visitor) {
-	v.visit(this)
-}
-func (this *IntArray) Gettype() int {
-	return this.TypeKind
-}
-
-func (this *IntArray) String() string {
-	return "@int[]"
-}
-func (this *IntArray) _exp() {
-}
-
 /*}}}*/
 
 //Type.ArrayType /*{{{*/
