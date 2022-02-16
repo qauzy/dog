@@ -110,7 +110,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		var el gast.Stmt
 		var Init gast.Stmt
 		if v.Elsee != nil {
-			el = this.transBlock(v.Elsee)
+			el = this.transStm(v.Elsee)
 		} else {
 			el = nil
 		}

@@ -28,7 +28,10 @@ func (this *Parser) parseStatement() ast.Stm {
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()
 		return stm
-
+	case TOKEN_NEW:
+		exp := this.parseNewExp()
+		this.eatToken(TOKEN_SEMI)
+		return ast.ExprStm_new(exp, this.Linenum)
 	case TOKEN_LBRACE: //{
 		log.Debugf("*******解析代码段*******")
 		this.eatToken(TOKEN_LBRACE)
@@ -287,7 +290,9 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.eatToken(TOKEN_ELSE)
 			elsee := this.parseStatement()
 			if _, ok := elsee.(*ast.Block); !ok {
-				elsee = ast.Block_new([]ast.Stm{elsee}, this.Linenum)
+				if _, ok := elsee.(*ast.If); !ok {
+					elsee = ast.Block_new([]ast.Stm{elsee}, this.Linenum)
+				}
 			}
 			if Init != nil {
 				return ast.If_newEx(Init, condition, body, elsee, this.Linenum)
@@ -545,6 +550,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_SWITCH ||
 		this.current.Kind == TOKEN_CASE ||
 		this.current.Kind == TOKEN_DEFAULT ||
+		this.current.Kind == TOKEN_NEW ||
 		this.current.Kind == TOKEN_SYSTEM {
 		stms = append(stms, this.parseStatement())
 	}

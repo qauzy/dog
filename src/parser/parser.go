@@ -8,7 +8,6 @@ import (
 	"dog/util"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -738,8 +737,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		if this.IsTypeToken() {
 			return this.parseType()
 		}
-		this.ParseBug("未处理")
-		os.Exit(0)
+		this.ParseBug("parseAtomExp未处理")
 	}
 	return nil
 }
@@ -751,7 +749,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 //
 // return:
 func (this *Parser) parseNewExp() ast.Exp {
-	log.Debugf("解析 parseNewExp")
+	log.Debugf("----------->解析 New语句")
 	this.advance()
 	switch this.current.Kind {
 	case TOKEN_BYTE:
@@ -902,7 +900,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
 			if this.current.Kind != TOKEN_GT {
-				this.parseNotExp()
+				this.parseType()
 			}
 			this.eatToken(TOKEN_GT)
 			this.eatToken(TOKEN_LPAREN)
