@@ -602,6 +602,10 @@ func (this *Parser) CovertExp(exp ast.Exp) (dst ast.Exp) {
 //          -> new id()
 func (this *Parser) parseAtomExp() ast.Exp {
 	log.Debugf("解析 parseAtomExp")
+	for this.current.Kind == TOKEN_COMMENT {
+		log.Debugf("--------->去除注释:%v", this.current.Lexeme)
+		this.advance()
+	}
 	switch this.current.Kind {
 	case TOKEN_SUB:
 		this.advance()
@@ -1070,8 +1074,6 @@ func (this *Parser) parseNotExp() ast.Exp {
 				this.eatToken(TOKEN_RBRACK)
 				panic("数组索引用")
 			}
-		case TOKEN_COMMENT:
-			exp = this.parseAtomExp()
 		}
 	}
 	return exp
@@ -1113,6 +1115,7 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 	left := this.parseTimeExp()
 	//去除注释
 	for this.current.Kind == TOKEN_COMMENT {
+		log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 		this.advance()
 	}
 	for this.current.Kind == TOKEN_REM ||
@@ -1123,6 +1126,7 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 			this.advance()
 			//去除注释
 			for this.current.Kind == TOKEN_COMMENT {
+				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
 			}
 			right := this.parseTimeExp()
@@ -1158,6 +1162,7 @@ func (this *Parser) parseLtExp() ast.Exp {
 	left := this.parseAddSubExp()
 	//去除注释
 	for this.current.Kind == TOKEN_COMMENT {
+		log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 		this.advance()
 	}
 	for this.current.Kind == TOKEN_ADD ||
@@ -1167,19 +1172,28 @@ func (this *Parser) parseLtExp() ast.Exp {
 			this.advance()
 			//去除注释
 			for this.current.Kind == TOKEN_COMMENT {
+				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
 			}
-
 			right := this.parseAddSubExp()
 			left = ast.Add_new(left, right, this.Linenum)
+			for this.current.Kind == TOKEN_COMMENT {
+				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
+				this.advance()
+			}
 		case TOKEN_SUB:
 			this.advance()
 			//去除注释
 			for this.current.Kind == TOKEN_COMMENT {
+				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
 			}
 			right := this.parseAddSubExp()
 			left = ast.Sub_new(left, right, this.Linenum)
+			for this.current.Kind == TOKEN_COMMENT {
+				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
+				this.advance()
+			}
 		}
 	}
 	return left
