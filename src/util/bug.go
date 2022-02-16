@@ -16,7 +16,7 @@ var (
 
 func Bug(info string) {
 	var msg = joint(4, "[BUG]", info)
-	l.Output(3, msg)
+	l.Output(2, msg)
 	os.Exit(0)
 }
 

@@ -1531,6 +1531,7 @@ func (this *Parser) Parser() ast.File {
 }
 
 func (this *Parser) ParseBug(info string) {
-	var msg = fmt.Sprintf("[%v] %s:%d:%s\n", this.current.Lexeme, this.lexer.fname, this.Linenum, info)
+	var msg = fmt.Sprintf("%s:%d:%s\n", this.lexer.fname, this.Linenum, info)
+	log.Errorf(this.current.Lexeme)
 	util.Bug(msg)
 }
