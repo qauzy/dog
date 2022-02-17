@@ -905,6 +905,11 @@ func (this *Parser) parseNewExp() ast.Exp {
 			this.eatToken(TOKEN_LT)
 			if this.current.Kind != TOKEN_GT {
 				this.parseType()
+				//泛型多个参数
+				for this.current.Kind == TOKEN_COMMER {
+					this.eatToken(TOKEN_COMMER)
+					this.parseType()
+				}
 			}
 			this.eatToken(TOKEN_GT)
 			this.eatToken(TOKEN_LPAREN)

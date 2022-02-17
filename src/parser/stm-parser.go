@@ -30,6 +30,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		return stm
 	case TOKEN_NEW:
 		exp := this.parseNewExp()
+		//FIXME 直接实现接口
 		this.eatToken(TOKEN_SEMI)
 		return ast.ExprStm_new(exp, this.Linenum)
 	case TOKEN_LBRACE: //{

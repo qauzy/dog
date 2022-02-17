@@ -98,10 +98,10 @@ func (this *Lexer) lex_String(c byte) string {
 	var st = this.fp
 
 	c = this.buf[this.fp]
-	for c != '\n' && c != '"' && this.fp < len(this.buf) {
+
+	for c != '\n' && (c != '"' || (c == '"' && this.buf[this.fp-1] == '\\')) && this.fp < len(this.buf) {
 		this.fp++
 		c = this.buf[this.fp]
-
 	}
 	if c != '"' && this.fp >= len(this.buf) {
 		util.ParserError("\"", "", this.lineNum, this.fname)
