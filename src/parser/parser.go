@@ -23,7 +23,10 @@ type Parser struct {
 	isField           bool
 	isAnnotationClass bool
 	GetField          FieldFunc
-	currentFile       ast.File   //当前解析的File
+	currentFile       ast.File //当前解析的File
+	classStack        *Stack
+	methodStack       *Stack
+	stmStack          *Stack
 	currentClass      ast.Class  //当前解析的class TODO 类嵌套
 	currentMethod     ast.Method //当前解析的Method	TODO 函数嵌套
 	currentStm        ast.Stm    //当前解析的Stm
@@ -35,6 +38,9 @@ func NewParse(fname string, buf []byte) *Parser {
 	lexer := NewLexer(fname, buf)
 	p := new(Parser)
 	p.Stack = InitStack()
+	p.classStack = InitStack()
+	p.methodStack = InitStack()
+	p.stmStack = InitStack()
 	p.lexer = lexer
 	p.current = p.lexer.NextToken()
 	return p
@@ -914,6 +920,16 @@ func (this *Parser) parseNewExp() ast.Exp {
 			//直接实现接口
 			if this.current.Kind == TOKEN_LBRACE {
 				classSingle := ast.NewClassSingle(this.currentFile, 0, id, "", ast.CLASS_TYPE)
+				this.currentClass = classSingle
+				this.Push(classSingle)
+				this.classStack.Push(classSingle)
+				defer func() {
+					this.classStack.Pop()
+					this.Pop()
+					if this.classStack.Peek() != nil {
+						this.currentClass = this.classStack.Peek().(ast.Class)
+					}
+				}()
 				this.eatToken(TOKEN_LBRACE)
 				this.parseClassContext(classSingle)
 				this.eatToken(TOKEN_RBRACE)
@@ -1393,12 +1409,14 @@ func (this *Parser) parseMemberStatic(comment string) (meth ast.Method) {
 
 	var methodSingle = ast.NewMethodSingle(this.currentClass, &ast.Void{}, ast.NewIdent("init", this.Linenum), nil, nil, false, true, false, comment)
 	this.currentMethod = methodSingle
-	this.GetField = this.currentMethod.GetField
-	this.Push(this.currentMethod)
+	this.methodStack.Push(methodSingle)
+	this.Push(methodSingle)
 	defer func() {
-		this.currentMethod = nil
-		this.GetField = this.currentClass.GetField
 		this.Pop()
+		this.methodStack.Pop()
+		if this.methodStack.Peek() != nil {
+			this.currentMethod = this.methodStack.Peek().(ast.Method)
+		}
 	}()
 
 	this.eatToken(TOKEN_LBRACE)

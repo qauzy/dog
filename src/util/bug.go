@@ -21,8 +21,8 @@ func Bug(info string) {
 }
 
 func Debug(info string) {
-	var msg = joint(4, "[DEBUG]", info)
-	l.Output(2, msg)
+	var msg = joint(5, "[DEBUG]", info)
+	l.Output(3, msg)
 }
 
 func ParserError(expect string, current string, linenum int, file string) {

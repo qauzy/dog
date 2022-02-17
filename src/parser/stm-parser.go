@@ -30,7 +30,9 @@ func (this *Parser) parseStatement() ast.Stm {
 		return stm
 	case TOKEN_NEW:
 		exp := this.parseNewExp()
-		//FIXME 直接实现接口
+		if this.current.Kind == TOKEN_DOT {
+			exp = this.parseCallExp(exp)
+		}
 		this.eatToken(TOKEN_SEMI)
 		return ast.ExprStm_new(exp, this.Linenum)
 	case TOKEN_LBRACE: //{
@@ -252,10 +254,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Debugf("********TOKEN_IF***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
 		this.currentStm = fake
+		this.stmStack.Push(fake)
 		this.Push(fake)
 		defer func() {
 			this.Pop()
-			this.currentStm = nil
+			this.stmStack.Pop()
+			if this.stmStack.Peek() != nil {
+				this.currentStm = this.stmStack.Peek().(ast.Stm)
+			} else {
+				this.currentStm = nil
+			}
 		}()
 
 		this.eatToken(TOKEN_IF)
@@ -313,10 +321,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Debugf("********TOKEN_TRY***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
 		this.currentStm = fake
+		this.stmStack.Push(fake)
 		this.Push(fake)
 		defer func() {
 			this.Pop()
-			this.currentStm = nil
+			this.stmStack.Pop()
+			if this.stmStack.Peek() != nil {
+				this.currentStm = this.stmStack.Peek().(ast.Stm)
+			} else {
+				this.currentStm = nil
+			}
 		}()
 		this.eatToken(TOKEN_TRY)
 		body := this.parseStatement()
@@ -353,15 +367,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Debugf("********TOKEN_WHILE***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
 		this.currentStm = fake
+		this.stmStack.Push(fake)
 		this.Push(fake)
 		defer func() {
 			this.Pop()
-			if this.currentMethod != nil {
-				this.GetField = this.currentMethod.GetField
+			this.stmStack.Pop()
+			if this.stmStack.Peek() != nil {
+				this.currentStm = this.stmStack.Peek().(ast.Stm)
 			} else {
-				this.GetField = nil
+				this.currentStm = nil
 			}
-			this.currentStm = nil
 		}()
 		this.eatToken(TOKEN_WHILE)
 		this.eatToken(TOKEN_LPAREN)
@@ -374,10 +389,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Debugf("********TOKEN_SWITCH***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
 		this.currentStm = fake
+		this.stmStack.Push(fake)
 		this.Push(fake)
 		defer func() {
 			this.Pop()
-			this.currentStm = nil
+			this.stmStack.Pop()
+			if this.stmStack.Peek() != nil {
+				this.currentStm = this.stmStack.Peek().(ast.Stm)
+			} else {
+				this.currentStm = nil
+			}
 		}()
 		this.eatToken(TOKEN_SWITCH)
 		this.eatToken(TOKEN_LPAREN)
@@ -402,10 +423,16 @@ func (this *Parser) parseStatement() ast.Stm {
 		log.Debugf("********TOKEN_FOR***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
 		this.currentStm = fake
+		this.stmStack.Push(fake)
 		this.Push(fake)
 		defer func() {
 			this.Pop()
-			this.currentStm = nil
+			this.stmStack.Pop()
+			if this.stmStack.Peek() != nil {
+				this.currentStm = this.stmStack.Peek().(ast.Stm)
+			} else {
+				this.currentStm = nil
+			}
 		}()
 		this.eatToken(TOKEN_FOR)
 		this.eatToken(TOKEN_LPAREN)

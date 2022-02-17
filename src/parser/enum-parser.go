@@ -21,8 +21,14 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.ENUM_TYPE)
 
 	this.currentClass = classSingle
+	this.Push(classSingle)
+	this.classStack.Push(classSingle)
 	defer func() {
-		this.currentClass = nil
+		this.classStack.Pop()
+		this.Pop()
+		if this.classStack.Peek() != nil {
+			this.currentClass = this.classStack.Peek().(ast.Class)
+		}
 	}()
 	//处理枚举变量
 	for {

@@ -73,8 +73,14 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	//处理implements
 	if this.current.Kind == TOKEN_IMPLEMENTS {
 		this.eatToken(TOKEN_IMPLEMENTS)
-		extends = this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+
+		//FIXME 忽略接口实现
+		this.parseType()
+		if this.current.Kind == TOKEN_COMMER {
+			this.eatToken(TOKEN_COMMER)
+			this.parseType()
+		}
+
 		//FIXME 泛型忽略
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
@@ -89,12 +95,15 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.CLASS_TYPE)
-
 	this.currentClass = classSingle
-	this.Push(this.currentClass)
+	this.Push(classSingle)
+	this.classStack.Push(classSingle)
 	defer func() {
-		this.currentClass = nil
+		this.classStack.Pop()
 		this.Pop()
+		if this.classStack.Peek() != nil {
+			this.currentClass = this.classStack.Peek().(ast.Class)
+		}
 	}()
 	this.parseClassContext(classSingle)
 	this.eatToken(TOKEN_RBRACE)
@@ -138,7 +147,7 @@ func (this *Parser) parseClassDecls() {
 //
 // return:
 func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
-
+	log.Infof("----------------->解析类上下文")
 	//每次循环解析一个成员变量或一个成员函数
 	for this.IsTypeToken() ||
 		this.current.Kind == TOKEN_ID ||
@@ -206,6 +215,15 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				this.eatToken(TOKEN_SYNCHRONIZED)
 			}
 
+		}
+
+		//嵌套类
+		if this.current.Kind == TOKEN_CLASS {
+			cl := this.parseClassDecl()
+			if cl != nil {
+				this.currentFile.AddClass(cl)
+				continue
+			}
 		}
 
 		//类静态语句
@@ -288,12 +306,14 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 	this.eatToken(TOKEN_LPAREN)
 	var methodSingle = ast.NewMethodSingle(this.currentClass, dec.Tp, dec.Name, nil, nil, IsConstruct, IsStatic, IsThrows, comment)
 	this.currentMethod = methodSingle
-	this.GetField = this.currentMethod.GetField
-	this.Push(this.currentMethod)
+	this.methodStack.Push(methodSingle)
+	this.Push(methodSingle)
 	defer func() {
-		this.currentMethod = nil
-		this.GetField = this.currentClass.GetField
 		this.Pop()
+		this.methodStack.Pop()
+		if this.methodStack.Peek() != nil {
+			this.currentMethod = this.methodStack.Peek().(ast.Method)
+		}
 	}()
 	//解析参数必须在生成currentMethod之后，因为解析需要参数作为本地变量信息 --> 函数参数会作为本地变量加入本地变量表
 	methodSingle.Formals = this.parseFormalList(false)

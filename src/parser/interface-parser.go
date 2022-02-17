@@ -67,8 +67,14 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.INTERFACE_TYPE)
 	this.currentClass = classSingle
+	this.Push(classSingle)
+	this.classStack.Push(classSingle)
 	defer func() {
-		this.currentClass = nil
+		this.classStack.Pop()
+		this.Pop()
+		if this.classStack.Peek() != nil {
+			this.currentClass = this.classStack.Peek().(ast.Class)
+		}
 	}()
 
 	for this.IsTypeToken() ||
@@ -134,8 +140,19 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 			}
 
 			this.eatToken(TOKEN_SEMI)
-			this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, isThrows, "")
-			classSingle.AddMethod(this.currentMethod)
+			methodSingle := ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, isThrows, "")
+			this.currentMethod = methodSingle
+			this.methodStack.Push(methodSingle)
+			this.Push(methodSingle)
+			defer func() {
+				this.Pop()
+				this.methodStack.Pop()
+				if this.methodStack.Peek() != nil {
+					this.currentMethod = this.methodStack.Peek().(ast.Method)
+				}
+			}()
+
+			this.currentClass.AddMethod(this.currentMethod)
 			//变量
 		} else {
 			var tmp ast.FieldSingle

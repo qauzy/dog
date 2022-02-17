@@ -54,7 +54,7 @@ func (s *Stack) Peek() ast.Container {
 	defer s.Unlock()
 
 	if s.length <= 0 {
-		panic("empty stack")
+		return nil
 	}
 
 	return s.data[s.length-1]
