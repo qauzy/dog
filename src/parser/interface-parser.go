@@ -7,7 +7,7 @@ import (
 //
 func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	var id, extends string
-
+	var isThrows bool
 	//类访问权限修饰符
 	this.eatToken(TOKEN_INTERFACE)
 	id = this.current.Lexeme
@@ -16,7 +16,20 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	//FIXME 泛型忽略
 	if this.current.Kind == TOKEN_LT {
 		this.eatToken(TOKEN_LT)
-		this.eatToken(TOKEN_ID)
+		this.parseType()
+		if this.current.Kind == TOKEN_EXTENDS {
+			this.eatToken(TOKEN_EXTENDS)
+			this.parseType()
+		}
+
+		for this.current.Kind == TOKEN_COMMER {
+			this.eatToken(TOKEN_COMMER)
+			this.parseType()
+			if this.current.Kind == TOKEN_EXTENDS {
+				this.eatToken(TOKEN_EXTENDS)
+				this.parseType()
+			}
+		}
 		this.eatToken(TOKEN_GT)
 	}
 
@@ -95,6 +108,10 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
 			this.eatToken(TOKEN_ID)
+			if this.current.Kind == TOKEN_EXTENDS {
+				this.eatToken(TOKEN_EXTENDS)
+				this.parseType()
+			}
 			this.eatToken(TOKEN_GT)
 		}
 
@@ -105,8 +122,19 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 			this.eatToken(TOKEN_LPAREN)
 			formals := this.parseFormalList(false)
 			this.eatToken(TOKEN_RPAREN)
+
+			if this.current.Kind == TOKEN_THROWS {
+				this.eatToken(TOKEN_THROWS)
+				this.eatToken(TOKEN_ID)
+				for this.current.Kind == TOKEN_COMMER {
+					this.eatToken(TOKEN_COMMER)
+					this.eatToken(TOKEN_ID)
+				}
+				isThrows = true
+			}
+
 			this.eatToken(TOKEN_SEMI)
-			this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, false, "")
+			this.currentMethod = ast.NewMethodSingle(this.currentClass, tp, ast.NewIdent(id, this.Linenum), formals, stms, false, false, isThrows, "")
 			classSingle.AddMethod(this.currentMethod)
 			//变量
 		} else {

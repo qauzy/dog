@@ -38,6 +38,9 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_LBRACE)
 		stms := this.parseStatements()
 		this.eatToken(TOKEN_RBRACE)
+		if this.current.Kind == TOKEN_SEMI {
+			this.eatToken(TOKEN_SEMI)
+		}
 		return ast.Block_new(stms, this.Linenum)
 	case TOKEN_THIS:
 		exp := this.parseExp()
@@ -113,8 +116,8 @@ func (this *Parser) parseStatement() ast.Stm {
 
 		case TOKEN_ASSIGN:
 			this.eatToken(TOKEN_ASSIGN)
-			if this.currentMethod.GetField(id) != nil {
-				this.assignType = this.currentMethod.GetField(id).GetDecType()
+			if this.Peek().GetField(id) != nil {
+				this.assignType = this.Peek().GetField(id).GetDecType()
 			}
 			exp := this.parseExp()
 
@@ -471,7 +474,6 @@ func (this *Parser) parseStatement() ast.Stm {
 			if id != nil {
 				exp = id
 			}
-
 			return ast.Range_new(exp, right, body, this.Linenum)
 		}
 

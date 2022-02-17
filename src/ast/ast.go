@@ -23,6 +23,7 @@ type File interface {
 }
 type Container interface {
 	GetField(name string) (f Field)
+	AddField(f Field)
 }
 type Import interface {
 	GetName() string
@@ -1608,7 +1609,7 @@ func (this *Stm_T) IsTriple() bool {
 func (this *Stm_T) SetTriple() {
 	this.isTriple = true
 }
-func (this *Stm_T) AddLocals(f Field) {
+func (this *Stm_T) AddField(f Field) {
 	this.Locals = append(this.Locals, f)
 	this.LocalsMap[f.GetName()] = f
 	return

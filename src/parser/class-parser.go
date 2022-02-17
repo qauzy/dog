@@ -325,6 +325,9 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 		}
 	}
 	this.eatToken(TOKEN_RBRACE)
+	if this.current.Kind == TOKEN_SEMI {
+		this.eatToken(TOKEN_SEMI)
+	}
 
 	return methodSingle
 }

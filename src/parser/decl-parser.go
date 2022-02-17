@@ -24,7 +24,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 			IsField: false,
 			Value:   nil,
 		}
-		this.currentMethod.AddField(f)
+		this.Peek().AddField(f)
 	} else if this.currentMethod != nil {
 		f := &ast.FieldSingle{
 			Access:  0,
@@ -34,7 +34,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 			IsField: false,
 			Value:   nil,
 		}
-		this.currentMethod.AddField(f)
+		this.Peek().AddField(f)
 	}
 
 	decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
@@ -72,7 +72,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 				IsField: false,
 				Value:   nil,
 			}
-			this.currentMethod.AddField(f)
+			this.Peek().AddField(f)
 		}
 		decl.Names = append(decl.Names, ast.NewIdent(id, this.Linenum))
 
@@ -167,7 +167,7 @@ func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamSt
 		}
 	case *ast.Ident:
 		if this.currentMethod != nil && this.currentMethod.GetField(e.Name) != nil {
-			lo := this.currentMethod.GetField(e.Name)
+			lo := this.Peek().GetField(e.Name)
 			if _, ok := lo.GetDecType().(*ast.ListType); ok || *call == "stream" {
 				mp.List = e
 				return true

@@ -287,12 +287,8 @@ func (this *Parser) parseType() ast.Exp {
 		} else {
 			this.eatToken(TOKEN_LT)
 			var tp []ast.Exp
-			if this.current.Kind == TOKEN_QUESTION {
-				this.eatToken(TOKEN_QUESTION)
-				tp = append(tp, ast.NewIdent("?", this.Linenum))
-			} else {
-				tp = this.parseTypeList()
-			}
+			tp = this.parseTypeList()
+
 			this.eatToken(TOKEN_GT)
 			this.currentType = &ast.GenericType{ast.NewIdent(name, this.Linenum), tp, ast.TYPE_GENERIC}
 		}
@@ -308,13 +304,29 @@ func (this *Parser) parseTypeList() (types []ast.Exp) {
 	if this.current.Kind == TOKEN_GT {
 		return types
 	}
-	tp := this.parseType()
-	types = append(types, tp)
+
+	if this.current.Kind == TOKEN_QUESTION {
+		this.eatToken(TOKEN_QUESTION)
+		types = append(types, ast.NewIdent("?", this.Linenum))
+	} else {
+		tp := this.parseType()
+		types = append(types, tp)
+	}
+	//FIXME 忽略
+	if this.current.Kind == TOKEN_EXTENDS {
+		this.eatToken(TOKEN_EXTENDS)
+		this.parseType()
+	}
 
 	for this.current.Kind == TOKEN_COMMER {
 		this.advance()
 		tp := this.parseType()
 		types = append(types, tp)
+		//FIXME 忽略
+		if this.current.Kind == TOKEN_EXTENDS {
+			this.eatToken(TOKEN_EXTENDS)
+			this.parseType()
+		}
 	}
 	return types
 }
@@ -367,8 +379,8 @@ func (this *Parser) parseFormalList(isSingle bool) (flist []ast.Field) {
 
 	}
 	for _, vv := range flist {
-		if this.currentMethod != nil {
-			this.currentMethod.AddField(vv)
+		if this.Peek() != nil {
+			this.Peek().AddField(vv)
 		}
 
 	}
@@ -896,9 +908,21 @@ func (this *Parser) parseNewExp() ast.Exp {
 		var typeName string
 		var args []ast.Exp
 		log.Debugf("-------------> %v", this.current.Lexeme)
-		id := ast.NewIdent(this.current.Lexeme, this.Linenum)
+		id := this.current.Lexeme
+
+		defer func() {
+			//直接实现接口
+			if this.current.Kind == TOKEN_LBRACE {
+				classSingle := ast.NewClassSingle(this.currentFile, 0, id, "", ast.CLASS_TYPE)
+				this.eatToken(TOKEN_LBRACE)
+				this.parseClassContext(classSingle)
+				this.eatToken(TOKEN_RBRACE)
+			}
+
+		}()
+
 		this.eatToken(TOKEN_ID)
-		exp := this.parseCallExp(id)
+		exp := this.parseCallExp(ast.NewIdent(id, this.Linenum))
 
 		//模板
 		if this.current.Kind == TOKEN_LT {
@@ -942,6 +966,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 				return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, nil, size, this.Linenum)
 			}
 		}
+
 		return exp
 	default:
 		this.ParseBug("未处理New类型")
@@ -1008,7 +1033,7 @@ func (this *Parser) parseLambdaExp(args []ast.Exp) (exp ast.Exp) {
 	}
 	fake := ast.FakeStm_new(this.currentMethod, this.Linenum)
 	for _, vv := range fields {
-		fake.AddLocals(vv)
+		fake.AddField(vv)
 	}
 	this.Push(fake)
 	defer func() {
@@ -1044,6 +1069,11 @@ func (this *Parser) parseNotExp() ast.Exp {
 		//this.current.Kind == TOKEN_AUTOSUB || //后缀加
 		//this.current.Kind == TOKEN_AUTOADD || //后缀减
 		this.current.Kind == TOKEN_LBRACK {
+		for this.current.Kind == TOKEN_COMMENT {
+			log.Debugf("--------->去除注释:%v", this.current.Lexeme)
+			this.advance()
+		}
+
 		switch this.current.Kind {
 
 		//可以不断循环下去
