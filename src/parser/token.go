@@ -23,10 +23,10 @@ func initTokenMap() {
 	tokenMap = make(map[string]int)
 	tokenMap["+"] = TOKEN_ADD
 	tokenMap["+="] = TOKEN_ADD_ASSIGN
-	tokenMap["++"] = TOKEN_AUTOADD
+	tokenMap["++"] = TOKEN_INCREMENT
 	tokenMap["-"] = TOKEN_SUB
 	tokenMap["-="] = TOKEN_SUB_ASSIGN
-	tokenMap["--"] = TOKEN_AUTOSUB
+	tokenMap["--"] = TOKEN_DECREMENT
 
 	tokenMap["&&"] = TOKEN_LAND
 	tokenMap["&"] = TOKEN_AND
@@ -143,12 +143,12 @@ func initTokenMap() {
 
 	tMap = make(map[int]string)
 
-	tMap[TOKEN_ADD] = "TOKEN_ADD"         // +
-	tMap[TOKEN_AUTOADD] = "TOKEN_AUTOADD" // ++
-	tMap[TOKEN_LAND] = "TOKEN_LAND"       // &&
-	tMap[TOKEN_AND] = "TOKEN_AND"         // &
-	tMap[TOKEN_LOR] = "TOKEN_LOR"         // ||
-	tMap[TOKEN_OR] = "TOKEN_OR"           // |
+	tMap[TOKEN_ADD] = "TOKEN_ADD"             // +
+	tMap[TOKEN_INCREMENT] = "TOKEN_INCREMENT" // ++
+	tMap[TOKEN_LAND] = "TOKEN_LAND"           // &&
+	tMap[TOKEN_AND] = "TOKEN_AND"             // &
+	tMap[TOKEN_LOR] = "TOKEN_LOR"             // ||
+	tMap[TOKEN_OR] = "TOKEN_OR"               // |
 
 	tMap[TOKEN_NE] = "TOKEN_NE"                     // !=
 	tMap[TOKEN_ASSIGN] = "TOKEN_ASSIGN"             // =
@@ -157,7 +157,7 @@ func initTokenMap() {
 	tMap[TOKEN_COLON] = "TOKEN_COLON"               // :
 	tMap[TOKEN_DOUBLE_COLON] = "TOKEN_DOUBLE_COLON" // ::
 	tMap[TOKEN_QUESTION] = "TOKEN_QUESTION"         // ?
-	tMap[TOKEN_AUTOSUB] = "TOKEN_AUTOSUB"           // --
+	tMap[TOKEN_DECREMENT] = "TOKEN_DECREMENT"       // --
 	tMap[TOKEN_SUB] = "TOKEN_SUB"                   // -
 	tMap[TOKEN_LAMBDA] = "TOKEN_LAMBDA"             // ->
 	tMap[TOKEN_INSTANCEOF] = "TOKEN_INSTANCEOF"     // instanceof
@@ -267,10 +267,10 @@ const (
 	//运算符
 	TOKEN_ADD          = iota // +
 	TOKEN_ADD_ASSIGN          // +=
-	TOKEN_AUTOADD             // ++
+	TOKEN_INCREMENT           // ++
 	TOKEN_SUB                 // -
 	TOKEN_SUB_ASSIGN          // -=
-	TOKEN_AUTOSUB             // --
+	TOKEN_DECREMENT           // --
 	TOKEN_LAND                // &&
 	TOKEN_AND                 // &
 	TOKEN_ASSIGN              // =

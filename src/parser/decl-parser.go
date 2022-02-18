@@ -89,7 +89,11 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 		}
 
 	}
-	this.eatToken(TOKEN_SEMI)
+	if !this.isSpecial {
+		this.eatToken(TOKEN_SEMI)
+	} else {
+		this.isSpecial = false
+	}
 	return decl
 }
 

@@ -1501,6 +1501,52 @@ func (this *Not) _exp() {
 
 /*}}}*/
 
+//Exp.Increment   /*{{{*/
+type Increment struct {
+	E      Exp
+	Prefix bool
+	Exp_T
+}
+
+func Increment_new(exp Exp, Prefix bool, line int) *Increment {
+	e := new(Increment)
+	e.E = exp
+	e.Prefix = Prefix
+	e.LineNum = line
+	return e
+}
+
+func (this *Increment) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Increment) _exp() {
+}
+
+/*}}}*/
+
+//Exp.Decrement   /*{{{*/
+type Decrement struct {
+	E      Exp
+	Prefix bool
+	Exp_T
+}
+
+func Decrement_new(exp Exp, Prefix bool, line int) *Decrement {
+	e := new(Decrement)
+	e.E = exp
+	e.Prefix = Prefix
+	e.LineNum = line
+	return e
+}
+
+func (this *Decrement) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Decrement) _exp() {
+}
+
+/*}}}*/
+
 //Exp.Num   /*{{{*/
 type Num struct {
 	Value int
@@ -1926,7 +1972,7 @@ type Try struct {
 	Finally   Stm
 }
 
-func Try_new(Body Stm, catches []*Catch, Finally Stm, line int) *Try {
+func Try_new(resource Stm, Body Stm, catches []*Catch, Finally Stm, line int) *Try {
 	s := new(Try)
 	s.Body = Body
 	s.Catches = catches

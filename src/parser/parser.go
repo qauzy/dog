@@ -565,7 +565,6 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 					v = arg
 				}
 			}
-
 			this.eatToken(TOKEN_RPAREN)
 			if isListOrMapGetSet && len(args) == 1 {
 				x = ast.IndexExpr_newEx(old, args[0], eleType, this.Linenum)
@@ -838,7 +837,9 @@ func (this *Parser) parseNewExp() ast.Exp {
 				key = t.Key
 				ele = t.Value
 			} else {
-				this.ParseBug("Hash类型存在空")
+				//this.ParseBug("Hash类型存在空")
+				key = &ast.String{}
+				ele = &ast.ObjectType{}
 			}
 		}
 		this.eatToken(TOKEN_GT)
@@ -1082,8 +1083,8 @@ func (this *Parser) parseNotExp() ast.Exp {
 		this.current.Kind == TOKEN_DOUBLE_COLON ||
 		this.current.Kind == TOKEN_COMMENT ||
 		//FIXME 自增,自减作为语句处理
-		//this.current.Kind == TOKEN_AUTOSUB || //后缀加
-		//this.current.Kind == TOKEN_AUTOADD || //后缀减
+		this.current.Kind == TOKEN_DECREMENT || //后缀加
+		this.current.Kind == TOKEN_INCREMENT || //后缀减
 		this.current.Kind == TOKEN_LBRACK {
 		for this.current.Kind == TOKEN_COMMENT {
 			log.Debugf("--------->去除注释:%v", this.current.Lexeme)
@@ -1091,7 +1092,12 @@ func (this *Parser) parseNotExp() ast.Exp {
 		}
 
 		switch this.current.Kind {
-
+		case TOKEN_INCREMENT:
+			this.eatToken(TOKEN_INCREMENT)
+			return ast.Increment_new(exp, false, this.Linenum)
+		case TOKEN_DECREMENT:
+			this.eatToken(TOKEN_DECREMENT)
+			return ast.Decrement_new(exp, false, this.Linenum)
 		//可以不断循环下去
 		case TOKEN_DOT:
 			log.Debugf("解析函数调用,或成员变量")
@@ -1129,6 +1135,9 @@ func (this *Parser) parseNotExp() ast.Exp {
 	}
 	return exp
 }
+func Add(aa int) {
+
+}
 
 //TimesExp  -> !TimesExp
 //          -> NotExp
@@ -1136,7 +1145,9 @@ func (this *Parser) parseTimeExp() ast.Exp {
 	log.Debugf("解析 parseTimeExp")
 	var exp2 ast.Exp
 	var opt = this.current.Kind
-	for this.current.Kind == TOKEN_NOT {
+	for this.current.Kind == TOKEN_INCREMENT ||
+		this.current.Kind == TOKEN_DECREMENT ||
+		this.current.Kind == TOKEN_NOT {
 		this.advance()
 		exp2 = this.parseTimeExp()
 	}
@@ -1144,10 +1155,10 @@ func (this *Parser) parseTimeExp() ast.Exp {
 		switch opt {
 		case TOKEN_NOT:
 			return ast.Not_new(exp2, this.Linenum)
-		//case TOKEN_AUTOADD:
-		//	return ast.AutoAdd_new(nil, exp2, this.Linenum)
-		//case TOKEN_AUTOSUB:
-		//	return ast.AutoSub_new(nil, exp2, this.Linenum)
+		case TOKEN_INCREMENT:
+			return ast.Increment_new(exp2, true, this.Linenum)
+		case TOKEN_DECREMENT:
+			return ast.Decrement_new(exp2, true, this.Linenum)
 		default:
 			panic("不支持")
 		}
@@ -1313,7 +1324,6 @@ func (this *Parser) parseOrExp() ast.Exp {
 func (this *Parser) parseLAndExp() ast.Exp {
 	log.Debugf("解析 parseLAndExp")
 	left := this.parseOrExp()
-	log.Debugf("解析 parseLAndExp --> %v", this.current.Lexeme)
 	for this.current.Kind == TOKEN_OR {
 		this.advance()
 		right := this.parseOrExp()
@@ -1346,7 +1356,6 @@ func (this *Parser) parseQuestionExp() ast.Exp {
 		right := this.parseLOrExp()
 		left = ast.LOr_new(left, right, this.Linenum)
 	}
-
 	return left
 }
 
@@ -1367,17 +1376,17 @@ func (this *Parser) parseExp() ast.Exp {
 		this.eatToken(TOKEN_RBRACE)
 		return ast.ArrayAssign_new(exps, this.currentType, this.Linenum)
 	}
-
+	log.Debugf("解析 parseQuestionExp --> %v", this.current.Lexeme)
 	left := this.parseQuestionExp()
 	//
-	for this.current.Kind == TOKEN_QUESTION {
+	if this.current.Kind == TOKEN_QUESTION {
 		log.Debugf("发现TOKEN_QUESTION")
 		this.advance()
 		log.Infof("TOKEN_QUESTION --> 解析第一个表达式")
-		one := this.parseQuestionExp()
+		one := this.parseExp()
 		this.eatToken(TOKEN_COLON)
 		log.Infof("TOKEN_QUESTION --> 解析第二个表达式")
-		two := this.parseQuestionExp()
+		two := this.parseExp()
 		return ast.Question_new(left, one, two, this.Linenum)
 	}
 	if this.current.Kind == TOKEN_INSTANCEOF {

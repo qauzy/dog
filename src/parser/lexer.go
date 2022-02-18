@@ -254,7 +254,7 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '+':
 		if this.s == "" {
 			if this.expectKeyword("+") {
-				return newToken(TOKEN_AUTOADD, "++", this.lineNum)
+				return newToken(TOKEN_INCREMENT, "++", this.lineNum)
 			} else if this.expectKeyword("=") {
 				return newToken(TOKEN_ADD_ASSIGN, "+=", this.lineNum)
 			} else {
@@ -296,7 +296,9 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '-':
 		if this.s == "" {
 			if this.expectKeyword("-") {
-				return newToken(TOKEN_AUTOSUB, "--", this.lineNum)
+				return newToken(TOKEN_DECREMENT, "--", this.lineNum)
+			} else if this.expectKeyword("=") {
+				return newToken(TOKEN_SUB_ASSIGN, "-=", this.lineNum)
 			} else if this.expectKeyword(">") {
 				return newToken(TOKEN_LAMBDA, "->", this.lineNum)
 			} else {

@@ -180,10 +180,10 @@ func (this *Parser) parseStatement() ast.Stm {
 
 			return ast.Binary_new(left, right, "%=", this.Linenum)
 
-			//处理的是后缀加
-		case TOKEN_AUTOADD:
+			//处理的是前缀加
+		case TOKEN_INCREMENT:
 			log.Debugf("处理累加")
-			this.eatToken(TOKEN_AUTOADD)
+			this.eatToken(TOKEN_INCREMENT)
 			//特殊的for语句才不需要分号
 			if this.isSpecial {
 				this.isSpecial = false
@@ -194,8 +194,8 @@ func (this *Parser) parseStatement() ast.Stm {
 
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
 			//处理的是后缀减
-		case TOKEN_AUTOSUB:
-			this.eatToken(TOKEN_AUTOSUB)
+		case TOKEN_DECREMENT:
+			this.eatToken(TOKEN_DECREMENT)
 			if !this.isSpecial {
 				this.isSpecial = false
 				this.eatToken(TOKEN_SEMI)
@@ -216,9 +216,15 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.eatToken(TOKEN_SEMI)
 			return ast.AssignArray_new(id, index, exp, nil, false, this.Linenum)
 		case TOKEN_LT:
+			tp := &ast.ClassType{id, ast.TYPE_CLASS}
 			this.eatToken(TOKEN_LT)
-			tp := this.parseType()
+			this.parseType()
+			for this.current.Kind == TOKEN_COMMER {
+				this.eatToken(TOKEN_COMMER)
+				this.parseType()
+			}
 			this.eatToken(TOKEN_GT)
+			this.currentType = &ast.ClassType{id, ast.TYPE_CLASS}
 			id = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			decl := ast.DeclStmt_new(nil, tp, nil, this.Linenum)
@@ -333,6 +339,13 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 		}()
 		this.eatToken(TOKEN_TRY)
+		var resource ast.Stm
+		if this.current.Kind == TOKEN_LPAREN {
+			this.eatToken(TOKEN_LPAREN)
+			this.isSpecial = true
+			resource = this.parseStatement()
+			this.eatToken(TOKEN_RPAREN)
+		}
 		body := this.parseStatement()
 		var catches []*ast.Catch
 		var finally ast.Stm
@@ -362,7 +375,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			this.eatToken(TOKEN_FINALLY)
 			finally = this.parseStatement()
 		}
-		return ast.Try_new(body, catches, finally, this.Linenum)
+		return ast.Try_new(resource, body, catches, finally, this.Linenum)
 	case TOKEN_WHILE:
 		log.Debugf("********TOKEN_WHILE***********")
 		var fake = ast.FakeStm_new(this.Peek(), this.Linenum)
@@ -521,9 +534,9 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_SEMI)
 		return ast.Throw_new(e, this.Linenum)
 		//处理的是后缀加
-	case TOKEN_AUTOADD:
+	case TOKEN_INCREMENT:
 		log.Debugf("处理累加")
-		this.eatToken(TOKEN_AUTOADD)
+		this.eatToken(TOKEN_INCREMENT)
 		id := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		//特殊的for语句才不需要分号
@@ -581,7 +594,11 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_CASE ||
 		this.current.Kind == TOKEN_DEFAULT ||
 		this.current.Kind == TOKEN_NEW ||
+		this.current.Kind == TOKEN_FINAL ||
 		this.current.Kind == TOKEN_SYSTEM {
+		if this.current.Kind == TOKEN_FINAL {
+			this.eatToken(TOKEN_FINAL)
+		}
 		stms = append(stms, this.parseStatement())
 	}
 	return stms
