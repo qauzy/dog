@@ -2049,6 +2049,29 @@ func (this *If) _stm() {
 
 /*}}}*/
 
+//Stm.Sync/*{{{*/
+type Sync struct {
+	Stm_T
+	E    Exp
+	Body Stm
+}
+
+func Sync_new(exp Exp, body Stm, line int) *Sync {
+	s := new(Sync)
+	s.E = exp
+	s.Body = body
+	s.LineNum = line
+	return s
+}
+
+func (this *Sync) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Sync) _stm() {
+}
+
+/*}}}*/
+
 //Stm.Throw/*{{{*/
 type Throw struct {
 	Stm_T

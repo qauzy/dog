@@ -28,6 +28,14 @@ func (this *Parser) parseStatement() ast.Stm {
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()
 		return stm
+	case TOKEN_SYNCHRONIZED:
+		this.eatToken(TOKEN_SYNCHRONIZED)
+		this.eatToken(TOKEN_LPAREN)
+		exp := this.parseExp()
+		this.eatToken(TOKEN_RPAREN)
+		body := this.parseStatement()
+		return ast.Sync_new(exp, body, this.Linenum)
+
 	case TOKEN_NEW:
 		exp := this.parseNewExp()
 		if this.current.Kind == TOKEN_DOT {
@@ -45,7 +53,12 @@ func (this *Parser) parseStatement() ast.Stm {
 		}
 		return ast.Block_new(stms, this.Linenum)
 	case TOKEN_THIS:
+		//1 调用构造函数
+		//2 调用成员函数
+		//3 调用成员变量
+
 		exp := this.parseExp()
+
 		if this.current.Kind == TOKEN_ASSIGN {
 			this.eatToken(TOKEN_ASSIGN)
 			if vv, ok := exp.(*ast.SelectorExpr); ok {
@@ -595,6 +608,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_DEFAULT ||
 		this.current.Kind == TOKEN_NEW ||
 		this.current.Kind == TOKEN_FINAL ||
+		this.current.Kind == TOKEN_SYNCHRONIZED ||
 		this.current.Kind == TOKEN_SYSTEM {
 		if this.current.Kind == TOKEN_FINAL {
 			this.eatToken(TOKEN_FINAL)

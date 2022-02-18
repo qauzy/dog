@@ -90,6 +90,8 @@ func initTokenMap() {
 	tokenMap["implements"] = TOKEN_IMPLEMENTS
 
 	tokenMap["extends"] = TOKEN_EXTENDS
+	tokenMap["super"] = TOKEN_SUPER
+
 	tokenMap["public"] = TOKEN_PUBLIC
 	tokenMap["protected"] = TOKEN_PROTECTED
 	tokenMap["private"] = TOKEN_PRIVATE
@@ -209,6 +211,7 @@ func initTokenMap() {
 	tMap[TOKEN_ABSTRACT] = "TOKEN_ABSTRACT"
 	tMap[TOKEN_TRANSIENT] = "TOKEN_TRANSIENT"
 	tMap[TOKEN_EXTENDS] = "TOKEN_EXTENDS"
+	tMap[TOKEN_SUPER] = "TOKEN_SUPER"
 
 	tMap[TOKEN_THIS] = "TOKEN_THIS"
 	tMap[TOKEN_NULL] = "TOKEN_NULL"
@@ -315,6 +318,7 @@ const (
 	TOKEN_CLASS // class
 	TOKEN_INTERFACE
 	TOKEN_EXTENDS // extends
+	TOKEN_SUPER   //super
 	TOKEN_FALSE   // false
 	TOKEN_TRUE    // true
 	TOKEN_ID

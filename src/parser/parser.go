@@ -86,6 +86,9 @@ func (this *Parser) eatToken(kind int) {
 	}
 }
 func (this *Parser) parseType() ast.Exp {
+	defer func() {
+		log.Debugf("解析类型:%v", this.currentType)
+	}()
 	switch this.current.Kind {
 	case TOKEN_CHAR:
 		this.advance()
@@ -233,6 +236,14 @@ func (this *Parser) parseType() ast.Exp {
 	case TOKEN_MAP:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_MAP)
+		//Map.Entry
+		if this.current.Kind == TOKEN_DOT {
+			this.parseCallExp(ast.NewIdent(name, this.Linenum))
+			name = this.current.Lexeme
+			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+			return this.currentType
+		}
+
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
 			key := this.parseType()
@@ -299,7 +310,6 @@ func (this *Parser) parseType() ast.Exp {
 			this.currentType = &ast.GenericType{ast.NewIdent(name, this.Linenum), tp, ast.TYPE_GENERIC}
 		}
 	}
-	log.Debugf("解析类型:%v", this.currentType)
 	return this.currentType
 }
 
@@ -691,7 +701,6 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			return ast.Cast_new(tp, exp, this.Linenum)
 
 		}
-
 		//3 小括号优先级
 		return exps[0]
 	case TOKEN_NUM:
@@ -709,6 +718,10 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		return &ast.Null{}
 	case TOKEN_THIS:
 		this.advance()
+		//调用构造函数
+		if this.current.Kind == TOKEN_LPAREN {
+			return this.parseCallExp(&ast.This{})
+		}
 		return &ast.This{}
 	case TOKEN_SYSTEM:
 		var x ast.Exp
