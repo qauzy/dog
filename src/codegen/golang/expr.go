@@ -333,13 +333,21 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 				Elt:    this.transType(v.T),
 			}
 			call.Args = append(call.Args, t)
+			if v.Size != nil {
+				call.Args = append(call.Args, this.transExp(v.Size))
+			} else if v.Eles != nil {
+				//FIXME 需要修改
+				call.Args = append(call.Args, this.transExp(v.Size))
+			} else {
+				len := &gast.BasicLit{
+					ValuePos: 0,
+					Kind:     token.INT,
+					Value:    "0",
+				}
+				call.Args = append(call.Args, len)
 
-			len := &gast.BasicLit{
-				ValuePos: 0,
-				Kind:     token.INT,
-				Value:    "0",
 			}
-			call.Args = append(call.Args, len)
+
 			return call
 		} else {
 			panic("NewObjectArray bug")

@@ -700,7 +700,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 		return ast.NewSet_new(ele, args, this.Linenum)
 	//带参数对象初始化
 	case TOKEN_ID:
-		var typeName string
+		var typeName = this.current.Lexeme
 		var args []ast.Exp
 		log.Debugf("-------------> %v", this.current.Lexeme)
 		id := this.current.Lexeme
@@ -756,7 +756,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 					this.eatToken(TOKEN_LBRACE)
 					args = this.parseExpList()
 					this.eatToken(TOKEN_RBRACE)
-					return ast.NewObjectWithArgsList_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, args, this.Linenum)
+					return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, args, nil, this.Linenum)
 				}
 
 			} else {

@@ -226,12 +226,12 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 	case *ast.ExprStm:
 		expp := this.transExp(v.E)
-		if v, ok := expp.(*gast.CallExpr); ok && len(v.Args) == 2 {
-			if vv, ok := v.Fun.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Put") && cfg.FieldAccess {
+		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
+			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "Put" || vvv.Sel.Name == "put") && cfg.FieldAccess {
 				idx := &gast.IndexExpr{
-					X:      vv.X,
+					X:      vvv.X,
 					Lbrack: 0,
-					Index:  v.Args[0],
+					Index:  vv.Args[0],
 					Rbrack: 0,
 				}
 
@@ -239,7 +239,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 					Lhs:    []gast.Expr{idx},
 					TokPos: 0,
 					Tok:    token.ASSIGN,
-					Rhs:    []gast.Expr{v.Args[1]},
+					Rhs:    []gast.Expr{vv.Args[1]},
 				}
 				return as
 			}
