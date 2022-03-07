@@ -73,11 +73,44 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		if len(v.Names) == len(v.Values) && v.GetExtra() == nil {
 			if len(v.Values) == 1 {
-				_, ok := v.Values[0].(*ast.Null)
-				if !ok {
-					sp.Type = nil
-				} else if ok {
+				//?语句,用if语句实现
+				if vv, ok := v.Values[0].(*ast.Question); ok {
+					blk := &FakeBlock{}
+					sp.Names = append(sp.Names, this.transNameExp(v.Names[0]))
+					d.Specs = append(d.Specs, sp)
+					stmt = &gast.DeclStmt{Decl: d}
+					blk.List = append(blk.List, stmt)
+
+					q := &gast.IfStmt{
+						If:   0,
+						Init: nil,
+						Cond: this.transExp(vv.E),
+						Body: &gast.BlockStmt{
+							Lbrace: 0,
+							List: []gast.Stmt{&gast.AssignStmt{
+								Lhs:    []gast.Expr{this.transExp(v.Names[0])},
+								TokPos: 0,
+								Tok:    token.ASSIGN,
+								Rhs:    []gast.Expr{this.transExp(vv.One)}}},
+						},
+
+						Else: &gast.BlockStmt{
+							Lbrace: 0,
+							List: []gast.Stmt{&gast.AssignStmt{
+								Lhs:    []gast.Expr{this.transExp(v.Names[0])},
+								TokPos: 0,
+								Tok:    token.ASSIGN,
+								Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
+							Rbrace: 0,
+						},
+					}
+					blk.List = append(blk.List, q)
+					return blk
+
+				} else if _, ok := v.Values[0].(*ast.Null); ok {
 					v.Values = nil
+				} else {
+					sp.Type = nil
 				}
 			}
 
@@ -100,17 +133,52 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		stmt = &gast.DeclStmt{Decl: d}
 		//赋值语句
 	case *ast.Assign:
-		stmt = &gast.AssignStmt{
-			Lhs:    []gast.Expr{this.transExp(v.Left)},
-			TokPos: 0,
-			Tok:    token.ASSIGN,
-			Rhs:    []gast.Expr{this.transExp(v.Value)},
+
+		//?语句,用if语句实现
+		if vv, ok := v.Value.(*ast.Question); ok {
+
+			q := &gast.IfStmt{
+				If:   0,
+				Init: nil,
+				Cond: this.transExp(vv.E),
+				Body: &gast.BlockStmt{
+					Lbrace: 0,
+					List: []gast.Stmt{&gast.AssignStmt{
+						Lhs:    []gast.Expr{this.transExp(v.Left)},
+						TokPos: 0,
+						Tok:    token.ASSIGN,
+						Rhs:    []gast.Expr{this.transExp(vv.One)}}},
+				},
+
+				Else: &gast.BlockStmt{
+					Lbrace: 0,
+					List: []gast.Stmt{&gast.AssignStmt{
+						Lhs:    []gast.Expr{this.transExp(v.Left)},
+						TokPos: 0,
+						Tok:    token.ASSIGN,
+						Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
+					Rbrace: 0,
+				},
+			}
+
+			return q
+		} else {
+
+			stmt = &gast.AssignStmt{
+				Lhs:    []gast.Expr{this.transExp(v.Left)},
+				TokPos: 0,
+				Tok:    token.ASSIGN,
+				Rhs:    []gast.Expr{this.transExp(v.Value)},
+			}
+
 		}
+
 	case *ast.If:
 		var el gast.Stmt
 		var Init gast.Stmt
 		if v.Elsee != nil {
 			el = this.transStm(v.Elsee)
+
 		} else {
 			el = nil
 		}
@@ -198,12 +266,72 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		return result
 	case *ast.Try:
-		block := &gast.BlockStmt{}
-		try := this.transStm(v.Body)
-		block.List = append(block.List, try)
+		block := &FakeBlock{}
+
+		fn := &gast.FuncLit{
+			Type: &gast.FuncType{
+				Func:    0,
+				Params:  nil,
+				Results: nil,
+			},
+			Body: nil,
+		}
+		//处理返回值
+		results := &gast.FieldList{
+			Opening: 0,
+			List:    nil,
+			Closing: 0,
+		}
+		results.List = append(results.List, this.getField(gast.NewIdent("err"), gast.NewIdent("error")))
+
+		//try 语句转为闭包函数
+		fn.Type.Results = results
+		try := this.transBlock(v.Body)
+		try.List = append(try.List, &gast.ReturnStmt{})
+
+		fn.Body = try
+		call := &gast.CallExpr{
+			Fun:      fn,
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+		as := &gast.AssignStmt{
+			Lhs:    []gast.Expr{gast.NewIdent("err")},
+			TokPos: 0,
+			Tok:    token.DEFINE,
+			Rhs:    []gast.Expr{call},
+		}
+		block.List = append(block.List, as)
+
 		for _, vv := range v.Catches {
-			catch := this.transStm(vv.Body)
-			block.List = append(block.List, catch)
+			ifStmt := &gast.IfStmt{
+				If:   0,
+				Init: nil,
+				Cond: this.transExp(vv.Test[0]), //FIXME 兼容多个Exception
+				Body: nil,
+				Else: nil,
+			}
+			stms := this.transStm(vv.Body)
+			//为了兼容处理要翻译为多个stm的语句
+			if blk, ok := stms.(*FakeBlock); ok {
+				bl := &gast.BlockStmt{}
+				for _, st := range blk.List {
+					bl.List = append(bl.List, st)
+				}
+				block.List = append(block.List, ifStmt)
+			} else if blk, ok := stms.(*gast.BlockStmt); ok {
+				ifStmt.Body = blk
+				block.List = append(block.List, ifStmt)
+			} else {
+				ifStmt.Body = &gast.BlockStmt{
+					Lbrace: 0,
+					List:   []gast.Stmt{stms},
+					Rbrace: 0,
+				}
+				block.List = append(block.List, ifStmt)
+			}
 		}
 		return block
 	case *ast.While:
@@ -257,12 +385,18 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Colon: 0,
 		}
 
-		body := this.transStm(v.Body)
-		if bb, ok := body.(*gast.BlockStmt); ok {
+		stms := this.transStm(v.Body)
+		//为了兼容处理要翻译为多个stm的语句
+		if blk, ok := stms.(*FakeBlock); ok {
+			for _, st := range blk.List {
+				cs.Body = append(cs.Body, st)
+			}
+		} else if bb, ok := stms.(*gast.BlockStmt); ok {
 			cs.Body = bb.List
 		} else {
-			cs.Body = append(cs.Body, body)
+			cs.Body = append(cs.Body, stms)
 		}
+
 		return cs
 	case *ast.Comment:
 		stmt = &gast.ExprStmt{X: gast.NewIdent(v.C)}
@@ -470,7 +604,16 @@ func (this *Translation) transBlock(s ast.Stm) (block *gast.BlockStmt) {
 						block.List = append(block.List, sss...)
 					}
 				} else {
-					block.List = append(block.List, this.transStm(st))
+					stms := this.transStm(st)
+					//为了兼容处理要翻译为多个stm的语句
+					if blk, ok := stms.(*FakeBlock); ok {
+						for _, st := range blk.List {
+							block.List = append(block.List, st)
+						}
+					} else {
+						block.List = append(block.List, stms)
+					}
+
 				}
 			}
 		}

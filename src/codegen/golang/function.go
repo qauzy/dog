@@ -291,13 +291,27 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				}
 			} else {
 				ss := this.transStm(stm)
-
 				if ss != nil {
-					body.List = append(body.List, ss)
+					//为了兼容处理要翻译为多个stm的语句
+					if blk, ok := ss.(*FakeBlock); ok {
+						for _, st := range blk.List {
+							body.List = append(body.List, st)
+						}
+					} else {
+						body.List = append(body.List, ss)
+					}
 				}
 
 				if stm.GetExtra() != nil {
-					body.List = append(body.List, this.transStm(stm.GetExtra()))
+					stms := this.transStm(stm.GetExtra())
+					//为了兼容处理要翻译为多个stm的语句
+					if blk, ok := stms.(*FakeBlock); ok {
+						for _, st := range blk.List {
+							body.List = append(body.List, st)
+						}
+					} else {
+						body.List = append(body.List, stms)
+					}
 				}
 			}
 		}
@@ -434,10 +448,16 @@ func (this *Translation) transLambda(fi ast.Exp) (fn *gast.FuncLit) {
 					body.List = append(body.List, sss...)
 				}
 			} else {
-				ss := this.transStm(stm)
-
-				if ss != nil {
-					body.List = append(body.List, ss)
+				stms := this.transStm(stm)
+				if stms != nil {
+					//为了兼容处理要翻译为多个stm的语句
+					if blk, ok := stms.(*FakeBlock); ok {
+						for _, st := range blk.List {
+							body.List = append(body.List, st)
+						}
+					} else {
+						body.List = append(body.List, stms)
+					}
 				}
 			}
 

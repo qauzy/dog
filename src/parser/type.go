@@ -13,8 +13,21 @@ func (this *Parser) ExtraToken() (b bool) {
 	return this.current.Kind > TOKEN_EXTRA_START && this.current.Kind < TOKEN_EXTRA_END
 }
 
-func (this *Parser) parseTypeV2() ast.Exp {
+func (this *Parser) parseType() ast.Exp {
+	defer func() {
+		log.Debugf("解析类型:%v", this.currentType)
+	}()
 	switch this.current.Kind {
+	case TOKEN_CHAR:
+		this.advance()
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ArrayType{Ele: &ast.Char{}}
+		} else {
+			this.currentType = &ast.Char{}
+		}
+
 	case TOKEN_FLOAT:
 		fallthrough
 	case TOKEN_DOUBLE:
@@ -36,7 +49,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.ObjectArray{ast.TYPE_OBJECTARRAY}
+			this.currentType = &ast.ArrayType{Ele: &ast.ObjectType{}}
 		} else {
 			this.currentType = &ast.ObjectType{ast.TYPE_OBJECT}
 		}
@@ -47,7 +60,7 @@ func (this *Parser) parseTypeV2() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.ArrayType{Ele: &ast.Int{}}
+			this.currentType = &ast.ArrayType{Ele: &ast.Integer{}}
 		} else {
 			this.currentType = &ast.Integer{ast.TYPE_INT}
 		}
@@ -86,38 +99,79 @@ func (this *Parser) parseTypeV2() ast.Exp {
 	case TOKEN_SET:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_SET)
-		this.eatToken(TOKEN_LT)
-		ele := this.parseNotExp()
-		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			ele := this.parseType()
+			this.eatToken(TOKEN_GT)
+			this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
+		} else {
+			this.assignType = &ast.ObjectType{ast.TYPE_OBJECT}
+			this.currentType = &ast.SetType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+		}
+
 	case TOKEN_HASHSET:
 		//处理泛型
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_HASHSET)
 		this.eatToken(TOKEN_LT)
-		ele := this.parseNotExp()
+		ele := this.parseType()
 		this.eatToken(TOKEN_ID)
 		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.SetType{name, ele, ast.TYPE_LIST}
+		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
 
 	case TOKEN_LIST:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_LIST)
-		this.eatToken(TOKEN_LT)
-		ele := this.parseNotExp()
-		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			if this.current.Kind == TOKEN_QUESTION {
+				this.eatToken(TOKEN_QUESTION)
+				//TODO 有继承规范
+				if this.current.Kind == TOKEN_EXTENDS {
+					this.eatToken(TOKEN_EXTENDS)
+					ele := this.parseType()
+					this.eatToken(TOKEN_GT)
+					this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+					//没有继承规范
+				} else {
+					this.eatToken(TOKEN_GT)
+					this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+				}
+
+			} else {
+				ele := this.parseType()
+				this.eatToken(TOKEN_GT)
+				this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+			}
+
+		} else {
+			this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+		}
+
 	case TOKEN_ARRAYLIST:
 		//处理泛型
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ARRAYLIST)
-		this.eatToken(TOKEN_LT)
-		ele := this.parseNotExp()
-		this.eatToken(TOKEN_GT)
-		this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+		if this.current.Kind == TOKEN_LT {
+			this.eatToken(TOKEN_LT)
+			ele := this.parseType()
+			this.eatToken(TOKEN_GT)
+			this.currentType = &ast.ListType{name, ele, ast.TYPE_LIST}
+		} else {
+			this.currentType = &ast.ListType{name, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_LIST}
+		}
+
 	case TOKEN_MAP:
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_MAP)
+		//Map.Entry
+		if this.current.Kind == TOKEN_DOT {
+			this.parseCallExp(ast.NewIdent(name, this.Linenum))
+			name = this.current.Lexeme
+			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+			return this.currentType
+		}
+
 		if this.current.Kind == TOKEN_LT {
 			this.eatToken(TOKEN_LT)
 			key := this.parseType()
@@ -148,18 +202,42 @@ func (this *Parser) parseTypeV2() ast.Exp {
 			this.currentType = &ast.MapType{name, &ast.String{ast.TYPE_STRING}, &ast.ObjectType{ast.TYPE_OBJECT}, ast.TYPE_MAP}
 		}
 
+		//泛型
+	case TOKEN_LT:
+		this.eatToken(TOKEN_LT)
+		tp := this.parseTypeList()
+		this.eatToken(TOKEN_GT)
+		//
+		this.currentType = &ast.GenericType{ast.NewIdent("", this.Linenum), tp, ast.TYPE_GENERIC}
 	default:
+		//FIXME 类型可能带包名前缀
 		name := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
+		if this.current.Kind == TOKEN_DOT {
+			id := ast.NewIdent(name, this.Linenum)
+			this.parseCallExp(id)
+			name = this.current.Lexeme
+		}
+
+		//数组类型
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ListType{name, &ast.ClassType{name, ast.TYPE_CLASS}, ast.TYPE_LIST}
+			return this.currentType
+		}
+
 		if this.current.Kind != TOKEN_LT {
 			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
 		} else {
 			this.eatToken(TOKEN_LT)
-			tp := this.parseTypeList()
+			var tp []ast.Exp
+			tp = this.parseTypeList()
+
 			this.eatToken(TOKEN_GT)
-			this.currentType = &ast.GenericType{&ast.Ident{Name: name}, tp, ast.TYPE_GENERIC}
+			this.currentType = &ast.GenericType{ast.NewIdent(name, this.Linenum), tp, ast.TYPE_GENERIC}
 		}
 	}
-	log.Debugf("解析类型:%s", this.currentType)
+	log.Debugf("解析类型：%v", this.currentType)
 	return this.currentType
 }

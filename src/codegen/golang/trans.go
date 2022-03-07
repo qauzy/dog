@@ -38,7 +38,7 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 
 		tag := &gast.BasicLit{
 			Kind:  token.STRING,
-			Value: fmt.Sprintf("`gorm:\"column:%s\" json:\"%s\"`", util.SnakeString(field.Name.Name), field.Name),
+			Value: fmt.Sprintf("`gorm:\"column:%v\" json:\"%v\"`", util.SnakeString(field.Name.Name), field.Name.Name),
 		}
 		gfi.Tag = tag
 	}
@@ -191,7 +191,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
 			if pack == "time" && (v.Name == "LocalDate" || v.Name == "LocalDateTime") {
-				pack = "timex"
+				pack = v.Name
 			}
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
@@ -233,7 +233,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
 			if pack == "time" && (v.Name == "LocalDate" || v.Name == "LocalDateTime") {
-				pack = "timex"
+				pack = v.Name
 			}
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),

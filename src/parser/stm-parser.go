@@ -28,6 +28,13 @@ func (this *Parser) parseStatement() ast.Stm {
 		stm := ast.Comment_new(this.current.Lexeme, this.Linenum)
 		this.advance()
 		return stm
+	case TOKEN_SUPER:
+		id := ast.NewIdent(this.current.Lexeme, this.Linenum)
+		this.eatToken(TOKEN_SUPER)
+		exp := this.parseCallExp(id)
+		this.eatToken(TOKEN_SEMI)
+		return ast.ExprStm_new(exp, this.Linenum)
+
 	case TOKEN_SYNCHRONIZED:
 		this.eatToken(TOKEN_SYNCHRONIZED)
 		this.eatToken(TOKEN_LPAREN)
@@ -355,8 +362,10 @@ func (this *Parser) parseStatement() ast.Stm {
 		var resource ast.Stm
 		if this.current.Kind == TOKEN_LPAREN {
 			this.eatToken(TOKEN_LPAREN)
+			//资源初始化语句
 			this.isSpecial = true
 			resource = this.parseStatement()
+			this.isSpecial = false
 			this.eatToken(TOKEN_RPAREN)
 		}
 		body := this.parseStatement()
@@ -502,6 +511,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			} else {
 				this.isSpecial = true
 				Post = this.parseStatement()
+				this.isSpecial = false
 			}
 
 			this.eatToken(TOKEN_RPAREN)
@@ -609,6 +619,7 @@ func (this *Parser) parseStatements() []ast.Stm {
 		this.current.Kind == TOKEN_NEW ||
 		this.current.Kind == TOKEN_FINAL ||
 		this.current.Kind == TOKEN_SYNCHRONIZED ||
+		this.current.Kind == TOKEN_SUPER ||
 		this.current.Kind == TOKEN_SYSTEM {
 		if this.current.Kind == TOKEN_FINAL {
 			this.eatToken(TOKEN_FINAL)
