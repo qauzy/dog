@@ -133,10 +133,16 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		stmt = &gast.DeclStmt{Decl: d}
 		//赋值语句
 	case *ast.Assign:
+		//TODO stream 语句
+		expp := this.transExp(v.Value)
+		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 0 {
+
+		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 1 {
+
+		}
 
 		//?语句,用if语句实现
 		if vv, ok := v.Value.(*ast.Question); ok {
-
 			q := &gast.IfStmt{
 				If:   0,
 				Init: nil,
@@ -168,7 +174,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				Lhs:    []gast.Expr{this.transExp(v.Left)},
 				TokPos: 0,
 				Tok:    token.ASSIGN,
-				Rhs:    []gast.Expr{this.transExp(v.Value)},
+				Rhs:    []gast.Expr{expp},
 			}
 
 		}
