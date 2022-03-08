@@ -243,6 +243,29 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				}
 				return as
 			}
+
+			//处理 xxx.Stream().ForEach
+		} else if forEachC, ok := expp.(*gast.CallExpr); ok && len(forEachC.Args) == 1 {
+			if forEach, ok := forEachC.Fun.(*gast.SelectorExpr); ok && (forEach.Sel.Name == "ForEach") {
+				if streamC, ok := forEach.X.(*gast.CallExpr); ok && len(streamC.Args) == 0 {
+					if stream, ok := streamC.Fun.(*gast.SelectorExpr); ok && (stream.Sel.Name == "Stream") {
+						if fn, ok := forEachC.Args[0].(*gast.FuncLit); ok {
+							stmt = &gast.RangeStmt{
+								For:    0,
+								Key:    gast.NewIdent("_"),
+								Value:  fn.Type.Params.List[0].Names[0],
+								TokPos: 0,
+								Tok:    token.DEFINE,
+								X:      stream.X,
+								Body:   fn.Body,
+							}
+
+							return stmt
+						}
+					}
+				}
+			}
+
 		}
 		//log.Debugf("表达式语句:%v", v)
 

@@ -318,7 +318,30 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 	case *ast.NewObjectArray:
 
-		if v.Eles == nil {
+		if v.Eles != nil {
+
+			//FIXME 需要修改
+			t := &gast.ArrayType{
+				Lbrack: 0,
+				Len:    nil,
+				Elt:    this.transType(v.T),
+			}
+
+			ct := &gast.CompositeLit{
+				Type:       t,
+				Lbrace:     0,
+				Elts:       nil,
+				Rbrace:     0,
+				Incomplete: false,
+			}
+
+			for _, arg := range v.Eles {
+				ct.Elts = append(ct.Elts, this.transExp(arg))
+			}
+			return ct
+
+		} else {
+
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("make"),
 				Lparen:   0,
@@ -335,9 +358,6 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			call.Args = append(call.Args, t)
 			if v.Size != nil {
 				call.Args = append(call.Args, this.transExp(v.Size))
-			} else if v.Eles != nil {
-				//FIXME 需要修改
-				call.Args = append(call.Args, this.transExp(v.Size))
 			} else {
 				len := &gast.BasicLit{
 					ValuePos: 0,
@@ -349,8 +369,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			}
 
 			return call
-		} else {
-			panic("NewObjectArray bug")
+
 		}
 	case *ast.ClassExp:
 		return gast.NewIdent("class")
