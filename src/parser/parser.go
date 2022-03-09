@@ -836,7 +836,7 @@ func (this *Parser) parseLambdaExp(args []ast.Exp) (exp ast.Exp) {
 			panic("parseLambdaExp")
 		}
 	}
-	fake := ast.FakeStm_new(this.currentMethod, this.Linenum)
+	fake := ast.FakeStm_new(this.Peek(), this.Linenum)
 	for _, vv := range fields {
 		fake.AddField(vv)
 	}
