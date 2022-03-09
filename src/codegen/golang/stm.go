@@ -319,11 +319,11 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			}
 
 			//处理 xxx.Stream().ForEach
-		} else if forEachC, ok := expp.(*gast.CallExpr); ok && len(forEachC.Args) == 1 {
-			if forEach, ok := forEachC.Fun.(*gast.SelectorExpr); ok && (forEach.Sel.Name == "ForEach") {
+		} else if call, ok := expp.(*gast.CallExpr); ok && len(call.Args) == 1 {
+			if forEach, ok := call.Fun.(*gast.SelectorExpr); ok && (forEach.Sel.Name == "ForEach") {
 				if streamC, ok := forEach.X.(*gast.CallExpr); ok && len(streamC.Args) == 0 {
 					if stream, ok := streamC.Fun.(*gast.SelectorExpr); ok && (stream.Sel.Name == "Stream") {
-						if fn, ok := forEachC.Args[0].(*gast.FuncLit); ok {
+						if fn, ok := call.Args[0].(*gast.FuncLit); ok {
 							stmt = &gast.RangeStmt{
 								For:    0,
 								Key:    gast.NewIdent("_"),
@@ -338,8 +338,29 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 						}
 					}
 				}
+			} else if Delete, ok := call.Fun.(*gast.SelectorExpr); ok && (Delete.Sel.Name == "Delete") {
+				call.Fun = gast.NewIdent("core.DelKey")
 			}
 
+		} else if call, ok := expp.(*gast.CallExpr); ok && len(call.Args) == 4 {
+
+			if SetIfAbsent, ok := call.Fun.(*gast.SelectorExpr); ok && (SetIfAbsent.Sel.Name == "SetIfAbsent") {
+				dulFun := &gast.CallExpr{
+					Fun:      gast.NewIdent("time.Duration"),
+					Lparen:   0,
+					Args:     []gast.Expr{call.Args[2]},
+					Ellipsis: 0,
+					Rparen:   0,
+				}
+				call.Args[2] = &gast.BinaryExpr{
+					X:     dulFun,
+					OpPos: 0,
+					Op:    token.MUL,
+					Y:     call.Args[3],
+				}
+				call.Args = call.Args[:3]
+				call.Fun = gast.NewIdent("core.SetNX")
+			}
 		}
 		//log.Debugf("表达式语句:%v", v)
 

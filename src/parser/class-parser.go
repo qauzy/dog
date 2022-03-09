@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -277,11 +278,14 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 
 			//成员方法
 			if this.current.Kind == TOKEN_LPAREN {
-				classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, IsStatic, comment))
+				if IsStatic || cfg.AllStatic {
+					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, true, comment))
+				} else {
+					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, IsStatic, comment))
+				}
 				//成员变量
-
 			} else {
-				if IsStatic {
+				if IsStatic || cfg.AllStatic {
 					this.currentFile.AddField(this.parseMemberVarDecl(&tmp, IsStatic))
 				} else {
 					classSingle.AddField(this.parseMemberVarDecl(&tmp, IsStatic))

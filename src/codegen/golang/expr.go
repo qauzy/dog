@@ -31,8 +31,10 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
 		//是类型标识符, 可能需要转换
-		if cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
+		if cfg.Capitalize && !cfg.AllStatic && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent("this." + util.Capitalize(v.Name))
+		} else if cfg.Capitalize && cfg.AllStatic && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
+			return gast.NewIdent(util.Capitalize(v.Name))
 		} else if cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent(util.Capitalize(v.Name))
 		} else if !cfg.Capitalize && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
@@ -147,10 +149,8 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		return expr
 	case *ast.This:
-		//log.Debugf("This表达式")
 		return gast.NewIdent("this")
 	case *ast.NewList:
-		//log.Debugf("初始化List表达式")
 		call := &gast.CallExpr{
 			Fun:      gast.NewIdent("make"),
 			Lparen:   0,
@@ -275,6 +275,73 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 
 		for _, a := range v.ArgsList {
 			call.Args = append(call.Args, this.transExp(a))
+		}
+		if len(call.Args) == 4 {
+			if SetIfAbsent, ok := call.Fun.(*gast.SelectorExpr); ok && (SetIfAbsent.Sel.Name == "SetIfAbsent") {
+				dulFun := &gast.CallExpr{
+					Fun:      gast.NewIdent("time.Duration"),
+					Lparen:   0,
+					Args:     []gast.Expr{call.Args[2]},
+					Ellipsis: 0,
+					Rparen:   0,
+				}
+				call.Args[2] = &gast.BinaryExpr{
+					X:     dulFun,
+					OpPos: 0,
+					Op:    token.MUL,
+					Y:     call.Args[3],
+				}
+				call.Args = call.Args[:3]
+				call.Fun = gast.NewIdent("core.SetNX")
+			} else if set, ok := call.Fun.(*gast.SelectorExpr); ok && (set.Sel.Name == "Set") {
+				if OpsForValueC, ok := set.X.(*gast.CallExpr); ok {
+					if OpsForValue, ok := OpsForValueC.Fun.(*gast.SelectorExpr); ok && (OpsForValue.Sel.Name == "OpsForValue") {
+						dulFun := &gast.CallExpr{
+							Fun:      gast.NewIdent("time.Duration"),
+							Lparen:   0,
+							Args:     []gast.Expr{call.Args[2]},
+							Ellipsis: 0,
+							Rparen:   0,
+						}
+						call.Args[2] = &gast.BinaryExpr{
+							X:     dulFun,
+							OpPos: 0,
+							Op:    token.MUL,
+							Y:     call.Args[3],
+						}
+						call.Args = call.Args[:3]
+						call.Fun = gast.NewIdent("core.SetExpireKV")
+					}
+				}
+			}
+		} else if len(call.Args) == 1 {
+			if get, ok := call.Fun.(*gast.SelectorExpr); ok && (get.Sel.Name == "Get") {
+				if OpsForValueC, ok := get.X.(*gast.CallExpr); ok {
+					if OpsForValue, ok := OpsForValueC.Fun.(*gast.SelectorExpr); ok && (OpsForValue.Sel.Name == "OpsForValue") {
+						var args []gast.Expr
+						args = append(args, gast.NewIdent("true"))
+						args = append(args, call.Args...)
+						call.Args = args
+						call.Fun = gast.NewIdent("core.GetKey")
+					}
+				}
+			} else if get, ok := call.Fun.(*gast.SelectorExpr); ok && (get.Sel.Name == "HasKey") {
+				if OpsForValueC, ok := get.X.(*gast.CallExpr); ok {
+					if OpsForValue, ok := OpsForValueC.Fun.(*gast.SelectorExpr); ok && (OpsForValue.Sel.Name == "OpsForValue") {
+						var args []gast.Expr
+						args = append(args, gast.NewIdent("true"))
+						args = append(args, call.Args...)
+						call.Args = args
+						call.Fun = gast.NewIdent("core.KeyExist")
+					}
+				} else if redisTemplate, ok := get.X.(*gast.Ident); ok && (redisTemplate.Name == "RedisTemplate") {
+					var args []gast.Expr
+					args = append(args, gast.NewIdent("true"))
+					args = append(args, call.Args...)
+					call.Args = args
+					call.Fun = gast.NewIdent("core.KeyExist")
+				}
+			}
 		}
 		return call
 	case *ast.DefExpr:
