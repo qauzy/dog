@@ -372,7 +372,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 
 		}
 	case *ast.ClassExp:
-		return gast.NewIdent("class")
+		return this.transType(v.Name)
 	case *ast.Question:
 		return this.transFuncLit(v)
 	case *ast.Lambda:

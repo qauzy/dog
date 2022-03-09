@@ -12,6 +12,23 @@ import (
 	"strings"
 )
 
+func (this *Translation) GetErrReturn() gast.Stmt {
+	l := &gast.ExprStmt{X: gast.NewIdent("log.Errorf(\"mdata.Cjson.Unmarshal,err=%v\", err)")}
+	blk := &gast.BlockStmt{
+		Lbrace: 0,
+		List:   []gast.Stmt{l, &gast.ReturnStmt{}},
+		Rbrace: 0,
+	}
+
+	iferr := &gast.IfStmt{
+		If:   0,
+		Init: nil,
+		Cond: gast.NewIdent("err != nil"),
+		Body: blk,
+		Else: nil,
+	}
+	return iferr
+}
 func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
 	switch v := s.(type) {
 	//变量声明
@@ -80,7 +97,6 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 					d.Specs = append(d.Specs, sp)
 					stmt = &gast.DeclStmt{Decl: d}
 					blk.List = append(blk.List, stmt)
-
 					q := &gast.IfStmt{
 						If:   0,
 						Init: nil,
@@ -106,6 +122,37 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 					}
 					blk.List = append(blk.List, q)
 					return blk
+					//json解析语句
+				} else if call, ok := v.Values[0].(*ast.CallExpr); ok {
+					expp := this.transExp(call)
+					if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
+						//处理json
+						if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "ParseObject") {
+							if vvvv, ok := vvv.X.(*gast.Ident); ok && (vvvv.Name == "JSON") {
+								//转换json解析
+								vv.Args = []gast.Expr{vv.Args[0], this.transExp(v.Names[0])}
+								vv.Fun = gast.NewIdent("mdata.Cjson.Unmarshal")
+								as := &gast.AssignStmt{
+									Lhs:    []gast.Expr{gast.NewIdent("err")},
+									TokPos: 0,
+									Tok:    token.ASSIGN,
+									Rhs:    []gast.Expr{expp},
+								}
+
+								//组装语句
+								blk := &FakeBlock{}
+								sp.Names = append(sp.Names, this.transNameExp(v.Names[0]))
+								d.Specs = append(d.Specs, sp)
+								stmt = &gast.DeclStmt{Decl: d}
+								blk.List = append(blk.List, stmt)
+								blk.List = append(blk.List, as)
+								blk.List = append(blk.List, this.GetErrReturn())
+								return blk
+
+							}
+						}
+
+					}
 
 				} else if _, ok := v.Values[0].(*ast.Null); ok {
 					v.Values = nil
@@ -138,6 +185,27 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 0 {
 
 		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 1 {
+
+		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
+			//处理json
+			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "ParseObject") {
+				if vvvv, ok := vvv.X.(*gast.Ident); ok && (vvvv.Name == "JSON") {
+					//转换json解析
+					vv.Args = []gast.Expr{vv.Args[0], this.transExp(v.Left)}
+					vv.Fun = gast.NewIdent("mdata.Cjson.Unmarshal")
+					as := &gast.AssignStmt{
+						Lhs:    []gast.Expr{gast.NewIdent("err")},
+						TokPos: 0,
+						Tok:    token.ASSIGN,
+						Rhs:    []gast.Expr{expp},
+					}
+					fk := &FakeBlock{}
+					fk.List = append(fk.List, as)
+					fk.List = append(fk.List, this.GetErrReturn())
+					return fk
+
+				}
+			}
 
 		}
 
