@@ -428,10 +428,13 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		}
 
 	case TOKEN_LPAREN:
-
 		this.eatToken(TOKEN_LPAREN)
-		//id := this.current.Lexeme
-		//if this.IsTypeToken() ||
+		//可能强制类型转换
+		var isCast bool
+		if this.IsTypeToken() || this.currentFile.GetImport(this.current.Lexeme) != nil {
+			log.Debugf("强制类型转换")
+			isCast = true
+		}
 		exps := this.parseExpList()
 		this.eatToken(TOKEN_RPAREN)
 
@@ -446,7 +449,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		}
 
 		//1 强制类型转换
-		if len(exps) == 1 && (this.current.Kind == TOKEN_ID || this.current.Kind == TOKEN_LPAREN) {
+		if len(exps) == 1 && isCast && this.current.Kind != TOKEN_SEMI && this.current.Kind != TOKEN_RPAREN && this.current.Kind != TOKEN_LBRACK {
 			//是类型表达式
 			var tp ast.Exp
 			switch v := exps[0].(type) {
@@ -465,12 +468,6 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			default:
 				log.Debugf("________--> %v", v)
 				this.ParseBug("强制类型转换bug")
-			}
-			if this.current.Kind == TOKEN_LPAREN {
-				this.eatToken(TOKEN_LPAREN)
-				exp := this.parseExp()
-				this.eatToken(TOKEN_RPAREN)
-				return ast.Cast_new(tp, exp, this.Linenum)
 			}
 			exp := this.parseExp()
 			return ast.Cast_new(tp, exp, this.Linenum)
@@ -929,11 +926,13 @@ func Add(aa int) {
 
 //TimesExp  -> !TimesExp
 //          -> NotExp
+//			-> ++NotExp
+//			-> --NotExp
 func (this *Parser) parseTimeExp() ast.Exp {
 	log.Debugf("解析 parseTimeExp")
 	var exp2 ast.Exp
 	var opt = this.current.Kind
-	for this.current.Kind == TOKEN_INCREMENT ||
+	if this.current.Kind == TOKEN_INCREMENT ||
 		this.current.Kind == TOKEN_DECREMENT ||
 		this.current.Kind == TOKEN_NOT {
 		this.advance()
