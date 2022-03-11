@@ -43,21 +43,31 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	id = this.current.Lexeme
 	this.eatToken(TOKEN_ID)
 
+	var generic []*ast.GenericSingle
 	//FIXME 泛型忽略
 	if this.current.Kind == TOKEN_LT {
 		this.eatToken(TOKEN_LT)
+		ge := &ast.GenericSingle{}
+		ge.Name = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		if this.current.Kind == TOKEN_EXTENDS {
 			this.advance()
+			ge.Extends = this.current.Lexeme
 			this.parseType()
 		}
+		generic = append(generic, ge)
 		for this.current.Kind == TOKEN_COMMER {
 			this.advance()
+
+			ge := &ast.GenericSingle{}
+			ge.Name = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			if this.current.Kind == TOKEN_EXTENDS {
 				this.advance()
+				ge.Extends = this.current.Lexeme
 				this.parseType()
 			}
+			generic = append(generic, ge)
 
 		}
 
@@ -96,6 +106,11 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.CLASS_TYPE)
+	for _, vv := range generic {
+		log.Infof("添加泛型：%v", vv.Name)
+		classSingle.AddGeneric(vv)
+	}
+
 	this.currentClass = classSingle
 	this.Push(classSingle)
 	this.classStack.Push(classSingle)
@@ -173,6 +188,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		var tmp ast.FieldSingle
 		var IsConstruct = false
 		var IsStatic = false
+		var IsAbstract = false
 		var IsBlock = false
 		var prefix = false
 
@@ -189,6 +205,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 		for this.current.Kind == TOKEN_STATIC ||
 			this.current.Kind == TOKEN_TRANSIENT ||
 			this.current.Kind == TOKEN_SYNCHRONIZED ||
+			this.current.Kind == TOKEN_ABSTRACT ||
 			this.current.Kind == TOKEN_FINAL {
 
 			//处理 其他修饰符(忽略)
@@ -214,6 +231,11 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			if this.current.Kind == TOKEN_SYNCHRONIZED {
 				prefix = true
 				this.eatToken(TOKEN_SYNCHRONIZED)
+			}
+
+			if this.current.Kind == TOKEN_ABSTRACT {
+				IsAbstract = true
+				this.eatToken(TOKEN_ABSTRACT)
 			}
 
 		}
@@ -279,9 +301,9 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 			//成员方法
 			if this.current.Kind == TOKEN_LPAREN {
 				if IsStatic || cfg.AllStatic {
-					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, true, comment))
+					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, true, IsAbstract, comment))
 				} else {
-					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, IsStatic, comment))
+					classSingle.AddMethod(this.parseMemberMethod(&tmp, IsConstruct, IsStatic, IsAbstract, comment))
 				}
 				//成员变量
 			} else {
@@ -303,7 +325,7 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 // param: dec
 // param: IsConstruct
 // return:
-func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, IsStatic bool, comment string) (meth ast.Method) {
+func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, IsStatic bool, IsAbstract bool, comment string) (meth ast.Method) {
 	log.Infof("解析函数")
 	var IsThrows bool
 	//左括号
@@ -333,6 +355,13 @@ func (this *Parser) parseMemberMethod(dec *ast.FieldSingle, IsConstruct bool, Is
 		}
 		methodSingle.Throws = true
 	}
+
+	//抽象方法,结束
+	if IsAbstract {
+		this.eatToken(TOKEN_SEMI)
+		return methodSingle
+	}
+
 	//左大括号
 	this.eatToken(TOKEN_LBRACE)
 

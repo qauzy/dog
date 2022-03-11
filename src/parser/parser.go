@@ -431,7 +431,7 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		this.eatToken(TOKEN_LPAREN)
 		//可能强制类型转换
 		var isCast bool
-		if this.IsTypeToken() || this.currentFile.GetImport(this.current.Lexeme) != nil {
+		if this.IsTypeToken() || this.currentFile.GetImport(this.current.Lexeme) != nil || this.currentClass.GetGeneric(this.current.Lexeme) != nil || this.current.Lexeme == this.currentClass.GetName() {
 			log.Debugf("强制类型转换")
 			isCast = true
 		}

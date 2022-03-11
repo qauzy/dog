@@ -39,6 +39,8 @@ type Class interface {
 	GetField(name string) (f Field)
 	AddMethod(m Method)
 	GetMethod(name string) (m Method)
+	GetGeneric(name string) (g *GenericSingle)
+	AddGeneric(g *GenericSingle)
 	ListMethods() []Method
 	GetName() string
 	GetType() KEY
@@ -107,17 +109,25 @@ func (this *MainClassSingle) accept(v Visitor) {
 func (this *MainClassSingle) _mainclass() {
 }
 
-/* ClassSingle {{{*/
-type ClassSingle struct {
-	Container  File
-	Access     int
+type GenericSingle struct {
 	Name       string
 	Extends    string
-	Fields     []Field
-	FieldsMap  map[string]Field
-	Methods    []Method
-	MethodsMap map[string]Method
-	Key        KEY //枚举类型
+	Implements []string
+}
+
+/* ClassSingle {{{*/
+type ClassSingle struct {
+	Container   File
+	Generics    []*GenericSingle          //记录泛型信息
+	GenericsMap map[string]*GenericSingle //记录泛型信息
+	Access      int
+	Name        string
+	Extends     string
+	Fields      []Field
+	FieldsMap   map[string]Field
+	Methods     []Method
+	MethodsMap  map[string]Method
+	Key         KEY //枚举类型
 }
 
 func (this *ClassSingle) accept(v Visitor) {
@@ -159,6 +169,15 @@ func (this *ClassSingle) GetMethod(name string) (m Method) {
 	return
 }
 
+func (this *ClassSingle) GetGeneric(name string) (g *GenericSingle) {
+	g = this.GenericsMap[name]
+	return
+}
+
+func (this *ClassSingle) AddGeneric(g *GenericSingle) {
+	this.GenericsMap[g.Name] = g
+	this.Generics = append(this.Generics, g)
+}
 func (this *ClassSingle) ListMethods() []Method {
 	return this.Methods
 }
@@ -169,15 +188,16 @@ func (this *ClassSingle) GetType() KEY {
 
 func NewClassSingle(Container File, Access int, Name string, Extends string, key KEY) (cl *ClassSingle) {
 	cl = &ClassSingle{
-		Container:  Container,
-		Access:     Access,
-		Name:       Name,
-		Extends:    Extends,
-		Fields:     nil,
-		Key:        key,
-		FieldsMap:  make(map[string]Field),
-		Methods:    nil,
-		MethodsMap: make(map[string]Method),
+		Container:   Container,
+		Access:      Access,
+		Name:        Name,
+		Extends:     Extends,
+		Fields:      nil,
+		Key:         key,
+		FieldsMap:   make(map[string]Field),
+		Methods:     nil,
+		MethodsMap:  make(map[string]Method),
+		GenericsMap: make(map[string]*GenericSingle),
 	}
 	return
 }
