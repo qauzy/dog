@@ -11,6 +11,11 @@ import (
 // return:
 func (this *Parser) parseStatement() ast.Stm {
 	log.Debugf("*******解析代码段******* --> %v", this.current.Lexeme)
+	defer func() {
+		if this.current.Kind == TOKEN_SEMI {
+			this.eatToken(TOKEN_SEMI)
+		}
+	}()
 	switch this.current.Kind {
 	case TOKEN_IS_NULL:
 		fallthrough
@@ -32,7 +37,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		id := ast.NewIdent(this.current.Lexeme, this.Linenum)
 		this.eatToken(TOKEN_SUPER)
 		exp := this.parseCallExp(id)
-		this.eatToken(TOKEN_SEMI)
+
 		return ast.ExprStm_new(exp, this.Linenum)
 
 	case TOKEN_SYNCHRONIZED:
@@ -48,7 +53,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		if this.current.Kind == TOKEN_DOT {
 			exp = this.parseCallExp(exp)
 		}
-		this.eatToken(TOKEN_SEMI)
+
 		return ast.ExprStm_new(exp, this.Linenum)
 	case TOKEN_LBRACE: //{
 		log.Debugf("*******解析代码段*******")
@@ -56,7 +61,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		stms := this.parseStatements()
 		this.eatToken(TOKEN_RBRACE)
 		if this.current.Kind == TOKEN_SEMI {
-			this.eatToken(TOKEN_SEMI)
+
 		}
 		return ast.Block_new(stms, this.Linenum)
 	case TOKEN_THIS:
@@ -75,7 +80,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				}
 			}
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
+
 			assign := new(ast.Assign)
 			assign.Left = exp
 			assign.Value = right
@@ -86,7 +91,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			return assign
 
 		}
-		this.eatToken(TOKEN_SEMI)
+
 		exprStm := ast.ExprStm_new(exp, this.Linenum)
 
 		return exprStm
@@ -113,7 +118,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
 				this.eatToken(TOKEN_ASSIGN)
 				right := this.parseExp()
-				this.eatToken(TOKEN_SEMI)
+
 				assign := ast.Assign_new(exp, right, false, this.Linenum)
 				//三元表达式
 				if _, ok := right.(*ast.Question); ok {
@@ -121,7 +126,7 @@ func (this *Parser) parseStatement() ast.Stm {
 				}
 				return assign
 			} else {
-				this.eatToken(TOKEN_SEMI)
+
 				exprStm := ast.ExprStm_new(exp, this.Linenum)
 				//检查表达式是不是三元表达式
 				if fn, ok := exp.(*ast.CallExpr); ok {
@@ -143,7 +148,6 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 			exp := this.parseExp()
 
-			this.eatToken(TOKEN_SEMI)
 			assign := new(ast.Assign)
 
 			//三元表达式
@@ -168,7 +172,6 @@ func (this *Parser) parseStatement() ast.Stm {
 			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_QUO_ASSIGN)
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "/=", this.Linenum)
 		case TOKEN_MUL_ASSIGN:
@@ -176,27 +179,25 @@ func (this *Parser) parseStatement() ast.Stm {
 			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_MUL_ASSIGN)
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
+
 			return ast.Binary_new(left, right, "*=", this.Linenum)
 		case TOKEN_SUB_ASSIGN:
 
 			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_SUB_ASSIGN)
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
+
 			return ast.Binary_new(left, right, "-=", this.Linenum)
 		case TOKEN_ADD_ASSIGN:
 			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_ADD_ASSIGN)
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "+=", this.Linenum)
 		case TOKEN_REM_ASSIGN:
 			left := ast.NewIdent(id, this.Linenum)
 			this.eatToken(TOKEN_REM_ASSIGN)
 			right := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
 
 			return ast.Binary_new(left, right, "%=", this.Linenum)
 
@@ -207,8 +208,6 @@ func (this *Parser) parseStatement() ast.Stm {
 			//特殊的for语句才不需要分号
 			if this.isSpecial {
 				this.isSpecial = false
-			} else {
-				this.eatToken(TOKEN_SEMI)
 			}
 			left := ast.NewIdent(id, this.Linenum)
 
@@ -216,10 +215,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			//处理的是后缀减
 		case TOKEN_DECREMENT:
 			this.eatToken(TOKEN_DECREMENT)
-			if !this.isSpecial {
-				this.isSpecial = false
-				this.eatToken(TOKEN_SEMI)
-			}
+
 			left := ast.NewIdent(id, this.Linenum)
 			return ast.Binary_new(left, &ast.Num{Value: 1}, "-=", this.Linenum)
 		case TOKEN_LBRACK:
@@ -231,9 +227,10 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 			index := this.parseExp()
 			this.eatToken(TOKEN_RBRACK) //]
+
 			this.eatToken(TOKEN_ASSIGN)
 			exp := this.parseExp()
-			this.eatToken(TOKEN_SEMI)
+
 			return ast.AssignArray_new(id, index, exp, nil, false, this.Linenum)
 		case TOKEN_LT:
 			tp := &ast.ClassType{id, ast.TYPE_CLASS}
@@ -261,11 +258,11 @@ func (this *Parser) parseStatement() ast.Stm {
 				}
 				decl.Values = append(decl.Values, exp)
 			}
-			this.eatToken(TOKEN_SEMI)
+
 			return decl
 
 		case TOKEN_SEMI:
-			this.eatToken(TOKEN_SEMI)
+
 			//因为List && Map Set 转换中间产物
 			if fk, ok := exp.(*ast.FakeExpr); ok {
 				return fk.Stm
@@ -500,7 +497,7 @@ func (this *Parser) parseStatement() ast.Stm {
 			}
 
 			//
-			log.Debugf("********TOKEN_FOR--> 解析条件语句 ***********")
+			log.Debugf("********TOKEN_FOR--> 解析条件语句 ***********,%v", this.current.Lexeme)
 			Condition := this.parseExp()
 			this.eatToken(TOKEN_SEMI)
 
@@ -549,12 +546,12 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_LPAREN)
 		e := this.parseExp()
 		this.eatToken(TOKEN_RPAREN)
-		this.eatToken(TOKEN_SEMI)
+
 		return ast.Print_new(e, this.Linenum)
 	case TOKEN_THROW:
 		this.eatToken(TOKEN_THROW)
 		e := this.parseExp()
-		this.eatToken(TOKEN_SEMI)
+
 		return ast.Throw_new(e, this.Linenum)
 		//处理的是后缀加
 	case TOKEN_INCREMENT:
@@ -563,11 +560,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		id := this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		//特殊的for语句才不需要分号
-		if this.isSpecial {
-			this.isSpecial = false
-		} else {
-			this.eatToken(TOKEN_SEMI)
-		}
+
 		left := ast.NewIdent(id, this.Linenum)
 
 		return ast.Binary_new(left, &ast.Num{Value: 1}, "+=", this.Linenum)
@@ -575,12 +568,12 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_RETURN)
 		//空return
 		if this.current.Kind == TOKEN_SEMI {
-			this.eatToken(TOKEN_SEMI)
+
 			return ast.Return_new(nil, this.Linenum)
 		}
 		log.Debugf("------>解析return,%v", this.current.Lexeme)
 		exp := this.parseExp()
-		this.eatToken(TOKEN_SEMI)
+
 		//三元表达式
 		if q, ok := exp.(*ast.Question); ok {
 			assign1 := ast.Return_new(q.One, this.Linenum)

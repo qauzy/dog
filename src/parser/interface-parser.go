@@ -8,6 +8,7 @@ import (
 func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	var id, extends string
 	var isThrows bool
+	var isDefault bool
 	//类访问权限修饰符
 	this.eatToken(TOKEN_INTERFACE)
 	id = this.current.Lexeme
@@ -105,6 +106,12 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 			this.advance()
 		}
 
+		//default方法都是初始化的抽象方法
+		if this.current.Kind == TOKEN_DEFAULT {
+			isDefault = true
+			this.advance()
+		}
+
 		//空接口
 		if this.current.Kind == TOKEN_RBRACE {
 			this.eatToken(TOKEN_RBRACE)
@@ -125,6 +132,14 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
 		if this.current.Kind == TOKEN_LPAREN {
+			if isDefault {
+				var tmp ast.FieldSingle
+				tmp.Tp = tp
+				tmp.Name = ast.NewIdent(this.current.Lexeme, this.Linenum)
+				classSingle.AddMethod(this.parseMemberMethod(&tmp, false, true, false, ""))
+				continue
+			}
+
 			this.eatToken(TOKEN_LPAREN)
 			formals := this.parseFormalList(false)
 			this.eatToken(TOKEN_RPAREN)

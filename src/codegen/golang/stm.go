@@ -184,8 +184,12 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		expp := this.transExp(v.Value)
 		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 0 {
 
-		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 1 {
+		} else if call, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 1 {
+			if orElse, ok := call.Fun.(*gast.SelectorExpr); ok && (orElse.Sel.Name == "OrElse") {
 
+			} else if orElse, ok := call.Fun.(*gast.SelectorExpr); ok && (orElse.Sel.Name == "OrElse") {
+
+			}
 		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
 			//处理json
 			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "ParseObject") {

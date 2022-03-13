@@ -45,6 +45,11 @@ func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
 			}
 			log.Infof("注释-->%v", comment)
 		}
+		//没有自定义
+		if this.current.Kind == TOKEN_RBRACE {
+			this.eatToken(TOKEN_RBRACE)
+			return classSingle
+		}
 
 		id = this.current.Lexeme
 		this.eatToken(TOKEN_ID)
