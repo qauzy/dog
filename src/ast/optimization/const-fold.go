@@ -8,7 +8,7 @@ package ast_opt
 //func ConstFold(prog ast.File) ast.File {
 //	var class ast.Class
 //	var main_class ast.MainClass
-//	var method ast.Method
+//	var method ast.Y
 //	var exp ast.Exp
 //	var stm ast.Stm
 //	var opt func(e ast.Acceptable)
@@ -197,7 +197,7 @@ package ast_opt
 //		}
 //	}
 //
-//	opt_Method := func(mm ast.Method) {
+//	opt_Method := func(mm ast.Y) {
 //		switch m := mm.(type) {
 //		case *ast.MethodSingle:
 //			stms := make([]ast.Stm, 0)
@@ -231,7 +231,7 @@ package ast_opt
 //	opt_Class := func(cc ast.Class) {
 //		switch c := cc.(type) {
 //		case *ast.ClassSingle:
-//			methods := make([]ast.Method, 0)
+//			methods := make([]ast.Y, 0)
 //			for _, m := range c.Methods {
 //				opt(m)
 //				methods = append(methods, method)
@@ -248,7 +248,7 @@ package ast_opt
 //			opt_Exp(v)
 //		case ast.Stm:
 //			opt_Stm(v)
-//		case ast.Method:
+//		case ast.Y:
 //			opt_Method(v)
 //		case ast.MainClass:
 //			opt_MainClass(v)

@@ -52,7 +52,7 @@ package ast
 //	}
 //}
 //
-//func (this *PrettyPrintVisitor) visitMethod(e Method) {
+//func (this *PrettyPrintVisitor) visitMethod(e Y) {
 //	switch v := e.(type) {
 //	case *MethodSingle:
 //		this.indent()
@@ -313,7 +313,7 @@ package ast
 //		this.visitStm(v)
 //	case Type:
 //		this.visitType(v)
-//	case Method:
+//	case Y:
 //		this.visitMethod(v)
 //	default:
 //		panic("wrong type")

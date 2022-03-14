@@ -14,7 +14,7 @@ package cfg
 //	var f_tp Type
 //	var f_dec Dec
 //	var f_vtable Vtable
-//	var f_method Method
+//	var f_method Y
 //	var f_main_method MainMethod
 //	var f_class Class
 //
@@ -262,7 +262,7 @@ package cfg
 //		}
 //	}
 //
-//	trans_Method := func(mm codegen_c.Method) {
+//	trans_Method := func(mm codegen_c.Y) {
 //		switch m := mm.(type) {
 //		case *codegen_c.MethodSingle:
 //			f_additional_locals = make([]Dec, 0)
@@ -354,7 +354,7 @@ package cfg
 //			trans_Exp(v)
 //		case codegen_c.MainMethod:
 //			trans_MainMethod(v)
-//		case codegen_c.Method:
+//		case codegen_c.Y:
 //			trans_Method(v)
 //		case codegen_c.Stm:
 //			trans_Stm(v)
@@ -380,7 +380,7 @@ package cfg
 //			trans(v)
 //			new_vtable = append(new_vtable, f_vtable)
 //		}
-//		new_methods := make([]Method, 0)
+//		new_methods := make([]Y, 0)
 //		for _, m := range p.Methods {
 //			trans(m)
 //			new_methods = append(new_methods, f_method)

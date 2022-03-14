@@ -892,7 +892,7 @@ func (this *Parser) parseNotExp() ast.Exp {
 			this.eatToken(TOKEN_DOUBLE_COLON)
 			if this.current.Kind == TOKEN_NEW {
 				this.eatToken(TOKEN_NEW)
-				exp = ast.NewObjectWithArgsList_new(exp, nil, this.Linenum)
+				exp = ast.MethodReference_new(exp, ast.NewIdent("New", this.Linenum), this.Linenum)
 			} else {
 				m := ast.NewIdent(util.Capitalize(this.current.Lexeme), this.Linenum)
 				this.eatToken(TOKEN_ID)

@@ -99,6 +99,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 
 //检查List的map操作
 func (this *Parser) CheckStreamExprs(exp ast.Exp, call *string, mp *ast.StreamStm) (b bool) {
+	return false
 	switch e := exp.(type) {
 	case *ast.SelectorExpr:
 		log.Debugf("CheckStreamExprs %v", e.Sel)

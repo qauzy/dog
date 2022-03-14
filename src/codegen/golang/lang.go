@@ -1,12 +1,18 @@
 package codegen_go
 
 import (
-	gast "go/ast"
+	"go/ast"
 )
 
 type FakeBlock struct {
-	gast.BlockStmt
-	List []gast.Stmt
+	ast.BlockStmt
+	List []ast.Stmt
+}
+
+type MethodReference struct {
+	X ast.Expr // left operand
+	Y ast.Expr // right operand
+	ast.BinaryExpr
 }
 
 //func (FakeBlock) stmtNode() {

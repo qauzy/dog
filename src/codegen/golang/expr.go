@@ -593,8 +593,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		return clit
 	case *ast.MethodReference:
-		return gast.NewIdent("####################################################")
-		this.TranslationBug(v)
+		mp := &gast.BinaryExpr{
+			Op: token.COLON,
+			X:  this.transExp(v.X),
+			Y:  this.transExp(v.Y),
+		}
+		return mp
 	default:
 		this.TranslationBug(v)
 	}

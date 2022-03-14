@@ -106,7 +106,7 @@ package ast_opt
 //		size++
 //	}
 //
-//	do_Method := func(mm ast.Method) {
+//	do_Method := func(mm ast.Y) {
 //		switch m := mm.(type) {
 //		case *ast.MethodSingle:
 //			do(m.RetType)
@@ -174,7 +174,7 @@ package ast_opt
 //			do_Exp(v)
 //		case ast.MainClass:
 //			do_MainClass(v)
-//		case ast.Method:
+//		case ast.Y:
 //			do_Method(v)
 //		case ast.File:
 //			do_Program(v)

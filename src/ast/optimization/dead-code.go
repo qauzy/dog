@@ -10,9 +10,9 @@ package ast_opt
 //	main_class ast.MainClass
 //	stm        ast.Stm
 //	classes    []ast.Class
-//	methods    []ast.Method
+//	methods    []ast.Y
 //	stms       []ast.Stm
-//	method     ast.Method
+//	method     ast.Y
 //	is_bool    bool
 //	is_true    bool
 //}
@@ -20,7 +20,7 @@ package ast_opt
 //func DeadCode_new() *DeadCode {
 //	o := new(DeadCode)
 //	o.classes = make([]ast.Class, 0)
-//	o.methods = make([]ast.Method, 0)
+//	o.methods = make([]ast.Y, 0)
 //	o.stms = make([]ast.Stm, 0)
 //
 //	return o
@@ -126,7 +126,7 @@ package ast_opt
 //	}
 //}
 //
-//func (this *DeadCode) opt_Method(method ast.Method) {
+//func (this *DeadCode) opt_Method(method ast.Y) {
 //	switch m := method.(type) {
 //	case *ast.MethodSingle:
 //		this.stms = make([]ast.Stm, 0)
@@ -160,7 +160,7 @@ package ast_opt
 //func (this *DeadCode) opt_Class(cc ast.Class) {
 //	switch c := cc.(type) {
 //	case *ast.ClassSingle:
-//		this.methods = make([]ast.Method, 0)
+//		this.methods = make([]ast.Y, 0)
 //		for _, m := range c.Methods {
 //			this.opt(m)
 //			this.methods = append(this.methods, this.method)
@@ -177,7 +177,7 @@ package ast_opt
 //		this.opt_Class(v)
 //	case ast.MainClass:
 //		this.opt_MainClass(v)
-//	case ast.Method:
+//	case ast.Y:
 //		this.opt_Method(v)
 //	case ast.Stm:
 //		this.opt_Stm(v)

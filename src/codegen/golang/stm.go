@@ -178,40 +178,11 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 		d.Specs = append(d.Specs, sp)
 		stmt = &gast.DeclStmt{Decl: d}
+		return this.OptimitcStreamStm(stmt)
 		//赋值语句
 	case *ast.Assign:
 		//TODO stream 语句
 		expp := this.transExp(v.Value)
-		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 0 {
-
-		} else if call, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 1 {
-			if orElse, ok := call.Fun.(*gast.SelectorExpr); ok && (orElse.Sel.Name == "OrElse") {
-
-			} else if orElse, ok := call.Fun.(*gast.SelectorExpr); ok && (orElse.Sel.Name == "OrElse") {
-
-			}
-		} else if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
-			//处理json
-			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "ParseObject") {
-				if vvvv, ok := vvv.X.(*gast.Ident); ok && (vvvv.Name == "JSON") {
-					//转换json解析
-					vv.Args = []gast.Expr{vv.Args[0], this.transExp(v.Left)}
-					vv.Fun = gast.NewIdent("mdata.Cjson.Unmarshal")
-					as := &gast.AssignStmt{
-						Lhs:    []gast.Expr{gast.NewIdent("err")},
-						TokPos: 0,
-						Tok:    token.ASSIGN,
-						Rhs:    []gast.Expr{expp},
-					}
-					fk := &FakeBlock{}
-					fk.List = append(fk.List, as)
-					fk.List = append(fk.List, this.GetErrReturn())
-					return fk
-
-				}
-			}
-
-		}
 
 		//?语句,用if语句实现
 		if vv, ok := v.Value.(*ast.Question); ok {
@@ -248,6 +219,8 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				Tok:    token.ASSIGN,
 				Rhs:    []gast.Expr{expp},
 			}
+
+			return this.OptimitcStreamStm(stmt)
 
 		}
 
@@ -369,6 +342,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		//log.Debugf("表达式语句:%v", v)
 
 		stmt = &gast.ExprStmt{X: expp}
+		return this.OptimitcStreamStm(stmt)
 	case *ast.Throw:
 		stmt = &gast.ReturnStmt{
 			Return:  0,
@@ -613,7 +587,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		} else if v.ToAny == "toSet" {
 			var method *gast.Ident
 			if mr, ok := v.Ele.(*ast.MethodReference); ok {
-				method = this.transNameExp(mr.Method)
+				method = this.transNameExp(mr.Y)
 			}
 			el := &gast.CallExpr{
 				Fun: &gast.SelectorExpr{

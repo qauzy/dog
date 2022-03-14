@@ -291,7 +291,7 @@ func NewFieldEnum(Access int, Tp Exp, Name string, Values []Exp, Static bool, Is
 
 /*}}}*/
 
-//Method  /*{{{*/
+//Y  /*{{{*/
 
 func NewMethodSingle(Container Class, RetType Exp, Name *Ident, Formals []Field, Stms []Stm, Construct bool, Static bool, Throws bool, comment string) (m *MethodSingle) {
 
@@ -849,15 +849,15 @@ func (this *IndexExpr) _exp() {
 
 //Exp.MethodReference /*{{{*/
 type MethodReference struct {
-	Owner  Exp
-	Method Exp
+	X Exp
+	Y Exp
 	Exp_T
 }
 
-func MethodReference_new(Owner Exp, Method Exp, line int) *MethodReference {
+func MethodReference_new(X Exp, Y Exp, line int) *MethodReference {
 	e := new(MethodReference)
-	e.Owner = Owner
-	e.Method = Method
+	e.X = X
+	e.Y = Y
 	e.LineNum = line
 	return e
 }

@@ -14,5 +14,5 @@ type FieldInfo struct {
 	Project string `gorm:"unique_index:path_uni"`        //项目名
 	Name    string `gorm:"unique_index:path_uni"`        //成员名
 	Type    string `gorm:"unique_index:path_uni"`        //成员属性
-	Kind    int    `gorm:"unique_index:path_uni"`        //成员类型 0:Member Var 1: Method 2: Param Var
+	Kind    int    `gorm:"unique_index:path_uni"`        //成员类型 0:Member Var 1: Y 2: Param Var
 }

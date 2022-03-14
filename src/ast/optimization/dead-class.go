@@ -86,7 +86,7 @@ package ast_opt
 //	}
 //}
 //
-//func (this *DeadClass) opt_Method(method ast.Method) {
+//func (this *DeadClass) opt_Method(method ast.Y) {
 //	switch m := method.(type) {
 //	case *ast.MethodSingle:
 //		//omit the formals and locals
@@ -148,7 +148,7 @@ package ast_opt
 //		//no need
 //	case ast.Field:
 //		//no need
-//	case ast.Method:
+//	case ast.Y:
 //		this.opt_Method(v)
 //	case ast.MainClass:
 //		this.opt_MainClass(v)

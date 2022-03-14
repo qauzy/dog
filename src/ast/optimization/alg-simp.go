@@ -9,9 +9,9 @@ package ast_opt
 //	var main_class ast.MainClass
 //	var classes []ast.Class
 //	var new_class ast.Class
-//	var methods []ast.Method
+//	var methods []ast.Y
 //	var stm ast.Stm
-//	var method ast.Method
+//	var method ast.Y
 //	var stms []ast.Stm
 //	var exp ast.Exp
 //	var is_0 bool
@@ -226,7 +226,7 @@ package ast_opt
 //		}
 //	}
 //
-//	opt_Method := func(mm ast.Method) {
+//	opt_Method := func(mm ast.Y) {
 //		if m, ok := mm.(*ast.MethodSingle); ok {
 //			stms = make([]ast.Stm, 0)
 //			for _, s := range m.Stms {
@@ -247,7 +247,7 @@ package ast_opt
 //
 //	opt_Class := func(cc ast.Class) {
 //		if c, ok := cc.(*ast.ClassSingle); ok {
-//			methods = make([]ast.Method, 0)
+//			methods = make([]ast.Y, 0)
 //			for _, m := range c.Methods {
 //				opt(m)
 //				methods = append(methods, method)
@@ -264,7 +264,7 @@ package ast_opt
 //			opt_Exp(v)
 //		case ast.Stm:
 //			opt_Stm(v)
-//		case ast.Method:
+//		case ast.Y:
 //			opt_Method(v)
 //		case ast.MainClass:
 //			opt_MainClass(v)
