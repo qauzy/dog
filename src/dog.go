@@ -118,6 +118,7 @@ func PareseJava(file string, info os.FileInfo, err error) error {
 		switch control.CodeGen_codegen {
 		case control.Go:
 			Ast_go = codegen_go.TransGo(Ast, control.CodeGen_base, file)
+			_ = Ast_go
 		case control.C:
 			//Ast_c = codegen_c.TransC(Ast)
 		default:

@@ -63,6 +63,26 @@ func (this *Translation) OptimitcStreamStm(src ast.Stmt) (dst ast.Stmt) {
 
 			}
 			if len(call0.Args) == 1 {
+				if forEach, ok := call0.Fun.(*ast.SelectorExpr); ok && (forEach.Sel.Name == "ForEach") {
+					if streamC, ok := forEach.X.(*ast.CallExpr); ok && len(streamC.Args) == 0 {
+						if stream, ok := streamC.Fun.(*ast.SelectorExpr); ok && (stream.Sel.Name == "Stream") {
+							if fn, ok := call0.Args[0].(*ast.FuncLit); ok {
+								stmt := &ast.RangeStmt{
+									For:    0,
+									Key:    ast.NewIdent("_"),
+									Value:  fn.Type.Params.List[0].Names[0],
+									TokPos: 0,
+									Tok:    token.DEFINE,
+									X:      stream.X,
+									Body:   fn.Body,
+								}
+
+								return stmt
+							}
+						}
+					}
+				}
+
 				lhs := ast.NewIdent(arg)
 				fk := &FakeBlock{}
 				rangeStmt := this.GetOptismicValue(fk, lhs, call0.Args[0])

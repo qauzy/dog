@@ -225,12 +225,13 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 			}
 
 			return ast.Length_new(x, this.Linenum)
-		} else if this.current.Lexeme == "Size" || this.current.Lexeme == "size" {
-			this.advance()
-			this.eatToken(TOKEN_LPAREN)
-			this.eatToken(TOKEN_RPAREN)
-			return ast.Length_new(x, this.Linenum)
 		}
+		//else if this.current.Lexeme == "Size" || this.current.Lexeme == "size" {
+		//	this.advance()
+		//	this.eatToken(TOKEN_LPAREN)
+		//	this.eatToken(TOKEN_RPAREN)
+		//	return ast.Length_new(x, this.Linenum)
+		//}
 		if this.current.Kind == TOKEN_CLASS {
 			this.advance()
 			return ast.ClassExp_new(x, this.Linenum)

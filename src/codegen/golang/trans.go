@@ -2,6 +2,7 @@ package codegen_go
 
 import (
 	"dog/ast"
+	"dog/cfg"
 	"dog/util"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
@@ -212,23 +213,54 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.Int:
 		return gast.NewIdent("int")
 	case *ast.MapType:
-		return &gast.MapType{
-			Map:   0,
-			Key:   this.transType(v.Key),
-			Value: this.transType(v.Value),
+
+		if cfg.MapListIdxAccess {
+			return &gast.MapType{
+				Map:   0,
+				Key:   this.transType(v.Key),
+				Value: this.transType(v.Value),
+			}
+		} else {
+			return &gast.IndexListExpr{
+				X:       gast.NewIdent("*hashmap.Map"),
+				Lbrack:  0,
+				Indices: []gast.Expr{this.transType(v.Key), this.transType(v.Value)},
+				Rbrack:  0,
+			}
 		}
 	case *ast.ListType:
-		return &gast.ArrayType{
-			Lbrack: 0,
-			Len:    nil,
-			Elt:    this.transType(v.Ele),
+
+		if cfg.MapListIdxAccess {
+			return &gast.ArrayType{
+				Lbrack: 0,
+				Len:    nil,
+				Elt:    this.transType(v.Ele),
+			}
+		} else {
+			return &gast.IndexExpr{
+				X:      gast.NewIdent("*arraylist.List"),
+				Lbrack: 0,
+				Index:  this.transType(v.Ele),
+				Rbrack: 0,
+			}
 		}
 	case *ast.SetType:
-		return &gast.MapType{
-			Map:   0,
-			Key:   this.transType(v.Ele),
-			Value: gast.NewIdent("string"),
+
+		if cfg.MapListIdxAccess {
+			return &gast.MapType{
+				Map:   0,
+				Key:   this.transType(v.Ele),
+				Value: gast.NewIdent("string"),
+			}
+		} else {
+			return &gast.IndexExpr{
+				X:      gast.NewIdent("*hashset.Set"),
+				Lbrack: 0,
+				Index:  this.transType(v.Ele),
+				Rbrack: 0,
+			}
 		}
+
 	case *ast.ClassType:
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()

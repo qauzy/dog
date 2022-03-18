@@ -278,7 +278,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	case *ast.ExprStm:
 		expp := this.transExp(v.E)
 		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
-			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "Put" || vvv.Sel.Name == "put") && cfg.FieldAccess {
+			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "Put" || vvv.Sel.Name == "put") && cfg.MapListIdxAccess {
 				idx := &gast.IndexExpr{
 					X:      vvv.X,
 					Lbrack: 0,
@@ -297,25 +297,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 			//处理 xxx.Stream().ForEach
 		} else if call, ok := expp.(*gast.CallExpr); ok && len(call.Args) == 1 {
-			if forEach, ok := call.Fun.(*gast.SelectorExpr); ok && (forEach.Sel.Name == "ForEach") {
-				if streamC, ok := forEach.X.(*gast.CallExpr); ok && len(streamC.Args) == 0 {
-					if stream, ok := streamC.Fun.(*gast.SelectorExpr); ok && (stream.Sel.Name == "Stream") {
-						if fn, ok := call.Args[0].(*gast.FuncLit); ok {
-							stmt = &gast.RangeStmt{
-								For:    0,
-								Key:    gast.NewIdent("_"),
-								Value:  fn.Type.Params.List[0].Names[0],
-								TokPos: 0,
-								Tok:    token.DEFINE,
-								X:      stream.X,
-								Body:   fn.Body,
-							}
-
-							return stmt
-						}
-					}
-				}
-			} else if Delete, ok := call.Fun.(*gast.SelectorExpr); ok && (Delete.Sel.Name == "Delete") {
+			if Delete, ok := call.Fun.(*gast.SelectorExpr); ok && (Delete.Sel.Name == "Delete") {
 				call.Fun = gast.NewIdent("core.DelKey")
 			}
 

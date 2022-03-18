@@ -151,29 +151,48 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.This:
 		return gast.NewIdent("this")
 	case *ast.NewList:
-		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("make"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
+		if cfg.MapListIdxAccess {
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("make"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+
+			t := &gast.ArrayType{
+				Lbrack: 0,
+				Len:    nil,
+				Elt:    this.transType(v.Ele),
+			}
+			call.Args = append(call.Args, t)
+
+			len := &gast.BasicLit{
+				ValuePos: 0,
+				Kind:     token.INT,
+				Value:    "0",
+			}
+			call.Args = append(call.Args, len)
+			return call
+		} else {
+			call := &gast.CallExpr{
+				Fun: &gast.IndexListExpr{
+					X:       gast.NewIdent("arraylist.New"),
+					Lbrack:  0,
+					Indices: []gast.Expr{this.transType(v.Ele)},
+					Rbrack:  0,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			for _, vv := range v.ArgsList {
+				call.Args = append(call.Args, this.transExp(vv))
+			}
+			return call
 		}
 
-		t := &gast.ArrayType{
-			Lbrack: 0,
-			Len:    nil,
-			Elt:    this.transType(v.Ele),
-		}
-		call.Args = append(call.Args, t)
-
-		len := &gast.BasicLit{
-			ValuePos: 0,
-			Kind:     token.INT,
-			Value:    "0",
-		}
-		call.Args = append(call.Args, len)
-		return call
-		//TODO 这里需要自己构造一个初始化函数
 	case *ast.NewObject:
 		call := &gast.CallExpr{
 			Fun:      this.transType(v.T),
@@ -188,13 +207,35 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return call
 	case *ast.NewSet:
 		//TODO 实现hashset等数据结构
-		expr = &gast.CallExpr{
-			Fun:      gast.NewIdent("NewSet"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
+		if cfg.MapListIdxAccess {
+			expr = &gast.CallExpr{
+				Fun:      gast.NewIdent("NewSet"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+		} else {
+			call := &gast.CallExpr{
+				Fun: &gast.IndexListExpr{
+					X:       gast.NewIdent("hashset.New"),
+					Lbrack:  0,
+					Indices: []gast.Expr{this.transType(v.Ele)},
+					Rbrack:  0,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+
+			for _, vv := range v.ArgsList {
+				call.Args = append(call.Args, this.transExp(vv))
+			}
+			return call
+
 		}
+
 	case *ast.SelectorExpr:
 		//	log.Debugf("选择表达式,%v, %s", v.X, v.Sel)
 		expr = &gast.SelectorExpr{
@@ -233,7 +274,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 				}
 			}
 
-		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") {
+		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") && cfg.MapListIdxAccess {
 			if vvv, ok := vv.X.(*gast.Ident); ok && (this.currentFile.GetField(vvv.Name) != nil || this.currentClass.GetField(vvv.Name) != nil || this.currentMethod.GetField(vvv.Name) != nil) {
 				if len(v.ArgsList) == 1 {
 					f := this.currentClass.GetField(vvv.Name)
@@ -445,68 +486,91 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.Lambda:
 		return this.transLambda(v)
 	case *ast.NewHash:
-		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("make"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
+		if cfg.MapListIdxAccess {
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("make"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+
+			t := &gast.MapType{
+				Map:   0,
+				Key:   this.transType(v.Key),
+				Value: this.transType(v.Ele),
+			}
+			call.Args = append(call.Args, t)
+			return call
+		} else {
+			call := &gast.CallExpr{
+				Fun: &gast.IndexListExpr{
+					X:       gast.NewIdent("hashset.New"),
+					Lbrack:  0,
+					Indices: []gast.Expr{this.transType(v.Ele)},
+					Rbrack:  0,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			return call
 		}
 
-		t := &gast.MapType{
-			Map:   0,
-			Key:   this.transType(v.Key),
-			Value: this.transType(v.Ele),
-		}
-		call.Args = append(call.Args, t)
-		return call
 	case *ast.NewStringArray:
+		if cfg.MapListIdxAccess {
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("make"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
 
-		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("make"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
+			t := &gast.ArrayType{
+				Lbrack: 0,
+				Len:    nil,
+				Elt:    gast.NewIdent("string"),
+			}
+			call.Args = append(call.Args, t)
+
+			len := &gast.BasicLit{
+				ValuePos: 0,
+				Kind:     token.INT,
+				Value:    "0",
+			}
+			call.Args = append(call.Args, len)
+			return call
+		} else {
+			call := &gast.CallExpr{
+				Fun: &gast.IndexListExpr{
+					X:       gast.NewIdent("arraylist.New"),
+					Lbrack:  0,
+					Indices: []gast.Expr{gast.NewIdent("string")},
+					Rbrack:  0,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			return call
 		}
 
-		t := &gast.ArrayType{
-			Lbrack: 0,
-			Len:    nil,
-			Elt:    gast.NewIdent("string"),
-		}
-		call.Args = append(call.Args, t)
-
-		len := &gast.BasicLit{
-			ValuePos: 0,
-			Kind:     token.INT,
-			Value:    "0",
-		}
-		call.Args = append(call.Args, len)
-		return call
 	case *ast.NewIntArray:
-
 		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("make"),
+			Fun: &gast.IndexListExpr{
+				X:       gast.NewIdent("arraylist.New"),
+				Lbrack:  0,
+				Indices: []gast.Expr{gast.NewIdent("int")},
+				Rbrack:  0,
+			},
 			Lparen:   0,
 			Args:     nil,
 			Ellipsis: 0,
 			Rparen:   0,
 		}
-
-		t := &gast.ArrayType{
-			Lbrack: 0,
-			Len:    nil,
-			Elt:    gast.NewIdent("int"),
-		}
-		call.Args = append(call.Args, t)
-
-		len := &gast.BasicLit{
-			ValuePos: 0,
-			Kind:     token.INT,
-			Value:    "0",
-		}
-		call.Args = append(call.Args, len)
 		return call
 	case *ast.Cast: //强制类型转换
 		expr = &gast.TypeAssertExpr{
@@ -558,28 +622,45 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		call.Args = append(call.Args, this.transExp(v.X))
 		return call
 	case *ast.NewArray:
-		call := &gast.CallExpr{
-			Fun:      gast.NewIdent("make"),
-			Lparen:   0,
-			Args:     nil,
-			Ellipsis: 0,
-			Rparen:   0,
+		if cfg.MapListIdxAccess {
+			call := &gast.CallExpr{
+				Fun:      gast.NewIdent("make"),
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+
+			t := &gast.ArrayType{
+				Lbrack: 0,
+				Len:    nil,
+				Elt:    this.transExp(v.Ele),
+			}
+			call.Args = append(call.Args, t)
+
+			len := &gast.BasicLit{
+				ValuePos: 0,
+				Kind:     token.INT,
+				Value:    "0",
+			}
+			call.Args = append(call.Args, len)
+			return call
+		} else {
+			call := &gast.CallExpr{
+				Fun: &gast.IndexListExpr{
+					X:       gast.NewIdent("arraylist.New"),
+					Lbrack:  0,
+					Indices: []gast.Expr{this.transType(v.Ele)},
+					Rbrack:  0,
+				},
+				Lparen:   0,
+				Args:     nil,
+				Ellipsis: 0,
+				Rparen:   0,
+			}
+			return call
 		}
 
-		t := &gast.ArrayType{
-			Lbrack: 0,
-			Len:    nil,
-			Elt:    this.transExp(v.Ele),
-		}
-		call.Args = append(call.Args, t)
-
-		len := &gast.BasicLit{
-			ValuePos: 0,
-			Kind:     token.INT,
-			Value:    "0",
-		}
-		call.Args = append(call.Args, len)
-		return call
 	case *ast.ArrayAssign:
 		clit := &gast.CompositeLit{
 			Type:       this.transType(v.Tp),
