@@ -1,6 +1,7 @@
 package codegen_go
 
 import (
+	"dog/cfg"
 	"dog/util"
 	"fmt"
 	"go/ast"
@@ -9,6 +10,9 @@ import (
 
 //实现stream处理
 func (this *Translation) OptimitcStreamStm(src ast.Stmt) (dst ast.Stmt) {
+	if !cfg.MapListIdxAccess {
+		return src
+	}
 
 	switch stm := src.(type) {
 	case *ast.AssignStmt:
