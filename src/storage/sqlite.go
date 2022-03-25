@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"dog/log"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
@@ -34,7 +35,10 @@ func NewDBWrite(name string) *gorm.DB {
 	}
 
 	// 自动迁移模式
-	db.AutoMigrate(&PackInfo{})
-
+	err = db.AutoMigrate(&PackInfo{}).Error
+	if err != nil {
+		log.Infof("err=%v", err)
+		panic("连接数据库失败")
+	}
 	return db
 }

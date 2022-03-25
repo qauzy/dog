@@ -21,7 +21,7 @@ func Bug(info string) {
 }
 
 func Debug(info string) {
-	var msg = joint(5, "[DEBUG]", info)
+	var msg = joint(4, "[DEBUG]", info)
 	l.Output(3, msg)
 }
 

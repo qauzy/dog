@@ -16,8 +16,7 @@ type Lexer struct {
 	/**
 	 * the buf index, can increse or decrese to implements reset
 	 */
-	fp  int
-	fpp int //用于测试
+	fp int
 }
 
 func NewLexer(fname string, buf []byte) *Lexer {

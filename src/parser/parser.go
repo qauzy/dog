@@ -4,10 +4,10 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/control"
+	"dog/log"
 	"dog/storage"
 	"dog/util"
 	"fmt"
-	log "github.com/corgi-kx/logcustom"
 	"strconv"
 	"strings"
 )
@@ -76,14 +76,28 @@ func (this *Parser) eatToken(kind int) {
 		log.Infof("注解类，不处理")
 		return
 	}
+	if control.Lexer_dump == true {
+		util.Debug(this.current.ToString())
+	}
+
 	if kind == this.current.Kind {
-		this.advance()
+		this.Linenum = this.current.LineNum
+		this.current = this.lexer.NextToken()
 	} else if TOKEN_COMMENT == this.current.Kind {
-		this.advance()
-		this.eatToken(kind)
+		this.lexer.NextToken()
+		if kind != this.current.Kind {
+			util.ParserError(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
+		}
+		this.Linenum = this.current.LineNum
+		this.current = this.lexer.NextToken()
 	} else {
 		util.ParserError(tMap[kind], tMap[this.current.Kind], this.current.LineNum, this.lexer.fname)
 	}
+	//处理所有注解
+	for this.current.Kind == TOKEN_AT {
+		this.parseAnnotation()
+	}
+
 }
 
 //解析泛型实例化参数列表
