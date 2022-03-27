@@ -151,7 +151,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.This:
 		return gast.NewIdent("this")
 	case *ast.NewList:
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("make"),
 				Lparen:   0,
@@ -207,7 +207,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return call
 	case *ast.NewSet:
 		//TODO 实现hashset等数据结构
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			expr = &gast.CallExpr{
 				Fun:      gast.NewIdent("NewSet"),
 				Lparen:   0,
@@ -274,7 +274,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 				}
 			}
 
-		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") && cfg.MapListIdxAccess {
+		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") && cfg.NoGeneric {
 			if vvv, ok := vv.X.(*gast.Ident); ok && (this.currentFile.GetField(vvv.Name) != nil || this.currentClass.GetField(vvv.Name) != nil || this.currentMethod.GetField(vvv.Name) != nil) {
 				if len(v.ArgsList) == 1 {
 					f := this.currentClass.GetField(vvv.Name)
@@ -486,7 +486,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	case *ast.Lambda:
 		return this.transLambda(v)
 	case *ast.NewHash:
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("make"),
 				Lparen:   0,
@@ -519,7 +519,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 
 	case *ast.NewStringArray:
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("make"),
 				Lparen:   0,
@@ -622,7 +622,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		call.Args = append(call.Args, this.transExp(v.X))
 		return call
 	case *ast.NewArray:
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("make"),
 				Lparen:   0,

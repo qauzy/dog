@@ -293,7 +293,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.eatToken(TOKEN_LPAREN)
 		condition := this.parseExp()
 		var Init ast.Exp
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			if cl, ok := condition.(*ast.CallExpr); ok && len(cl.ArgsList) == 1 {
 				if sl, ok := cl.Callee.(*ast.SelectorExpr); ok {
 					if sl.Sel == "containsKey" {

@@ -10,7 +10,7 @@ import (
 
 //实现stream处理
 func (this *Translation) OptimitcStreamStm(src ast.Stmt) (dst ast.Stmt) {
-	if !cfg.MapListIdxAccess {
+	if !cfg.NoGeneric {
 		return src
 	}
 
@@ -204,7 +204,7 @@ func (this *Translation) GetOptismicValue(fk *FakeBlock, lhs ast.Expr, rhs ast.E
 			if vvvv, ok := parseObject.X.(*ast.Ident); ok && (vvvv.Name == "JSON") {
 				//转换json解析
 				call.Args = []ast.Expr{call.Args[0], lhs}
-				call.Fun = ast.NewIdent("mdata.Cjson.Unmarshal")
+				call.Fun = ast.NewIdent("json.Unmarshal")
 				as := &ast.AssignStmt{
 					Lhs:    []ast.Expr{ast.NewIdent("err")},
 					TokPos: 0,

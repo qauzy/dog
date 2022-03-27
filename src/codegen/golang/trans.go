@@ -214,7 +214,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return gast.NewIdent("int")
 	case *ast.MapType:
 
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			return &gast.MapType{
 				Map:   0,
 				Key:   this.transType(v.Key),
@@ -230,7 +230,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		}
 	case *ast.ListType:
 
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			return &gast.ArrayType{
 				Lbrack: 0,
 				Len:    nil,
@@ -246,7 +246,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		}
 	case *ast.SetType:
 
-		if cfg.MapListIdxAccess {
+		if cfg.NoGeneric {
 			return &gast.MapType{
 				Map:   0,
 				Key:   this.transType(v.Ele),
@@ -305,15 +305,30 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		//泛型
 		//TODO 先用接口替代
 	case *ast.GenericType:
-		return &gast.InterfaceType{
-			Interface: 0,
-			Methods: &gast.FieldList{
-				Opening: 0,
-				List:    nil,
-				Closing: 1,
-			},
-			Incomplete: false,
+		if cfg.NoGeneric {
+			return &gast.InterfaceType{
+				Interface: 0,
+				Methods: &gast.FieldList{
+					Opening: 0,
+					List:    nil,
+					Closing: 1,
+				},
+				Incomplete: false,
+			}
+		} else {
+			var tps []gast.Expr
+			for _, vv := range v.T {
+				tps = append(tps, this.transExp(vv))
+			}
+			return &gast.IndexListExpr{
+				X:       this.transExp(v.Name),
+				Lbrack:  0,
+				Indices: tps,
+				Rbrack:  0,
+			}
+
 		}
+
 	case *ast.Float:
 		return gast.NewIdent("float64")
 	case *ast.Date:

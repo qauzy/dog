@@ -287,7 +287,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 		} else {
 
 			//处理Map,List元素访问
-			if cfg.MapListIdxAccess && (this.current.Lexeme == "get" || this.current.Lexeme == "set") {
+			if cfg.NoGeneric && (this.current.Lexeme == "get" || this.current.Lexeme == "set") {
 
 				if id, ok := x.(*ast.Ident); ok {
 					if this.CheckField(id.Name) != nil {
@@ -316,21 +316,21 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 
 				}
 
-			} else if cfg.MapListIdxAccess && this.current.Lexeme == "add" {
+			} else if cfg.NoGeneric && this.current.Lexeme == "add" {
 				if id, ok := x.(*ast.Ident); ok {
 					if this.CheckField(id.Name) != nil {
 						_, isListAdd = this.CheckField(id.Name).GetDecType().(*ast.ListType)
 
 					}
 				}
-			} else if cfg.MapListIdxAccess && this.current.Lexeme == "remove" {
+			} else if cfg.NoGeneric && this.current.Lexeme == "remove" {
 				if id, ok := x.(*ast.Ident); ok {
 					if this.CheckField(id.Name) != nil {
 						_, isListRemove = this.CheckField(id.Name).GetDecType().(*ast.MapType)
 
 					}
 				}
-			} else if cfg.MapListIdxAccess && (this.current.Lexeme == "clear") {
+			} else if cfg.NoGeneric && (this.current.Lexeme == "clear") {
 				if id, ok := x.(*ast.Ident); ok {
 					if this.CheckField(id.Name) != nil {
 

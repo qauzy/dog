@@ -31,6 +31,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 		return this.parseEnumDecl(access)
 	}
 
+	//接口类型
 	if this.current.Kind == TOKEN_INTERFACE {
 		return this.parseInterfaceDecl(access)
 	}

@@ -5,7 +5,7 @@ var (
 	AllStatic          = true  //所有变量和方法按静态类型处理
 	AppendContext      = false //添加*gin.Contex
 	FieldAccess        = false //Get,Set函数转换为直接成员访问
-	MapListIdxAccess   = false //索引形式访问Map和List
+	NoGeneric          = false //禁用泛型
 	DropResult         = false //去掉返回值
 	OneFold            = false //独立文件夹
 	ConstructNewFunc   = false //是否构建构造New函数
@@ -17,6 +17,6 @@ var (
 	ProjectName        = "bitrade"
 	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
 	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
-	TargetPath         = "/opt/3code/actJob/memberxxl/test"                                        //目标目录
+	TargetPath         = "/opt/code/util/test"                                                     //目标目录
 	ImportBase         = "bitrade/core"
 )

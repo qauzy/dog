@@ -110,9 +110,8 @@ func (this *MainClassSingle) _mainclass() {
 }
 
 type GenericSingle struct {
-	Name       string
-	Extends    string
-	Implements []string
+	Name    string
+	Extends string
 }
 
 /* ClassSingle {{{*/

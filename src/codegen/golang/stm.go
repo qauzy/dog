@@ -13,7 +13,7 @@ import (
 )
 
 func (this *Translation) GetErrReturn() gast.Stmt {
-	l := &gast.ExprStmt{X: gast.NewIdent("log.Errorf(\"mdata.Cjson.Unmarshal,err=%v\", err)")}
+	l := &gast.ExprStmt{X: gast.NewIdent("log.Errorf(\"json.Unmarshal,err=%v\", err)")}
 	blk := &gast.BlockStmt{
 		Lbrace: 0,
 		List:   []gast.Stmt{l, &gast.ReturnStmt{}},
@@ -131,7 +131,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 							if vvvv, ok := vvv.X.(*gast.Ident); ok && (vvvv.Name == "JSON") {
 								//转换json解析
 								vv.Args = []gast.Expr{vv.Args[0], this.transExp(v.Names[0])}
-								vv.Fun = gast.NewIdent("mdata.Cjson.Unmarshal")
+								vv.Fun = gast.NewIdent("json.Unmarshal")
 								as := &gast.AssignStmt{
 									Lhs:    []gast.Expr{gast.NewIdent("err")},
 									TokPos: 0,
@@ -278,7 +278,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	case *ast.ExprStm:
 		expp := this.transExp(v.E)
 		if vv, ok := expp.(*gast.CallExpr); ok && len(vv.Args) == 2 {
-			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "Put" || vvv.Sel.Name == "put") && cfg.MapListIdxAccess {
+			if vvv, ok := vv.Fun.(*gast.SelectorExpr); ok && (vvv.Sel.Name == "Put" || vvv.Sel.Name == "put") && cfg.NoGeneric {
 				idx := &gast.IndexExpr{
 					X:      vvv.X,
 					Lbrack: 0,
