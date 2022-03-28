@@ -166,10 +166,10 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_MAP)
 		//Map.Entry
 		if this.current.Kind == TOKEN_DOT {
-			this.parseCallExp(ast.NewIdent(name, this.Linenum))
+			this.advance()
+			ast.SelectorExpr_new(ast.NewIdent(name, this.Linenum), this.current.Lexeme, this.Linenum)
 			name = this.current.Lexeme
-			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
-			return this.currentType
+			this.eatToken(TOKEN_ID)
 		}
 
 		if this.current.Kind == TOKEN_LT {

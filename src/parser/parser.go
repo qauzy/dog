@@ -1062,17 +1062,26 @@ func (this *Parser) parseLtExp() ast.Exp {
 	}
 	return left
 }
+func (this *Parser) parseInstanceofExp() ast.Exp {
+	left := this.parseLtExp()
+	if this.current.Kind == TOKEN_INSTANCEOF {
+		this.eatToken(TOKEN_INSTANCEOF)
+		right := this.parseLtExp()
+		return ast.Instanceof_new(left, right, this.Linenum)
+	}
+	return left
+}
 
 //EqExp    -> EqExp == EqExp || EqExp != EqExp
 //          -> EqExp
 func (this *Parser) parseEqExp() ast.Exp {
 	log.Debugf("解析parseEqExp")
-	left := this.parseLtExp()
+	left := this.parseInstanceofExp()
 	for this.current.Kind == TOKEN_LT || this.current.Kind == TOKEN_LE || this.current.Kind == TOKEN_GT || this.current.Kind == TOKEN_GE {
 		opt := this.current.Kind
 		this.advance()
 		//泛型应该在前面被拦截处理 -- > 原理是类型不能被用来比较大小
-		right := this.parseLtExp()
+		right := this.parseInstanceofExp()
 		switch opt {
 		case TOKEN_LT:
 			return ast.Lt_new(left, right, this.Linenum)
@@ -1141,6 +1150,7 @@ func (this *Parser) parseLOrExp() ast.Exp {
 	left := this.parseLAndExp()
 	for this.current.Kind == TOKEN_LAND {
 		this.advance()
+		log.Debugf("=============================")
 		right := this.parseLAndExp()
 		left = ast.LAnd_new(left, right, this.Linenum)
 	}
@@ -1190,11 +1200,6 @@ func (this *Parser) parseExp() ast.Exp {
 		log.Infof("TOKEN_QUESTION --> 解析第二个表达式")
 		two := this.parseExp()
 		return ast.Question_new(left, one, two, this.Linenum)
-	}
-	if this.current.Kind == TOKEN_INSTANCEOF {
-		this.eatToken(TOKEN_INSTANCEOF)
-		right := this.parseQuestionExp()
-		return ast.Instanceof_new(left, right, this.Linenum)
 	}
 
 	return left

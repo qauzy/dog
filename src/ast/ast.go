@@ -2654,3 +2654,8 @@ func (this *MapType) String() string {
 }
 func (this *MapType) _exp() {
 }
+
+type GenericListExpr struct {
+	X       Exp   // expression
+	Indices []Exp // index expressions
+}

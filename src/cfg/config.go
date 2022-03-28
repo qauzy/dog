@@ -13,7 +13,7 @@ var (
 	Capitalize         = true  //类成员大写开头
 	StarClassTypeParam = true  //非原生类型函数参数带*
 	StarClassTypeDecl  = true  //非原生类型变量带*
-	ParseOnly          = false //只解析，不翻译(获取全局信息)
+	ParseOnly          = true  //只解析，不翻译(获取全局信息)
 	ProjectName        = "bitrade"
 	SourceBase         = "/opt/code/ZTuoExchange_framework"                                        //待转换源代码工程目录
 	SourcePath         = "/opt/code/ZTuoExchange_framework/core/src/main/java/cn/ztuo/bitrade/dao" //待转换源代码目录
