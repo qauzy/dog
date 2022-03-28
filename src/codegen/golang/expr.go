@@ -621,45 +621,42 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 
 		call.Args = append(call.Args, this.transExp(v.X))
 		return call
-	case *ast.NewArray:
-		if cfg.NoGeneric {
-			call := &gast.CallExpr{
-				Fun:      gast.NewIdent("make"),
-				Lparen:   0,
-				Args:     nil,
-				Ellipsis: 0,
-				Rparen:   0,
-			}
-
-			t := &gast.ArrayType{
-				Lbrack: 0,
-				Len:    nil,
-				Elt:    this.transExp(v.Ele),
-			}
-			call.Args = append(call.Args, t)
-
-			len := &gast.BasicLit{
-				ValuePos: 0,
-				Kind:     token.INT,
-				Value:    "0",
-			}
-			call.Args = append(call.Args, len)
-			return call
-		} else {
-			call := &gast.CallExpr{
-				Fun: &gast.IndexListExpr{
-					X:       gast.NewIdent("arraylist.New"),
-					Lbrack:  0,
-					Indices: []gast.Expr{this.transType(v.Ele)},
-					Rbrack:  0,
-				},
-				Lparen:   0,
-				Args:     nil,
-				Ellipsis: 0,
-				Rparen:   0,
-			}
-			return call
+	case *ast.NewArrayWithArgs:
+		clit := &gast.CompositeLit{
+			Type:       this.transType(v.Tp),
+			Lbrace:     0,
+			Elts:       nil,
+			Rbrace:     0,
+			Incomplete: false,
 		}
+		for _, vv := range v.Args {
+			clit.Elts = append(clit.Elts, this.transExp(vv))
+		}
+		return clit
+
+	case *ast.NewArray:
+		call := &gast.CallExpr{
+			Fun:      gast.NewIdent("make"),
+			Lparen:   0,
+			Args:     nil,
+			Ellipsis: 0,
+			Rparen:   0,
+		}
+
+		t := &gast.ArrayType{
+			Lbrack: 0,
+			Len:    nil,
+			Elt:    this.transExp(v.Tp),
+		}
+		call.Args = append(call.Args, t)
+
+		length := &gast.BasicLit{
+			ValuePos: 0,
+			Kind:     token.INT,
+			Value:    "0",
+		}
+		call.Args = append(call.Args, length)
+		return call
 
 	case *ast.ArrayAssign:
 		clit := &gast.CompositeLit{

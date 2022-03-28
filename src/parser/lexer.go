@@ -103,7 +103,7 @@ func (this *Lexer) lex_String(c byte) string {
 		c = this.buf[this.fp]
 	}
 	if c != '"' && this.fp >= len(this.buf) {
-		util.ParserError("\"", "", this.lineNum, this.fname)
+		util.ParserError("\"", string(c), this.lineNum, this.fname)
 	}
 	var ed = this.fp
 	//处理字符串末尾的"
@@ -217,6 +217,12 @@ func (this *Lexer) nextTokenInternal() *Token {
 			}
 			this.lineNum++
 
+		} else if c == '\t' || c == ' ' {
+			if this.s != "" {
+				if (this.s[0] >= 'a' && this.s[0] <= 'z') || (this.s[0] >= 'A' && this.s[0] <= 'Z') || this.s[0] == '_' {
+					return this.expectIdOrKey(c)
+				}
+			}
 		}
 		if this.fp >= len(this.buf) {
 			return newToken(TOKEN_EOF, "EOF", this.lineNum)
@@ -230,6 +236,19 @@ func (this *Lexer) nextTokenInternal() *Token {
 	//}
 	//fallthrough强制执行后面的case代码
 	switch c {
+	case '\'':
+		var st = this.fp - 1
+		if this.s == "" {
+			this.fp++
+			c = this.buf[this.fp]
+
+			if c != '\'' {
+				util.ParserError("'", string(c), this.lineNum, this.fname)
+			}
+			var ss = string(this.buf[st-1 : this.fp+1])
+			this.fp++
+			return newToken(TOKEN_ID, ss, this.lineNum)
+		}
 	case '&':
 		if this.s == "" {
 			if this.expectKeyword("&") {
@@ -330,6 +349,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 	case '@':
 		//return newToken(TOKEN_AT, "@", this.lineNum)
 		fallthrough
+	case '\t':
+		fallthrough
 	case ' ':
 		fallthrough
 	case '?':
@@ -344,7 +365,6 @@ func (this *Lexer) nextTokenInternal() *Token {
 		fallthrough
 	case '(':
 		fallthrough
-
 	case '}':
 		fallthrough
 	case ']':

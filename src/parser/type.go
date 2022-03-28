@@ -17,6 +17,12 @@ func (this *Parser) parseType() ast.Exp {
 	defer func() {
 		log.Debugf("解析类型:%v", this.currentType)
 	}()
+
+	//处理final
+	if this.current.Kind == TOKEN_FINAL {
+		this.advance()
+	}
+
 	switch this.current.Kind {
 	case TOKEN_CHAR:
 		this.advance()
@@ -223,7 +229,15 @@ func (this *Parser) parseType() ast.Exp {
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
-			this.currentType = &ast.ListType{name, &ast.ClassType{name, ast.TYPE_CLASS}, ast.TYPE_LIST}
+			this.currentType = &ast.ArrayType{&ast.ClassType{name, ast.TYPE_CLASS}, ast.TYPE_ARRAY}
+
+			//多为数组
+			for this.current.Kind == TOKEN_LBRACK {
+				this.eatToken(TOKEN_LBRACK)
+				this.eatToken(TOKEN_RBRACK)
+				this.currentType = &ast.ArrayType{this.currentType, ast.TYPE_ARRAY}
+			}
+
 			return this.currentType
 		}
 

@@ -1310,13 +1310,13 @@ func (this *NewObjectArray) _exp() {
 //Exp.NewArray   /*{{{*/
 type NewArray struct {
 	Size Exp
-	Ele  Exp
+	Tp   Exp
 	Exp_T
 }
 
-func NewArray_new(Ele Exp, size Exp, line int) *NewArray {
+func NewArray_new(Tp Exp, size Exp, line int) *NewArray {
 	e := new(NewArray)
-	e.Ele = Ele
+	e.Tp = Tp
 	e.Size = size
 	e.LineNum = line
 	return e
@@ -1326,6 +1326,27 @@ func (this *NewArray) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *NewArray) _exp() {
+}
+
+//Exp.NewArray   /*{{{*/
+type NewArrayWithArgs struct {
+	Args []Exp
+	Tp   Exp
+	Exp_T
+}
+
+func NewArrayWithArgs_new(Ele Exp, Args []Exp, line int) *NewArrayWithArgs {
+	e := new(NewArrayWithArgs)
+	e.Tp = Ele
+	e.Args = Args
+	e.LineNum = line
+	return e
+}
+
+func (this *NewArrayWithArgs) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *NewArrayWithArgs) _exp() {
 }
 
 /*}}}*/
@@ -2262,7 +2283,7 @@ const (
 	TYPE_Integer
 	TYPE_BOOLEAN
 	TYPE_VOID
-	TYPE_INTARRAY
+	TYPE_ARRAY
 	TYPE_BYTE
 	TYPE_BYTEARRAY
 	TYPE_CLASS

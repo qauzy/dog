@@ -562,6 +562,25 @@ func (this *Parser) parseAtomExp() ast.Exp {
 	}
 	return nil
 }
+func (this *Parser) parseNewArrayExp(exp ast.Exp) ast.Exp {
+	//new xxx[]{xxx,xxx}
+	this.eatToken(TOKEN_LBRACK)
+	if this.current.Kind == TOKEN_RBRACK {
+		this.eatToken(TOKEN_RBRACK)
+		this.eatToken(TOKEN_LBRACE)
+		//空参数构建新数组
+		if this.current.Kind == TOKEN_RBRACE {
+			this.eatToken(TOKEN_RBRACE)
+			return ast.NewArrayWithArgs_new(ast.NewIdent("int64", this.Linenum), nil, this.Linenum)
+		}
+		args := this.parseExpList()
+		this.eatToken(TOKEN_RBRACE)
+		return ast.NewArrayWithArgs_new(ast.NewIdent("int64", this.Linenum), args, this.Linenum)
+	}
+	size := this.parseExp()
+	this.eatToken(TOKEN_RBRACK)
+	return ast.NewArray_new(exp, size, this.Linenum)
+}
 
 // new id[]			   -->
 // new id(xx,xx,xx...) -->构造函数
@@ -587,6 +606,10 @@ func (this *Parser) parseNewExp() ast.Exp {
 		return ast.NewIntArray_new(exp, this.Linenum)
 	case TOKEN_INTEGER:
 		this.advance()
+		//数组
+		if this.current.Kind == TOKEN_LBRACK {
+			return this.parseNewArrayExp(ast.NewIdent("int64", this.Linenum))
+		}
 		this.eatToken(TOKEN_LPAREN)
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RPAREN)
@@ -599,17 +622,9 @@ func (this *Parser) parseNewExp() ast.Exp {
 			this.eatToken(TOKEN_RPAREN)
 			return ast.CallExpr_new(ast.NewIdent("strconv.Itoa", this.Linenum), args, this.Linenum)
 		}
-		this.eatToken(TOKEN_LBRACK)
 		//new String[]{xxx, xxxx};
-		if this.current.Kind == TOKEN_RBRACK {
-			this.eatToken(TOKEN_RBRACK)
-			if this.current.Kind == TOKEN_LBRACE {
-				this.eatToken(TOKEN_LBRACE)
-				args := this.parseExpList()
-				this.eatToken(TOKEN_RBRACE)
-				return ast.NewStringArray_new(nil, args, this.Linenum)
-			}
-			return ast.NewStringArray_new(nil, nil, this.Linenum)
+		if this.current.Kind == TOKEN_LBRACK {
+			return this.parseNewArrayExp(ast.NewIdent("string", this.Linenum))
 		}
 		exp := this.parseExp()
 		this.eatToken(TOKEN_RBRACK)
@@ -712,8 +727,6 @@ func (this *Parser) parseNewExp() ast.Exp {
 		return ast.NewSet_new(ele, args, this.Linenum)
 	//带参数对象初始化
 	case TOKEN_ID:
-		var typeName = this.current.Lexeme
-		var args []ast.Exp
 		log.Debugf("-------------> %v", this.current.Lexeme)
 		id := this.current.Lexeme
 
@@ -759,29 +772,9 @@ func (this *Parser) parseNewExp() ast.Exp {
 			return ast.CallExpr_new(exp, args, this.Linenum)
 		}
 		//数组
+		// new xxx[]{xxx, xxx,xxx....};
 		if this.current.Kind == TOKEN_LBRACK {
-			this.eatToken(TOKEN_LBRACK)
-			// new xxx[]{xxx, xxx,xxx....};
-			if this.current.Kind == TOKEN_RBRACK {
-				this.eatToken(TOKEN_RBRACK)
-				if this.current.Kind == TOKEN_LBRACE {
-					this.eatToken(TOKEN_LBRACE)
-					args = this.parseExpList()
-					this.eatToken(TOKEN_RBRACE)
-					return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, args, nil, this.Linenum)
-				}
-
-			} else {
-				size := this.parseExp()
-				this.eatToken(TOKEN_RBRACK)
-				if this.current.Kind == TOKEN_LBRACE {
-					this.eatToken(TOKEN_LBRACE)
-					eles := this.parseExpList()
-					this.eatToken(TOKEN_RBRACE)
-					return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, eles, size, this.Linenum)
-				}
-				return ast.NewObjectArray_new(&ast.ClassType{typeName, ast.TYPE_CLASS}, nil, size, this.Linenum)
-			}
+			return this.parseNewArrayExp(exp)
 		}
 
 		return exp
