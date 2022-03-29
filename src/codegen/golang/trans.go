@@ -63,7 +63,7 @@ func (this *Translation) getErrRet() (gfi *gast.Field) {
 	return
 }
 func (this *Translation) TranslationBug(v interface{}) {
-	var msg = fmt.Sprintf("未处理 [%v] %s,%v\n", reflect.TypeOf(v).String(), path.Base(this.file), v)
+	var msg = fmt.Sprintf("未处理 [%v] %s,value=%v\n", reflect.TypeOf(v).String(), path.Base(this.file), v)
 	util.Bug(msg)
 }
 
@@ -318,7 +318,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		} else {
 			var tps []gast.Expr
 			for _, vv := range v.T {
-				tps = append(tps, this.transExp(vv))
+				tps = append(tps, this.transType(vv))
 			}
 			return &gast.IndexListExpr{
 				X:       this.transExp(v.Name),
@@ -337,7 +337,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return &gast.ArrayType{
 			Lbrack: 0,
 			Len:    nil,
-			Elt:    this.transExp(v.Ele),
+			Elt:    this.transType(v.Ele),
 		}
 
 	default:

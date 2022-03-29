@@ -41,6 +41,20 @@ func (this *Lexer) NextToken() *Token {
 	return t
 }
 
+func (this *Lexer) ExpectKeyword(expect string) bool {
+	reset := this.fp
+	for _, e := range expect {
+		if e == int32(this.buf[this.fp]) {
+			this.fp++
+			continue
+		} else {
+			this.fp = reset
+			return false
+		}
+	}
+	return true
+}
+
 func (this *Lexer) expectKeyword(expect string) bool {
 	reset := this.fp
 	for _, e := range expect {
@@ -330,6 +344,8 @@ func (this *Lexer) nextTokenInternal() *Token {
 		if this.s == "" {
 			if this.expectKeyword("=") {
 				return newToken(TOKEN_LE, "<=", this.lineNum)
+			} else if this.expectKeyword("<") {
+				return newToken(TOKEN_SHL, "<<", this.lineNum)
 			} else {
 				return this.expectIdOrKey(c)
 			}

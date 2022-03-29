@@ -1,5 +1,7 @@
 package ast
 
+import "fmt"
+
 type KEY int
 
 const (
@@ -1631,6 +1633,54 @@ func (this *Cast) _exp() {
 
 /*}}}*/
 
+//Exp.UnaryExpr    /*{{{*/
+type UnaryExpr struct {
+	X   Exp //左边可能是一个包含声明语句的
+	Opt string
+	Exp_T
+}
+
+func UnaryExpr_new(x Exp, Opt string, line int) *UnaryExpr {
+	s := new(UnaryExpr)
+	s.X = x
+	s.Opt = Opt
+	s.LineNum = line
+	return s
+}
+
+func (this *UnaryExpr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *UnaryExpr) _exp() {
+}
+
+/*}}}*/
+
+//Exp.BinaryExpr    /*{{{*/
+type BinaryExpr struct {
+	Left  Exp //左边可能是一个包含声明语句的
+	Right Exp
+	Opt   string
+	Exp_T
+}
+
+func Binary_new(Left Exp, Right Exp, Opt string, line int) *BinaryExpr {
+	s := new(BinaryExpr)
+	s.Left = Left
+	s.Right = Right
+	s.Opt = Opt
+	s.LineNum = line
+	return s
+}
+
+func (this *BinaryExpr) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *BinaryExpr) _exp() {
+}
+
+/*}}}*/
+
 //Exp.Sub   /*{{{*/
 type Sub struct {
 	Left  Exp
@@ -1712,6 +1762,48 @@ func (this *Stm_T) ListLocals() (f []Field) {
 	return
 }
 
+//Stm.BranchStmt    /*{{{*/
+type BranchStmt struct {
+	Tok   int    // keyword token (BREAK, CONTINUE, GOTO, FALLTHROUGH)
+	Label *Ident // label name; or nil
+	Stm_T
+}
+
+func BranchStmt_new(Label *Ident, Tok int, line int) *BranchStmt {
+	s := new(BranchStmt)
+	s.Label = Label
+	s.Tok = Tok
+	s.LineNum = line
+	return s
+}
+
+func (this *BranchStmt) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *BranchStmt) _stm() {
+}
+
+//Stm.LabeledStmt    /*{{{*/
+type LabeledStmt struct {
+	Label *Ident
+	Stmt  Stm
+	Stm_T
+}
+
+func LabeledStmt_new(Label *Ident, Stmt Stm, line int) *LabeledStmt {
+	s := new(LabeledStmt)
+	s.Label = Label
+	s.Stmt = Stmt
+	s.LineNum = line
+	return s
+}
+
+func (this *LabeledStmt) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *LabeledStmt) _stm() {
+}
+
 //Stm.DeclStmt    /*{{{*/
 type DeclStmt struct {
 	Names  []Exp
@@ -1741,15 +1833,17 @@ func (this *DeclStmt) _stm() {
 type Assign struct {
 	Left    Exp //左边可能是一个包含声明语句的
 	Value   Exp
+	Op      string
 	IsField bool
 	Special bool
 	Stm_T
 }
 
-func Assign_new(Left Exp, exp Exp, Special bool, line int) *Assign {
+func Assign_new(Left Exp, exp Exp, Op string, Special bool, line int) *Assign {
 	s := new(Assign)
 	s.Left = Left
 	s.Value = exp
+	s.Op = Op
 	s.Special = Special
 	s.LineNum = line
 	return s
@@ -1788,31 +1882,6 @@ func (this *StreamStm) accept(v Visitor) {
 	v.visit(this)
 }
 func (this *StreamStm) _stm() {
-}
-
-/*}}}*/
-
-//Stm.Binary    /*{{{*/
-type Binary struct {
-	Left  Exp //左边可能是一个包含声明语句的
-	Right Exp
-	Opt   string
-	Stm_T
-}
-
-func Binary_new(Left Exp, Right Exp, Opt string, line int) *Binary {
-	s := new(Binary)
-	s.Left = Left
-	s.Right = Right
-	s.Opt = Opt
-	s.LineNum = line
-	return s
-}
-
-func (this *Binary) accept(v Visitor) {
-	v.visit(this)
-}
-func (this *Binary) _stm() {
 }
 
 /*}}}*/
@@ -2157,13 +2226,15 @@ func (this *Print) _stm() {
 //Stm.While   /*{{{*/
 type While struct {
 	Stm_T
+	IsDo bool
 	E    Exp
 	Body Stm
 }
 
-func While_new(exp Exp, body Stm, line int) *While {
+func While_new(exp Exp, body Stm, IsDo bool, line int) *While {
 	s := new(While)
 	s.E = exp
+	s.IsDo = IsDo
 	s.Body = body
 	s.LineNum = line
 	return s
@@ -2469,7 +2540,7 @@ func (this *ArrayType) Gettype() int {
 }
 
 func (this *ArrayType) String() string {
-	return "@Array[]"
+	return fmt.Sprintf("@Array[] -> %v", this.Ele)
 }
 func (this *ArrayType) _exp() {
 }

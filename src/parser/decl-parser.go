@@ -44,7 +44,7 @@ func (this *Parser) parserDecl(exp ast.Exp) ast.Stm {
 		//临时变量类型
 		log.Debugf("*******解析临时变量声明语句(有赋值语句)*******")
 		this.eatToken(TOKEN_ASSIGN)
-		exp := this.parseExp()
+		exp = this.parseExp()
 
 		var call string
 		var mp = new(ast.StreamStm)

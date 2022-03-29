@@ -72,12 +72,21 @@ func (this *Parser) advanceOnly() {
 }
 
 func (this *Parser) eatToken(kind int) {
-	if this.isAnnotationClass {
-		log.Infof("注解类，不处理")
-		return
+
+	//>> 二义
+	if kind == TOKEN_SHR && this.current.Kind == TOKEN_GT {
+		if this.lexer.ExpectKeyword(">") {
+			this.Linenum = this.current.LineNum
+			this.current = newToken(TOKEN_SHR, ">>", this.Linenum)
+		}
 	}
 	if control.Lexer_dump == true {
 		util.Debug(this.current.ToString())
+	}
+
+	if this.isAnnotationClass {
+		log.Infof("注解类，不处理")
+		return
 	}
 
 	if kind == this.current.Kind {
@@ -368,13 +377,13 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 				x = ast.IndexExpr_newEx(old, args[0], eleType, this.Linenum)
 				//处理List Map Get&&Set操作
 			} else if isListOrMapGetSet && len(args) == 2 {
-				x = ast.FakeExpr_new(ast.Assign_new(ast.IndexExpr_new(old, args[0], this.Linenum), args[1], false, this.Linenum), this.Linenum)
+				x = ast.FakeExpr_new(ast.Assign_new(ast.IndexExpr_new(old, args[0], this.Linenum), args[1], "=", false, this.Linenum), this.Linenum)
 				//处理List Add操作
 			} else if isListAdd && len(args) == 1 {
 				var args1 []ast.Exp
 				args1 = append(args1, old)
 				args1 = append(args1, args[0])
-				x = ast.FakeExpr_new(ast.Assign_new(old, ast.CallExpr_new(ast.NewIdent("append", this.Linenum), args1, this.Linenum), false, this.Linenum), this.Linenum)
+				x = ast.FakeExpr_new(ast.Assign_new(old, ast.CallExpr_new(ast.NewIdent("append", this.Linenum), args1, this.Linenum), "=", false, this.Linenum), this.Linenum)
 
 			} else if isListRemove && len(args) == 1 {
 				var args1 []ast.Exp
@@ -383,7 +392,7 @@ func (this *Parser) parseCallExp(x ast.Exp) (ret ast.Exp) {
 				x = ast.CallExpr_new(ast.NewIdent("delete", this.Linenum), args1, this.Linenum)
 
 			} else if isListOrMapClear && len(args) == 0 {
-				x = ast.FakeExpr_new(ast.Assign_new(old, eleType, false, this.Linenum), this.Linenum)
+				x = ast.FakeExpr_new(ast.Assign_new(old, eleType, "=", false, this.Linenum), this.Linenum)
 
 			} else {
 				x = ast.CallExpr_new(x, args, this.Linenum)
@@ -439,7 +448,8 @@ func (this *Parser) parseAtomExp() ast.Exp {
 			return ast.NewIdent("-"+id, this.Linenum)
 
 		} else {
-			this.ParseBug("加法解析bug")
+			var exp = this.parseExp()
+			return ast.UnaryExpr_new(exp, "-", this.Linenum)
 		}
 
 	case TOKEN_LPAREN:
@@ -605,6 +615,16 @@ func (this *Parser) parseNewExp() ast.Exp {
 		this.eatToken(TOKEN_RBRACK)
 		return ast.NewIntArray_new(exp, this.Linenum)
 	case TOKEN_INTEGER:
+		this.advance()
+		//数组
+		if this.current.Kind == TOKEN_LBRACK {
+			return this.parseNewArrayExp(ast.NewIdent("int", this.Linenum))
+		}
+		this.eatToken(TOKEN_LPAREN)
+		exp := this.parseExp()
+		this.eatToken(TOKEN_RPAREN)
+		return ast.NewObject_new(exp, this.Linenum)
+	case TOKEN_LONG:
 		this.advance()
 		//数组
 		if this.current.Kind == TOKEN_LBRACK {
@@ -914,16 +934,13 @@ func (this *Parser) parseNotExp() ast.Exp {
 			if index != nil {
 				log.Debugf("数组索引表达式 --> %v", exp)
 				this.eatToken(TOKEN_RBRACK)
-				if this.current.Kind == TOKEN_DOT {
-					exp = ast.IndexExpr_new(exp, index, this.Linenum)
-				} else {
-					return ast.IndexExpr_new(exp, index, this.Linenum)
-				}
+				exp = ast.IndexExpr_new(exp, index, this.Linenum)
 			} else {
 				log.Debugf("数组索引用")
 				this.eatToken(TOKEN_RBRACK)
 				panic("数组索引用")
 			}
+
 		}
 	}
 	return exp
@@ -1011,12 +1028,26 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 	return left
 }
 
+func (this *Parser) parseSHLRExp() ast.Exp {
+	left := this.parseAddSubExp()
+	if this.current.Kind == TOKEN_SHL {
+		this.eatToken(TOKEN_SHL)
+		right := this.parseAddSubExp()
+		return ast.Binary_new(left, right, "<<", this.Linenum)
+	} else if this.current.Kind == TOKEN_SHR {
+		this.eatToken(TOKEN_SHR)
+		right := this.parseAddSubExp()
+		return ast.Binary_new(left, right, ">>", this.Linenum)
+	}
+	return left
+}
+
 //LtExp -> AddSubExp + AddSubExp
 //      -> AddSubExp - AddSubExp
 //      -> AddSubExp
 func (this *Parser) parseLtExp() ast.Exp {
 	log.Debugf("解析parseLtExp")
-	left := this.parseAddSubExp()
+	left := this.parseSHLRExp()
 	//去除注释
 	for this.current.Kind == TOKEN_COMMENT {
 		log.Debugf("--------->去除注释:%v", this.current.Lexeme)
@@ -1032,7 +1063,7 @@ func (this *Parser) parseLtExp() ast.Exp {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
 			}
-			right := this.parseAddSubExp()
+			right := this.parseSHLRExp()
 			left = ast.Add_new(left, right, this.Linenum)
 			for this.current.Kind == TOKEN_COMMENT {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
@@ -1045,7 +1076,7 @@ func (this *Parser) parseLtExp() ast.Exp {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
 			}
-			right := this.parseAddSubExp()
+			right := this.parseSHLRExp()
 			left = ast.Sub_new(left, right, this.Linenum)
 			for this.current.Kind == TOKEN_COMMENT {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)

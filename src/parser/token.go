@@ -59,6 +59,11 @@ func initTokenMap() {
 	tokenMap["%"] = TOKEN_REM
 	tokenMap["%="] = TOKEN_REM_ASSIGN
 	tokenMap["@"] = TOKEN_AT
+	tokenMap["break"] = TOKEN_BREAK
+	tokenMap["goto"] = TOKEN_GOTO
+	tokenMap["<<"] = TOKEN_SHL
+	tokenMap[">>"] = TOKEN_SHR
+
 	tokenMap["->"] = TOKEN_LAMBDA
 	tokenMap["instanceof"] = TOKEN_INSTANCEOF
 	tokenMap["synchronized"] = TOKEN_SYNCHRONIZED
@@ -66,6 +71,7 @@ func initTokenMap() {
 	tokenMap["if"] = TOKEN_IF
 	tokenMap["else"] = TOKEN_ELSE
 	tokenMap["while"] = TOKEN_WHILE
+	tokenMap["do"] = TOKEN_DO
 	tokenMap["for"] = TOKEN_FOR
 	tokenMap["throws"] = TOKEN_THROWS
 	tokenMap["throw"] = TOKEN_THROW
@@ -184,12 +190,18 @@ func initTokenMap() {
 	tMap[TOKEN_GT] = "TOKEN_GT"                 // >
 	tMap[TOKEN_NOT] = "TOKEN_NOT"               // !
 	tMap[TOKEN_AT] = "TOKEN_AT"                 // @
+	tMap[TOKEN_BREAK] = "TOKEN_BREAK"           // break
+	tMap[TOKEN_GOTO] = "TOKEN_GOTO"             // goto
+	tMap[TOKEN_SHL] = "TOKEN_SHL"               // <<
+	tMap[TOKEN_SHR] = "TOKEN_SHR"               // >>
+
 	tMap[TOKEN_COMMENT] = "TOKEN_COMMENT"
 
 	tMap[TOKEN_IF] = "TOKEN_IF"
 	tMap[TOKEN_ELSE] = "TOKEN_ELSE"
 	tMap[TOKEN_FOR] = "TOKEN_FOR"
 	tMap[TOKEN_WHILE] = "TOKEN_WHILE"
+	tMap[TOKEN_DO] = "TOKEN_DO"
 
 	tMap[TOKEN_TRUE] = "TOKEN_TRUE"
 	tMap[TOKEN_FALSE] = "TOKEN_FALSE"
@@ -305,13 +317,17 @@ const (
 	TOKEN_REM_ASSIGN          // %=
 	TOKEN_SEMI                // ;
 	TOKEN_AT                  // @
-
-	TOKEN_COMMENT //注释
+	TOKEN_BREAK               // break
+	TOKEN_GOTO                // goto
+	TOKEN_SHL                 //<<
+	TOKEN_SHR                 //>>
+	TOKEN_COMMENT             //注释
 	//关键字
 
 	TOKEN_IF    // if
 	TOKEN_ELSE  // else
 	TOKEN_WHILE // while
+	TOKEN_DO    // do
 	TOKEN_FOR   // for
 
 	TOKEN_EOF   //

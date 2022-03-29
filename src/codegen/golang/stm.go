@@ -3,6 +3,7 @@ package codegen_go
 import (
 	"dog/ast"
 	"dog/cfg"
+	"dog/parser"
 	log "github.com/corgi-kx/logcustom"
 	"github.com/xwb1989/sqlparser"
 	gast "go/ast"
@@ -181,6 +182,24 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		return this.OptimitcStreamStm(stmt)
 		//赋值语句
 	case *ast.Assign:
+		var opt token.Token
+		switch v.Op {
+		case "=":
+			opt = token.ASSIGN
+		case "*=":
+			opt = token.MUL_ASSIGN
+		case "/=":
+			opt = token.QUO_ASSIGN
+		case "+=":
+			opt = token.ADD_ASSIGN
+		case "-=":
+			opt = token.SUB_ASSIGN
+		case "%=":
+			opt = token.REM_ASSIGN
+		default:
+			this.TranslationBug(v)
+		}
+
 		//TODO stream 语句
 		expp := this.transExp(v.Value)
 
@@ -195,7 +214,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 					List: []gast.Stmt{&gast.AssignStmt{
 						Lhs:    []gast.Expr{this.transExp(v.Left)},
 						TokPos: 0,
-						Tok:    token.ASSIGN,
+						Tok:    opt,
 						Rhs:    []gast.Expr{this.transExp(vv.One)}}},
 				},
 
@@ -204,7 +223,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 					List: []gast.Stmt{&gast.AssignStmt{
 						Lhs:    []gast.Expr{this.transExp(v.Left)},
 						TokPos: 0,
-						Tok:    token.ASSIGN,
+						Tok:    opt,
 						Rhs:    []gast.Expr{this.transExp(vv.Two)}}},
 					Rbrace: 0,
 				},
@@ -216,7 +235,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			stmt = &gast.AssignStmt{
 				Lhs:    []gast.Expr{this.transExp(v.Left)},
 				TokPos: 0,
-				Tok:    token.ASSIGN,
+				Tok:    opt,
 				Rhs:    []gast.Expr{expp},
 			}
 
@@ -422,28 +441,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 	case *ast.Block:
 		return this.transBlock(v)
-	case *ast.Binary:
-		var opt token.Token
-		switch v.Opt {
-		case "*=":
-			opt = token.MUL_ASSIGN
-		case "/=":
-			opt = token.QUO_ASSIGN
-		case "+=":
-			opt = token.ADD_ASSIGN
-		case "-=":
-			opt = token.SUB_ASSIGN
-		case "%=":
-			opt = token.REM_ASSIGN
-		default:
-			panic("*ast.Binary")
-		}
-		stmt = &gast.AssignStmt{
-			Lhs:    []gast.Expr{this.transExp(v.Left)},
-			TokPos: 0,
-			Tok:    opt,
-			Rhs:    []gast.Expr{this.transExp(v.Right)},
-		}
+
 	case *ast.Switch:
 		return &gast.SwitchStmt{
 			Switch: 0,
@@ -633,6 +631,27 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Rhs:    []gast.Expr{this.transExp(v.E)},
 		}
 		return as
+	case *ast.LabeledStmt:
+		lstm := &gast.LabeledStmt{
+			Label: this.transNameExp(v.Label),
+			Stmt:  this.transStm(v.Stmt),
+		}
+		return lstm
+	case *ast.BranchStmt:
+		var tok token.Token
+		switch v.Tok {
+		case parser.TOKEN_BREAK:
+			tok = token.BREAK
+		case parser.TOKEN_GOTO:
+			tok = token.GOTO
+		default:
+			this.TranslationBug(v)
+		}
+		lstm := &gast.BranchStmt{
+			Tok:   tok,
+			Label: this.transNameExp(v.Label),
+		}
+		return lstm
 	case *ast.Query:
 		stm, err := sqlparser.Parse(v.SQL)
 		if err != nil {

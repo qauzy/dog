@@ -167,12 +167,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			}
 			call.Args = append(call.Args, t)
 
-			len := &gast.BasicLit{
+			length := &gast.BasicLit{
 				ValuePos: 0,
 				Kind:     token.INT,
 				Value:    "0",
 			}
-			call.Args = append(call.Args, len)
+			call.Args = append(call.Args, length)
 			return call
 		} else {
 			call := &gast.CallExpr{
@@ -467,12 +467,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			if v.Size != nil {
 				call.Args = append(call.Args, this.transExp(v.Size))
 			} else {
-				len := &gast.BasicLit{
+				length := &gast.BasicLit{
 					ValuePos: 0,
 					Kind:     token.INT,
 					Value:    "0",
 				}
-				call.Args = append(call.Args, len)
+				call.Args = append(call.Args, length)
 
 			}
 
@@ -485,6 +485,22 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return this.transFuncLit(v)
 	case *ast.Lambda:
 		return this.transLambda(v)
+	case *ast.BinaryExpr:
+		var opt token.Token
+		switch v.Opt {
+		case ">>":
+			opt = token.SHR
+		case "<<":
+			opt = token.SHL
+		default:
+			this.TranslationBug(v)
+		}
+		return &gast.BinaryExpr{
+			X:     this.transExp(v.Left),
+			OpPos: 0,
+			Op:    opt,
+			Y:     this.transExp(v.Right),
+		}
 	case *ast.NewHash:
 		if cfg.NoGeneric {
 			call := &gast.CallExpr{
@@ -535,12 +551,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 			}
 			call.Args = append(call.Args, t)
 
-			len := &gast.BasicLit{
+			length := &gast.BasicLit{
 				ValuePos: 0,
 				Kind:     token.INT,
 				Value:    "0",
 			}
-			call.Args = append(call.Args, len)
+			call.Args = append(call.Args, length)
 			return call
 		} else {
 			call := &gast.CallExpr{
