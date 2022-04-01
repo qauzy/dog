@@ -17,6 +17,7 @@ import (
 )
 
 type Translation struct {
+	*util.Stack
 	file          string
 	currentFile   ast.File
 	currentClass  ast.Class
@@ -24,6 +25,9 @@ type Translation struct {
 	currentField  ast.Field
 	currentStm    ast.Stm
 	currentExp    ast.Exp
+	classStack    *util.Stack
+	methodStack   *util.Stack
+	stmStack      *util.Stack
 	GolangFile    *gast.File
 	PkgName       string
 }
@@ -32,6 +36,10 @@ func NewTranslation(file string, j ast.File) (translation *Translation) {
 	translation = &Translation{
 		file:        file,
 		currentFile: j,
+		Stack:       util.InitStack(),
+		classStack:  util.InitStack(),
+		methodStack: util.InitStack(),
+		stmStack:    util.InitStack(),
 		GolangFile: &gast.File{
 			Doc:        nil,
 			Package:    0,

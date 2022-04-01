@@ -44,7 +44,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	id = this.current.Lexeme
 	this.eatToken(TOKEN_ID)
 
-	var generic []*ast.GenericSingle
+	var generics []*ast.GenericSingle
 	//FIXME 泛型忽略
 	if this.current.Kind == TOKEN_LT {
 		this.eatToken(TOKEN_LT)
@@ -56,11 +56,11 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 			ge.Extends = this.current.Lexeme
 			this.parseType()
 		}
-		generic = append(generic, ge)
+		generics = append(generics, ge)
 		for this.current.Kind == TOKEN_COMMER {
 			this.advance()
 
-			ge := &ast.GenericSingle{}
+			ge = &ast.GenericSingle{}
 			ge.Name = this.current.Lexeme
 			this.eatToken(TOKEN_ID)
 			if this.current.Kind == TOKEN_EXTENDS {
@@ -68,7 +68,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 				ge.Extends = this.current.Lexeme
 				this.parseType()
 			}
-			generic = append(generic, ge)
+			generics = append(generics, ge)
 
 		}
 
@@ -107,7 +107,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.CLASS_TYPE)
-	for _, vv := range generic {
+	for _, vv := range generics {
 		log.Infof("添加泛型：%v", vv.Name)
 		classSingle.AddGeneric(vv)
 	}

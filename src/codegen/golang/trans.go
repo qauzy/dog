@@ -260,7 +260,22 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 				Rbrack: 0,
 			}
 		}
+	case *ast.InterfaceType:
+		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
+			pack := this.currentFile.GetImport(v.Name).GetPack()
+			expr := &gast.SelectorExpr{
+				X:   gast.NewIdent(pack),
+				Sel: gast.NewIdent(util.GetNewId(v.Name)),
+			}
 
+			return expr
+		}
+
+		return &gast.Ident{
+			NamePos: 0,
+			Name:    v.Name,
+			Obj:     gast.NewObj(gast.Typ, v.Name),
+		}
 	case *ast.ClassType:
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
@@ -345,5 +360,14 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		log.Info(v)
 		panic("impossible")
 
+	}
+}
+
+func (this *Translation) CheckField(name string) ast.Field {
+	if this.Peek() != nil {
+		return this.Peek().GetField(name)
+	} else {
+		log.Debugf("------------------------->检查本地变量:%v", name)
+		return nil
 	}
 }

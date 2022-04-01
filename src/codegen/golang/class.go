@@ -17,7 +17,20 @@ import (
 // param: c
 // return:
 func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
+	log.Infof("解析类:%v", c.GetName())
 	this.currentClass = c
+	this.Push(c)
+	this.classStack.Push(c)
+	defer func() {
+		this.classStack.Pop()
+		this.Pop()
+		if this.classStack.Peek() != nil {
+			this.currentClass = this.classStack.Peek().(ast.Class)
+		} else {
+			this.currentClass = nil
+		}
+	}()
+
 	if cc, ok := c.(*ast.ClassSingle); ok {
 		cl = &gast.GenDecl{
 			Doc:    nil,
@@ -34,6 +47,26 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 			Assign:  0,
 			Type:    nil,
 			Comment: nil,
+		}
+		//处理类泛型
+		var tpList = &gast.FieldList{}
+		for _, generic := range cc.Generics {
+			log.Debugf("解析泛型：%v", generic)
+			var tp = gast.NewIdent("any")
+			if generic.Extends != "" {
+				tp = gast.NewIdent(generic.Extends)
+			}
+
+			fi := &gast.Field{
+				Doc:     nil,
+				Names:   []*gast.Ident{gast.NewIdent(generic.Name)},
+				Type:    tp,
+				Tag:     nil,
+				Comment: nil,
+			}
+
+			tpList.List = append(tpList.List, fi)
+			sp.TypeParams = tpList
 		}
 		Type := &gast.StructType{
 			Struct: 0,
@@ -62,6 +95,22 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 				Type.Fields.List = append(Type.Fields.List, gfi)
 				this.constructFieldFunc(gfi)
 			}
+		}
+
+		//处理Extends
+		if cc.Extends != "" {
+			var tp = cc.Extends
+			im := this.currentFile.GetImport(tp)
+			if im != nil {
+				tp = im.GetPack() + "." + cc.Extends
+			}
+			Extends := &gast.Field{
+				Doc:     nil,
+				Type:    gast.NewIdent(tp),
+				Tag:     nil,
+				Comment: nil,
+			}
+			Type.Fields.List = append(Type.Fields.List, Extends)
 		}
 
 		//如果是枚举类型加一个枚举序号变量 和 枚举序号获取函数

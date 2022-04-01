@@ -259,6 +259,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 					return call
 				}
 			}
+
 		}
 		//替换日志打印语句中的 {}
 		if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Info" || vv.Sel.Name == "Error") {
@@ -274,7 +275,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 				}
 			}
 
-		} else if vv, ok := fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") && cfg.NoGeneric {
+		} else if vv, ok = fn.(*gast.SelectorExpr); ok && (vv.Sel.Name == "Get" || vv.Sel.Name == "get") && cfg.NoGeneric {
 			if vvv, ok := vv.X.(*gast.Ident); ok && (this.currentFile.GetField(vvv.Name) != nil || this.currentClass.GetField(vvv.Name) != nil || this.currentMethod.GetField(vvv.Name) != nil) {
 				if len(v.ArgsList) == 1 {
 					f := this.currentClass.GetField(vvv.Name)
@@ -296,7 +297,12 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 					}
 				}
 			}
-
+			//如果不是全静态处理，对于类成员函数的调佣，加this,而且大写开头
+		} else if ident, ok := fn.(*gast.Ident); ok && (ident.Name == "ordinal") && this.currentClass.GetType() == ast.ENUM_TYPE {
+			fn = &gast.SelectorExpr{
+				X:   gast.NewIdent("this"),
+				Sel: gast.NewIdent("Ordinal"),
+			}
 		}
 
 		//替换name

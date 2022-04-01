@@ -41,9 +41,10 @@ type Class interface {
 	GetField(name string) (f Field)
 	AddMethod(m Method)
 	GetMethod(name string) (m Method)
+	ListMethods() []Method
 	GetGeneric(name string) (g *GenericSingle)
 	AddGeneric(g *GenericSingle)
-	ListMethods() []Method
+	ListGeneric() []*GenericSingle
 	GetName() string
 	GetType() KEY
 }
@@ -179,6 +180,10 @@ func (this *ClassSingle) AddGeneric(g *GenericSingle) {
 	this.GenericsMap[g.Name] = g
 	this.Generics = append(this.Generics, g)
 }
+func (this *ClassSingle) ListGeneric() []*GenericSingle {
+	return this.Generics
+}
+
 func (this *ClassSingle) ListMethods() []Method {
 	return this.Methods
 }
@@ -2358,6 +2363,7 @@ const (
 	TYPE_BYTE
 	TYPE_BYTEARRAY
 	TYPE_CLASS
+	TYPE_INTERFACE
 	TYPE_STRING
 	TYPE_STRINGARRAY
 	TYPE_LIST
@@ -2628,6 +2634,24 @@ func (this *StringArray) _exp() {
 }
 
 /*}}}*/
+//Type.InterfaceType    /*{{{*/
+type InterfaceType struct {
+	Name     string
+	TypeKind int
+}
+
+func (this *InterfaceType) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *InterfaceType) Gettype() int {
+	return this.TypeKind
+}
+
+func (this *InterfaceType) String() string {
+	return this.Name
+}
+func (this *InterfaceType) _exp() {
+}
 
 //Type.ClassType    /*{{{*/
 type ClassType struct {

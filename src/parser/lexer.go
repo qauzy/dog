@@ -256,9 +256,12 @@ func (this *Lexer) nextTokenInternal() *Token {
 			this.fp++
 			c = this.buf[this.fp]
 
-			if c != '\'' {
+			if c != '\'' && this.buf[this.fp-1] != '\\' {
 				util.ParserError("'", string(c), this.lineNum, this.fname)
+			} else {
+				this.fp++
 			}
+
 			var ss = string(this.buf[st-1 : this.fp+1])
 			this.fp++
 			return newToken(TOKEN_ID, ss, this.lineNum)

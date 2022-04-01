@@ -148,8 +148,16 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 // return:
 func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 	this.currentMethod = fi
+	this.methodStack.Push(fi)
+	this.Push(fi)
 	defer func() {
-		this.currentMethod = nil
+		this.Pop()
+		this.methodStack.Pop()
+		if this.methodStack.Peek() != nil {
+			this.currentMethod = this.methodStack.Peek().(ast.Method)
+		} else {
+			this.currentMethod = nil
+		}
 	}()
 	if method, ok := fi.(*ast.MethodSingle); ok {
 		var recv *gast.FieldList
@@ -197,19 +205,39 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				List:    nil,
 				Closing: 0,
 			}
+			//处理泛型
+			var tp gast.Expr
+			if len(this.currentClass.ListGeneric()) > 0 {
+				gnTp := &gast.IndexListExpr{
+					X: &gast.Ident{
+						NamePos: 0,
+						Name:    this.currentClass.GetName(),
+						Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
+					},
+					Lbrack:  0,
+					Indices: nil,
+					Rbrack:  0,
+				}
+				for _, gnic := range this.currentClass.ListGeneric() {
+					gnTp.Indices = append(gnTp.Indices, gast.NewIdent(gnic.Name))
+				}
 
-			gfi := &gast.Field{
-				Doc:   nil,
-				Names: []*gast.Ident{gast.NewIdent("this")},
-				Type: &gast.StarExpr{X: &gast.Ident{
+				tp = gnTp
+			} else {
+				tp = &gast.Ident{
 					NamePos: 0,
 					Name:    this.currentClass.GetName(),
 					Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-				}},
+				}
+			}
+
+			gfi := &gast.Field{
+				Doc:     nil,
+				Names:   []*gast.Ident{gast.NewIdent("this")},
+				Type:    &gast.StarExpr{X: tp},
 				Tag:     nil,
 				Comment: nil,
 			}
-
 			recv.List = append(recv.List, gfi)
 		}
 

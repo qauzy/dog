@@ -13,7 +13,7 @@ import (
 )
 
 type Parser struct {
-	*Stack
+	*util.Stack
 	lexer             *Lexer
 	current           *Token
 	pending           []*Token
@@ -24,9 +24,9 @@ type Parser struct {
 	isAnnotationClass bool
 	GetField          FieldFunc
 	currentFile       ast.File //当前解析的File
-	classStack        *Stack
-	methodStack       *Stack
-	stmStack          *Stack
+	classStack        *util.Stack
+	methodStack       *util.Stack
+	stmStack          *util.Stack
 	currentClass      ast.Class  //当前解析的class TODO 类嵌套
 	currentMethod     ast.Method //当前解析的Method	TODO 函数嵌套
 	currentStm        ast.Stm    //当前解析的Stm
@@ -37,10 +37,10 @@ type Parser struct {
 func NewParse(fname string, buf []byte) *Parser {
 	lexer := NewLexer(fname, buf)
 	p := new(Parser)
-	p.Stack = InitStack()
-	p.classStack = InitStack()
-	p.methodStack = InitStack()
-	p.stmStack = InitStack()
+	p.Stack = util.InitStack()
+	p.classStack = util.InitStack()
+	p.methodStack = util.InitStack()
+	p.stmStack = util.InitStack()
 	p.lexer = lexer
 	p.current = p.lexer.NextToken()
 	return p

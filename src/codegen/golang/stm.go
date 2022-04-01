@@ -61,7 +61,21 @@ func (this *Translation) transDefine(s ast.Stm) (stmt gast.Stmt) {
 // param: s
 // return:
 func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
-	log.Debugf("transStm = %v", s)
+	log.Debugf("解析transStm = %v", s)
+	var fake = ast.FakeStm_new(this.Peek(), 0)
+	this.currentStm = fake
+	this.stmStack.Push(fake)
+	this.Push(fake)
+	defer func() {
+		this.Pop()
+		this.stmStack.Pop()
+		if this.stmStack.Peek() != nil {
+			this.currentStm = this.stmStack.Peek().(ast.Stm)
+		} else {
+			this.currentStm = nil
+		}
+	}()
+
 	switch v := s.(type) {
 	//变量声明
 	case *ast.DeclStmt:

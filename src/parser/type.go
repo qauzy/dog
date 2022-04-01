@@ -2,6 +2,7 @@ package parser
 
 import (
 	"dog/ast"
+	"dog/storage"
 	log "github.com/corgi-kx/logcustom"
 )
 
@@ -242,7 +243,13 @@ func (this *Parser) parseType() ast.Exp {
 		}
 
 		if this.current.Kind != TOKEN_LT {
-			this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+			ttp, err := storage.FindByName(name)
+			if err == nil && ast.KEY(ttp.Kind) == ast.INTERFACE_TYPE {
+				this.currentType = &ast.InterfaceType{name, ast.TYPE_INTERFACE}
+			} else {
+				this.currentType = &ast.ClassType{name, ast.TYPE_CLASS}
+			}
+
 		} else {
 			this.eatToken(TOKEN_LT)
 			var tp []ast.Exp
