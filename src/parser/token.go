@@ -137,6 +137,7 @@ func initTokenMap() {
 
 	tokenMap["Object"] = TOKEN_OBJECT
 	tokenMap["Integer"] = TOKEN_INTEGER
+	tokenMap["Number"] = TOKEN_NUMBER
 	tokenMap["Set"] = TOKEN_SET
 	tokenMap["HashSet"] = TOKEN_HASHSET
 	tokenMap["Map"] = TOKEN_MAP
@@ -261,6 +262,7 @@ func initTokenMap() {
 	tMap[TOKEN_STRING] = "TOKEN_STRING"
 	tMap[TOKEN_OBJECT] = "TOKEN_OBJECT"
 	tMap[TOKEN_INTEGER] = "TOKEN_INTEGER"
+	tMap[TOKEN_NUMBER] = "TOKEN_NUMBER"
 	tMap[TOKEN_SET] = "TOKEN_SET"
 	tMap[TOKEN_HASHSET] = "TOKEN_HASHSET"
 	tMap[TOKEN_MAP] = "TOKEN_MAP"
@@ -401,6 +403,7 @@ const (
 	TOKEN_STRING
 	TOKEN_OBJECT
 	TOKEN_INTEGER
+	TOKEN_NUMBER //Number
 	TOKEN_TYPE_END
 
 	//自定义处理关键字

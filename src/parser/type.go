@@ -61,15 +61,28 @@ func (this *Parser) parseType() ast.Exp {
 			this.currentType = &ast.ObjectType{ast.TYPE_OBJECT}
 		}
 	case TOKEN_LONG:
-		fallthrough
+		this.advance()
+		if this.current.Kind == TOKEN_DOT {
+			return ast.NewIdent("Long", this.Linenum)
+		}
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ArrayType{Ele: &ast.Long{}}
+		} else {
+			this.currentType = &ast.Long{ast.TYPE_LONG}
+		}
 	case TOKEN_INTEGER:
 		this.advance()
+		if this.current.Kind == TOKEN_DOT {
+			return ast.NewIdent("Integer", this.Linenum)
+		}
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
 			this.currentType = &ast.ArrayType{Ele: &ast.Integer{}}
 		} else {
-			this.currentType = &ast.Integer{ast.TYPE_INT}
+			this.currentType = &ast.Integer{ast.TYPE_INTEGER}
 		}
 	case TOKEN_BYTE:
 		this.advance()
@@ -91,6 +104,9 @@ func (this *Parser) parseType() ast.Exp {
 		this.currentType = &ast.Date{ast.TYPE_DATE}
 	case TOKEN_STRING:
 		this.eatToken(TOKEN_STRING)
+		if this.current.Kind == TOKEN_DOT {
+			return ast.NewIdent("String", this.Linenum)
+		}
 		if this.current.Kind == TOKEN_LBRACK {
 			this.eatToken(TOKEN_LBRACK)
 			this.eatToken(TOKEN_RBRACK)
@@ -216,6 +232,15 @@ func (this *Parser) parseType() ast.Exp {
 		this.eatToken(TOKEN_GT)
 		//
 		this.currentType = &ast.GenericType{ast.NewIdent("", this.Linenum), tp, ast.TYPE_GENERIC}
+	case TOKEN_NUMBER:
+		this.advance()
+		if this.current.Kind == TOKEN_LBRACK {
+			this.eatToken(TOKEN_LBRACK)
+			this.eatToken(TOKEN_RBRACK)
+			this.currentType = &ast.ArrayType{Ele: &ast.Integer{}}
+		} else {
+			this.currentType = &ast.Integer{ast.TYPE_INT}
+		}
 	default:
 		//FIXME 类型可能带包名前缀
 		name := this.current.Lexeme

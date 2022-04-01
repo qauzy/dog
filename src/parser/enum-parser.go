@@ -6,16 +6,15 @@ import (
 )
 
 func (this *Parser) parseEnumDecl(access int) (cl ast.Class) {
-	var id, extends string
-
+	var id string
+	var extends ast.Exp
 	this.eatToken(TOKEN_ENUM)
 	id = this.current.Lexeme
 	this.eatToken(TOKEN_ID)
 	//处理implements
 	if this.current.Kind == TOKEN_IMPLEMENTS {
 		this.eatToken(TOKEN_IMPLEMENTS)
-		extends = this.current.Lexeme
-		this.eatToken(TOKEN_ID)
+		extends = this.parseType()
 	}
 	this.eatToken(TOKEN_LBRACE)
 	classSingle := ast.NewClassSingle(this.currentFile, access, id, extends, ast.ENUM_TYPE)

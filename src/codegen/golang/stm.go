@@ -4,6 +4,7 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/parser"
+	"fmt"
 	log "github.com/corgi-kx/logcustom"
 	"github.com/xwb1989/sqlparser"
 	gast "go/ast"
@@ -409,7 +410,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Rparen:   0,
 		}
 		as := &gast.AssignStmt{
-			Lhs:    []gast.Expr{gast.NewIdent("err")},
+			Lhs:    []gast.Expr{gast.NewIdent("exception")},
 			TokPos: 0,
 			Tok:    token.DEFINE,
 			Rhs:    []gast.Expr{call},
@@ -420,7 +421,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			ifStmt := &gast.IfStmt{
 				If:   0,
 				Init: nil,
-				Cond: this.transExp(vv.Test[0]), //FIXME 兼容多个Exception
+				Cond: gast.NewIdent("exception != nil"), //FIXME 兼容多个Exception
 				Body: nil,
 				Else: nil,
 			}
@@ -690,7 +691,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			}
 		}
 		exe := `
-	//FIXME 非原生sql，需要处理
+	//FIXME 非原生sql,需要处理
 	eng := this.DBWrite().Exec(` + v.SQL + args + `)
 	err = eng.Error`
 
@@ -701,6 +702,30 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 	}
 
 	return
+}
+func (this *Translation) transSQl(sql string) (stmt *gast.Stmt) {
+	stm, err := sqlparser.Parse(sql)
+	if err != nil {
+		log.Errorf("Query=%v", err)
+	}
+	exe := `eng := this.DBWrite()`
+	switch st := stm.(type) {
+	case *sqlparser.Select:
+		exe = exe + fmt.Sprintf(".Table(%v)", sqlparser.String(st.From))
+
+		exe = exe + fmt.Sprintf(".Select(%v)", sqlparser.String(st.SelectExprs))
+
+		exe = exe + fmt.Sprintf(".Group(%v)", sqlparser.String(st.GroupBy))
+
+		exe = exe + fmt.Sprintf(".Offset(%v)", sqlparser.String(st.Limit.Offset))
+		exe = exe + fmt.Sprintf(".Limit(%v)", sqlparser.String(st.Limit.Rowcount))
+
+		exe = exe + fmt.Sprintf(".Order(%v)", sqlparser.String(st.OrderBy))
+
+	case *sqlparser.Insert:
+	}
+
+	return stmt
 }
 
 func (this *Translation) transBlock(s ast.Stm) (block *gast.BlockStmt) {

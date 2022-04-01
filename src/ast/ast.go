@@ -1,6 +1,8 @@
 package ast
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type KEY int
 
@@ -45,6 +47,7 @@ type Class interface {
 	GetGeneric(name string) (g *GenericSingle)
 	AddGeneric(g *GenericSingle)
 	ListGeneric() []*GenericSingle
+	GetExtends() Exp
 	GetName() string
 	GetType() KEY
 }
@@ -124,7 +127,7 @@ type ClassSingle struct {
 	GenericsMap map[string]*GenericSingle //记录泛型信息
 	Access      int
 	Name        string
-	Extends     string
+	Extends     Exp
 	Fields      []Field
 	FieldsMap   map[string]Field
 	Methods     []Method
@@ -162,6 +165,9 @@ func (this *ClassSingle) ListFields() []Field {
 	return this.Fields
 }
 
+func (this *ClassSingle) GetExtends() Exp {
+	return this.Extends
+}
 func (this *ClassSingle) AddMethod(m Method) {
 	this.MethodsMap[m.GetName()] = m
 	this.Methods = append(this.Methods, m)
@@ -192,7 +198,7 @@ func (this *ClassSingle) GetType() KEY {
 	return this.Key
 }
 
-func NewClassSingle(Container File, Access int, Name string, Extends string, key KEY) (cl *ClassSingle) {
+func NewClassSingle(Container File, Access int, Name string, Extends Exp, key KEY) (cl *ClassSingle) {
 	cl = &ClassSingle{
 		Container:   Container,
 		Access:      Access,
@@ -2356,7 +2362,8 @@ func (this *Range) _stm() {
 //Type.Int  /*{{{*/
 const (
 	TYPE_INT = iota
-	TYPE_Integer
+	TYPE_INTEGER
+	TYPE_LONG
 	TYPE_BOOLEAN
 	TYPE_VOID
 	TYPE_ARRAY
@@ -2438,6 +2445,22 @@ func (this *Integer) String() string {
 	return "@Integer"
 }
 func (this *Integer) _exp() {
+}
+
+type Long struct {
+	TypeKind int
+}
+
+func (this *Long) accept(v Visitor) {
+	v.visit(this)
+}
+func (this *Long) Gettype() int {
+	return this.TypeKind
+}
+func (this *Long) String() string {
+	return "@Long"
+}
+func (this *Long) _exp() {
 }
 
 type Char struct {

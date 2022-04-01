@@ -47,7 +47,7 @@ func (this *Parser) parseStatement() ast.Stm {
 		this.advance()
 		return stm
 	case TOKEN_SUPER:
-		id := ast.NewIdent(this.current.Lexeme, this.Linenum)
+		id := ast.NewIdent("super", this.Linenum)
 		this.eatToken(TOKEN_SUPER)
 		exp := this.parseCallExp(id)
 

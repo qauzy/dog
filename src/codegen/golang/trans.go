@@ -208,6 +208,8 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		return gast.NewIdent("string")
 	case *ast.StringArray:
 		return gast.NewIdent("[]string")
+	case *ast.Long:
+		return gast.NewIdent("int64")
 	case *ast.Integer:
 		return gast.NewIdent("int")
 	case *ast.Int:

@@ -6,7 +6,8 @@ import (
 
 //
 func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
-	var id, extends string
+	var id string
+	var extends ast.Exp
 	var isThrows bool
 	var isDefault bool
 	//类访问权限修饰符
@@ -37,17 +38,9 @@ func (this *Parser) parseInterfaceDecl(access int) (cl ast.Class) {
 	//处理extends
 	if this.current.Kind == TOKEN_EXTENDS {
 		this.eatToken(TOKEN_EXTENDS)
-		extends = this.current.Lexeme
-		this.eatToken(TOKEN_ID)
-		if this.current.Kind == TOKEN_LT {
-			this.eatToken(TOKEN_LT)
-			this.eatToken(TOKEN_ID)
-			for this.current.Kind == TOKEN_COMMER {
-				this.eatToken(TOKEN_COMMER)
-				this.advance()
-			}
-			this.eatToken(TOKEN_GT)
-		}
+		extends = this.parseType()
+
+		//FIXME 接口可以继承多个父对象
 		for this.current.Kind == TOKEN_COMMER {
 			this.eatToken(TOKEN_COMMER)
 			this.eatToken(TOKEN_ID)

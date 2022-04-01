@@ -564,6 +564,9 @@ func (this *Parser) parseAtomExp() ast.Exp {
 		return ast.NewIdent(id, this.Linenum)
 	case TOKEN_NEW:
 		return this.parseNewExp()
+	case TOKEN_SUPER:
+		this.eatToken(TOKEN_SUPER)
+		return ast.NewIdent("super", this.Linenum)
 	default:
 		if this.IsTypeToken() {
 			return this.parseType()
@@ -753,7 +756,7 @@ func (this *Parser) parseNewExp() ast.Exp {
 		defer func() {
 			//直接实现接口
 			if this.current.Kind == TOKEN_LBRACE {
-				classSingle := ast.NewClassSingle(this.currentFile, 0, id, "", ast.CLASS_TYPE)
+				classSingle := ast.NewClassSingle(this.currentFile, 0, id, nil, ast.CLASS_TYPE)
 				this.currentClass = classSingle
 				this.Push(classSingle)
 				this.classStack.Push(classSingle)
@@ -1280,6 +1283,10 @@ func (this *Parser) parseAnnotation() {
 		return
 	}
 	this.eatToken(TOKEN_ID)
+	for this.current.Kind == TOKEN_DOT {
+		this.eatToken(TOKEN_DOT)
+		this.eatToken(TOKEN_ID)
+	}
 	//带参数的注解
 	if this.current.Kind == TOKEN_LPAREN {
 		this.eatToken(TOKEN_LPAREN)

@@ -98,15 +98,15 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		}
 
 		//处理Extends
-		if cc.Extends != "" {
-			var tp = cc.Extends
-			im := this.currentFile.GetImport(tp)
-			if im != nil {
-				tp = im.GetPack() + "." + cc.Extends
-			}
+		if cc.Extends != nil {
+			//var tp = cc.Extends
+			//im := this.currentFile.GetImport(tp)
+			//if im != nil {
+			//	tp = im.GetPack() + "." + cc.Extends
+			//}
 			Extends := &gast.Field{
 				Doc:     nil,
-				Type:    gast.NewIdent(tp),
+				Type:    this.transType(cc.Extends),
 				Tag:     nil,
 				Comment: nil,
 			}

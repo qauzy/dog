@@ -12,7 +12,8 @@ type FieldFunc func(string) ast.Field
 //
 // return:
 func (this *Parser) parseClassDecl() (cl ast.Class) {
-	var id, extends string
+	var id string
+	var extends ast.Exp
 
 	//类访问权限修饰符
 	var access int
@@ -78,8 +79,7 @@ func (this *Parser) parseClassDecl() (cl ast.Class) {
 	//处理extends
 	if this.current.Kind == TOKEN_EXTENDS {
 		this.eatToken(TOKEN_EXTENDS)
-		extends = this.current.Lexeme
-		this.parseType()
+		extends = this.parseType()
 	}
 
 	//处理implements

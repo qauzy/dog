@@ -265,7 +265,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				results.List = append(results.List, ret)
 			}
 
-			if this.currentMethod.IsThrows() {
+			if this.currentMethod.IsThrows() || cfg.AddErrReruen {
 				results.List = append(results.List, this.getErrRet())
 			}
 

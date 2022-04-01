@@ -339,7 +339,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 					Y:     call.Args[3],
 				}
 				call.Args = call.Args[:3]
-				call.Fun = gast.NewIdent("core.SetNX")
+				call.Fun = gast.NewIdent("redis.SetNX")
 			} else if set, ok := call.Fun.(*gast.SelectorExpr); ok && (set.Sel.Name == "Set") {
 				if OpsForValueC, ok := set.X.(*gast.CallExpr); ok {
 					if OpsForValue, ok := OpsForValueC.Fun.(*gast.SelectorExpr); ok && (OpsForValue.Sel.Name == "OpsForValue") {
@@ -357,7 +357,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 							Y:     call.Args[3],
 						}
 						call.Args = call.Args[:3]
-						call.Fun = gast.NewIdent("core.SetExpireKV")
+						call.Fun = gast.NewIdent("redis.SetExpireKV")
 					}
 				}
 			}
@@ -369,7 +369,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 						args = append(args, gast.NewIdent("true"))
 						args = append(args, call.Args...)
 						call.Args = args
-						call.Fun = gast.NewIdent("core.GetKey")
+						call.Fun = gast.NewIdent("redis.GetKey")
 					}
 				}
 			} else if get, ok := call.Fun.(*gast.SelectorExpr); ok && (get.Sel.Name == "HasKey") {
@@ -379,14 +379,14 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 						args = append(args, gast.NewIdent("true"))
 						args = append(args, call.Args...)
 						call.Args = args
-						call.Fun = gast.NewIdent("core.KeyExist")
+						call.Fun = gast.NewIdent("redis.KeyExist")
 					}
 				} else if redisTemplate, ok := get.X.(*gast.Ident); ok && (redisTemplate.Name == "RedisTemplate") {
 					var args []gast.Expr
 					args = append(args, gast.NewIdent("true"))
 					args = append(args, call.Args...)
 					call.Args = args
-					call.Fun = gast.NewIdent("core.KeyExist")
+					call.Fun = gast.NewIdent("redis.KeyExist")
 				}
 			}
 		}
