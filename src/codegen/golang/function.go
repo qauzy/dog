@@ -9,14 +9,43 @@ import (
 	"go/token"
 )
 
-func (this *Translation) constructBuilderFunc(fi ast.Field) {
+func (this *Translation) getClassTpeExpr() gast.Expr {
+	if this.currentClass == nil {
+		return nil
+	}
 
+	var clsType gast.Expr = &gast.Ident{
+		NamePos: 0,
+		Name:    this.currentClass.GetName(),
+		Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
+	}
+
+	//处理接收对象的泛型
+	if this.currentClass.ListGeneric() != nil {
+		var indexListExpr = &gast.IndexListExpr{
+			X:       clsType,
+			Lbrack:  0,
+			Indices: nil,
+			Rbrack:  0,
+		}
+		for _, vv := range this.currentClass.ListGeneric() {
+			indexListExpr.Indices = append(indexListExpr.Indices, gast.NewIdent(vv.Name))
+		}
+		clsType = indexListExpr
+	}
+
+	return clsType
 }
 
 func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 	if !cfg.ConstructFieldFunc {
 		return
 	}
+	var clsType = this.getClassTpeExpr()
+	if clsType == nil {
+		return
+	}
+
 	var recv *gast.FieldList
 	//处理类接收
 	recv = &gast.FieldList{
@@ -26,13 +55,9 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 	}
 
 	recvFi := &gast.Field{
-		Doc:   nil,
-		Names: []*gast.Ident{gast.NewIdent("this")},
-		Type: &gast.StarExpr{X: &gast.Ident{
-			NamePos: 0,
-			Name:    this.currentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-		}},
+		Doc:     nil,
+		Names:   []*gast.Ident{gast.NewIdent("this")},
+		Type:    &gast.StarExpr{X: clsType},
 		Tag:     nil,
 		Comment: nil,
 	}
@@ -76,13 +101,9 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 	}
 
 	ret := &gast.Field{
-		Doc:   nil,
-		Names: []*gast.Ident{gast.NewIdent("result")},
-		Type: &gast.StarExpr{X: &gast.Ident{
-			NamePos: 0,
-			Name:    this.currentClass.GetName(),
-			Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-		}},
+		Doc:     nil,
+		Names:   []*gast.Ident{gast.NewIdent("result")},
+		Type:    &gast.StarExpr{X: clsType},
 		Tag:     nil,
 		Comment: nil,
 	}
@@ -176,7 +197,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 
 		for _, p := range method.Formals {
 			pa := this.transField(p)
-			_, ok := pa.Type.(*gast.SelectorExpr)
+			_, ok = pa.Type.(*gast.SelectorExpr)
 			if ok && cfg.StarClassTypeParam {
 				pa.Type = &gast.StarExpr{
 					Star: 0,
@@ -197,6 +218,9 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			List:   nil,
 			Rbrace: 0,
 		}
+		//代表类的描述信息
+		var tp gast.Expr = this.getClassTpeExpr()
+
 		//处理类接收
 		if !fi.IsConstruct() && !fi.IsStatic() {
 			//处理类接收
@@ -204,31 +228,6 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Opening: 0,
 				List:    nil,
 				Closing: 0,
-			}
-			//处理泛型
-			var tp gast.Expr
-			if len(this.currentClass.ListGeneric()) > 0 {
-				gnTp := &gast.IndexListExpr{
-					X: &gast.Ident{
-						NamePos: 0,
-						Name:    this.currentClass.GetName(),
-						Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-					},
-					Lbrack:  0,
-					Indices: nil,
-					Rbrack:  0,
-				}
-				for _, gnic := range this.currentClass.ListGeneric() {
-					gnTp.Indices = append(gnTp.Indices, gast.NewIdent(gnic.Name))
-				}
-
-				tp = gnTp
-			} else {
-				tp = &gast.Ident{
-					NamePos: 0,
-					Name:    this.currentClass.GetName(),
-					Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-				}
 			}
 
 			gfi := &gast.Field{
@@ -252,7 +251,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Tag:     nil,
 				Comment: nil,
 			}
-			_, ok := ret.Type.(*gast.SelectorExpr)
+			_, ok = ret.Type.(*gast.SelectorExpr)
 			if ok && cfg.StarClassTypeParam {
 				ret.Type = &gast.StarExpr{
 					Star: 0,
@@ -283,7 +282,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Rparen:   0,
 			}
 
-			call.Args = append(call.Args, gast.NewIdent(this.currentClass.GetName()))
+			call.Args = append(call.Args, tp)
 			init = &gast.AssignStmt{
 				Lhs:    []gast.Expr{gast.NewIdent("this")},
 				TokPos: 0,
@@ -295,13 +294,9 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 
 			//处理返回值
 			ret := &gast.Field{
-				Doc:   nil,
-				Names: []*gast.Ident{gast.NewIdent("this")},
-				Type: &gast.StarExpr{X: &gast.Ident{
-					NamePos: 0,
-					Name:    this.currentClass.GetName(),
-					Obj:     gast.NewObj(gast.Typ, this.currentClass.GetName()),
-				}},
+				Doc:     nil,
+				Names:   []*gast.Ident{gast.NewIdent("this")},
+				Type:    &gast.StarExpr{X: tp},
 				Tag:     nil,
 				Comment: nil,
 			}

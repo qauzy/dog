@@ -36,12 +36,14 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 			Tag:     nil,
 			Comment: nil,
 		}
-
-		tag := &gast.BasicLit{
-			Kind:  token.STRING,
-			Value: fmt.Sprintf("`gorm:\"column:%v\" json:\"%v\"`", util.SnakeString(field.Name.Name), field.Name.Name),
+		if cfg.TagGorm {
+			tag := &gast.BasicLit{
+				Kind:  token.STRING,
+				Value: fmt.Sprintf("`gorm:\"column:%v\" json:\"%v\"`", util.SnakeString(field.Name.Name), field.Name.Name),
+			}
+			gfi.Tag = tag
 		}
-		gfi.Tag = tag
+
 	}
 	return
 }
@@ -315,6 +317,8 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		}
 	case *ast.Boolean:
 		return gast.NewIdent("bool")
+	case *ast.Char:
+		return gast.NewIdent("byte")
 	case *ast.Byte:
 		return gast.NewIdent("byte")
 	case *ast.ByteArray:

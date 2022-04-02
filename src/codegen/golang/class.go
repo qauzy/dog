@@ -93,6 +93,8 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 				}
 
 				Type.Fields.List = append(Type.Fields.List, gfi)
+
+				//构建成员的Get,Set函数
 				this.constructFieldFunc(gfi)
 			}
 		}
@@ -132,6 +134,10 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 		for _, m := range cc.Methods {
 			gmeth := this.transFunc(m)
+
+			if m.IsConstruct() && len(cc.Generics) > 0 {
+				gmeth.Type.TypeParams = tpList
+			}
 			this.GolangFile.Decls = append(this.GolangFile.Decls, gmeth)
 		}
 
