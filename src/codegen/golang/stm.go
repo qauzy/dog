@@ -6,7 +6,7 @@ import (
 	"dog/parser"
 	"fmt"
 	log "github.com/corgi-kx/logcustom"
-	"github.com/xwb1989/sqlparser"
+	"github.com/qauzy/sqlparser"
 	gast "go/ast"
 	"go/token"
 	"reflect"
@@ -668,10 +668,7 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		return lstm
 	case *ast.Query:
-		sqlStm := this.transSQl(v.SQL)
-		if sqlStm != nil {
-			return sqlStm
-		}
+
 		var args string
 		for idx, arg := range this.currentMethod.ListFormal() {
 			args += ","
@@ -682,6 +679,12 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				v.SQL = strings.Replace(v.SQL, "?"+strconv.Itoa(idx+1), "?", 1)
 			}
 		}
+
+		sqlStm := this.transSQl(v.SQL, args)
+		if sqlStm != nil {
+			return sqlStm
+		}
+
 		exe := `
 	//FIXME 非原生sql,需要处理
 	eng := this.DBWrite().Exec(` + v.SQL + args + `)
@@ -695,11 +698,13 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 	return
 }
-func (this *Translation) transSQl(sql string) (stmt gast.Stmt) {
+func (this *Translation) transSQl(sql string, args string) (stmt gast.Stmt) {
 	sql = strings.Trim(sql, "\"")
 	stm, err := sqlparser.Parse(sql)
 	if err != nil {
+
 		log.Errorf("Query=%v,err=%v", sql, err)
+		//time.Sleep(time.Second * 3)
 	}
 
 	switch st := stm.(type) {
@@ -709,15 +714,7 @@ func (this *Translation) transSQl(sql string) (stmt gast.Stmt) {
 
 		exe = exe + fmt.Sprintf(".Select(\"%v\")", sqlparser.String(st.SelectExprs))
 		if st.Where != nil {
-			var args string
 			var sql = sqlparser.String(st.Where.Expr)
-			for idx, arg := range this.currentMethod.ListFormal() {
-				args += ","
-				args += arg.GetName()
-				sql = strings.Replace(sql, ":"+arg.GetName(), "?", -1)
-				sql = strings.Replace(sql, "?"+strconv.Itoa(idx+1), "?", 1)
-			}
-
 			exe = exe + fmt.Sprintf(".Where(\"%v\"%v)", sql, args)
 		}
 
@@ -732,7 +729,14 @@ func (this *Translation) transSQl(sql string) (stmt gast.Stmt) {
 			exe = exe + fmt.Sprintf(".Limit(%v)", sqlparser.String(st.Limit.Rowcount))
 		}
 		if st.OrderBy != nil {
-			exe = exe + fmt.Sprintf(".Order(%v)", sqlparser.String(st.OrderBy))
+			var ors string
+			for _, vv := range st.OrderBy {
+				if ors != "" {
+					ors += ","
+				}
+				ors += sqlparser.String(vv)
+			}
+			exe = exe + fmt.Sprintf(".Order(\"%v\")", ors)
 		}
 		exe = exe + ".Find(&result)"
 		exe += `

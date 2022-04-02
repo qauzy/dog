@@ -6,8 +6,8 @@ require (
 	github.com/corgi-kx/logcustom v0.0.0-20191226094333-f56d55ec7426
 	github.com/jinzhu/gorm v1.9.16
 	github.com/pingcap/parser v0.0.0-20200623164729-3a18f1e5dceb
+	github.com/qauzy/sqlparser v0.0.0-20220402060031-8931563e881d
 	github.com/stretchr/testify v1.7.0
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 	go.uber.org/zap v1.15.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
