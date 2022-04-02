@@ -668,18 +668,10 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 		}
 		return lstm
 	case *ast.Query:
-		stm, err := sqlparser.Parse(v.SQL)
-		if err != nil {
-			log.Errorf("Query=%v", err)
+		sqlStm := this.transSQl(v.SQL)
+		if sqlStm != nil {
+			return sqlStm
 		}
-
-		// Otherwise do something with stmt
-		switch stm := stm.(type) {
-		case *sqlparser.Select:
-			_ = stm
-		case *sqlparser.Insert:
-		}
-
 		var args string
 		for idx, arg := range this.currentMethod.ListFormal() {
 			args += ","
@@ -703,26 +695,64 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 	return
 }
-func (this *Translation) transSQl(sql string) (stmt *gast.Stmt) {
+func (this *Translation) transSQl(sql string) (stmt gast.Stmt) {
+	sql = strings.Trim(sql, "\"")
 	stm, err := sqlparser.Parse(sql)
 	if err != nil {
-		log.Errorf("Query=%v", err)
+		log.Errorf("Query=%v,err=%v", sql, err)
 	}
-	exe := `eng := this.DBWrite()`
+
 	switch st := stm.(type) {
 	case *sqlparser.Select:
-		exe = exe + fmt.Sprintf(".Table(%v)", sqlparser.String(st.From))
+		exe := `eng := this.DBWrite()`
+		exe = exe + fmt.Sprintf(".Table(\"%v\")", sqlparser.String(st.From))
 
-		exe = exe + fmt.Sprintf(".Select(%v)", sqlparser.String(st.SelectExprs))
+		exe = exe + fmt.Sprintf(".Select(\"%v\")", sqlparser.String(st.SelectExprs))
+		if st.Where != nil {
+			var args string
+			var sql = sqlparser.String(st.Where.Expr)
+			for idx, arg := range this.currentMethod.ListFormal() {
+				args += ","
+				args += arg.GetName()
+				sql = strings.Replace(sql, ":"+arg.GetName(), "?", -1)
+				sql = strings.Replace(sql, "?"+strconv.Itoa(idx+1), "?", 1)
+			}
 
-		exe = exe + fmt.Sprintf(".Group(%v)", sqlparser.String(st.GroupBy))
+			exe = exe + fmt.Sprintf(".Where(\"%v\"%v)", sql, args)
+		}
 
-		exe = exe + fmt.Sprintf(".Offset(%v)", sqlparser.String(st.Limit.Offset))
-		exe = exe + fmt.Sprintf(".Limit(%v)", sqlparser.String(st.Limit.Rowcount))
+		if st.GroupBy != nil {
+			exe = exe + fmt.Sprintf(".Group(\"%v\")", sqlparser.String(st.GroupBy))
+		}
 
-		exe = exe + fmt.Sprintf(".Order(%v)", sqlparser.String(st.OrderBy))
+		if st.Limit != nil && st.Limit.Offset != nil {
+			exe = exe + fmt.Sprintf(".Offset(%v)", sqlparser.String(st.Limit.Offset))
+		}
+		if st.Limit != nil && st.Limit.Rowcount != nil {
+			exe = exe + fmt.Sprintf(".Limit(%v)", sqlparser.String(st.Limit.Rowcount))
+		}
+		if st.OrderBy != nil {
+			exe = exe + fmt.Sprintf(".Order(%v)", sqlparser.String(st.OrderBy))
+		}
+		exe = exe + ".Find(&result)"
+		exe += `
+	err = eng.Error`
+
+		stmt = &gast.ExprStmt{X: gast.NewIdent(exe)}
+		return stmt
 
 	case *sqlparser.Insert:
+
+	case *sqlparser.Update:
+		//exe := `eng := this.DBWrite()`
+		//exe = exe + fmt.Sprintf(".Table(\"%v\")", sqlparser.String(st.TableExprs))
+		//if st.Where != nil {
+		//	exe = exe + fmt.Sprintf(".Where(\"%v\")", sqlparser.String(st.Where))
+		//}
+		//if st.Exprs != nil {
+		//	exe = exe + fmt.Sprintf(".Where(\"%v\")", sqlparser.String(st.Exprs))
+		//}
+
 	}
 
 	return stmt
