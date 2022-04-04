@@ -18,6 +18,11 @@ import (
 // return:
 func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 	log.Infof("解析类:%v", c.GetName())
+	if cfg.OneFold {
+		this.PkgName = strings.Replace(c.GetName(), "Controller", "", -1)
+		this.GolangFile.Name.Name = strings.Replace(c.GetName(), "Controller", "", -1)
+	}
+
 	this.currentClass = c
 	this.Push(c)
 	this.classStack.Push(c)
@@ -101,11 +106,7 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 		//处理Extends
 		if cc.Extends != nil {
-			//var tp = cc.Extends
-			//im := this.currentFile.GetImport(tp)
-			//if im != nil {
-			//	tp = im.GetPack() + "." + cc.Extends
-			//}
+
 			Extends := &gast.Field{
 				Doc:     nil,
 				Type:    this.transType(cc.Extends),

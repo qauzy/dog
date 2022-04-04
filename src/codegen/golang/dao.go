@@ -135,7 +135,7 @@ func (this *adminAccessLogDao) FindAll(qp *types.QueryParam) (result []*entity.A
 `
 	fn = this.getFunc(src)
 	fn.Recv.List[0].Type = gast.NewIdent("*" + util.DeCapitalize(c.GetName()))
-	fn.Type.Results.List[0].Type = gast.NewIdent("[]*entity." + strings.Replace(c.GetName(), "Dao", "", 1))
+	fn.Type.Results.List[0].Type = gast.NewIdent("arraylist.List[*entity." + strings.Replace(c.GetName(), "Dao", "", 1) + "]")
 	return
 }
 

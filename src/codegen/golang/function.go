@@ -196,7 +196,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 		}
 
 		for _, p := range method.Formals {
-			pa := this.transField(p)
+			pa := this.transFormals(p)
 			_, ok = pa.Type.(*gast.SelectorExpr)
 			if ok && cfg.StarClassTypeParam {
 				pa.Type = &gast.StarExpr{
@@ -219,7 +219,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			Rbrace: 0,
 		}
 		//代表类的描述信息
-		var tp gast.Expr = this.getClassTpeExpr()
+		var tp = this.getClassTpeExpr()
 
 		//处理类接收
 		if !fi.IsConstruct() && !fi.IsStatic() {

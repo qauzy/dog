@@ -47,6 +47,21 @@ func (this *Translation) transField(fi ast.Field) (gfi *gast.Field) {
 	}
 	return
 }
+func (this *Translation) transFormals(fi ast.Field) (gfi *gast.Field) {
+	this.currentField = fi
+	if field, ok := fi.(*ast.FieldSingle); ok {
+		//只处理成员变量
+		gfi = &gast.Field{
+			Doc:     nil,
+			Names:   []*gast.Ident{gast.NewIdent(util.GetNewId(field.Name.Name))},
+			Type:    this.transType(field.Tp),
+			Tag:     nil,
+			Comment: nil,
+		}
+
+	}
+	return
+}
 
 // 添加错误返回
 //
@@ -194,7 +209,8 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 		if this.currentFile != nil && (this.currentFile.GetImport(v.Name) != nil) {
 			pack := this.currentFile.GetImport(v.Name).GetPack()
 			if pack == "time" && (v.Name == "LocalDate" || v.Name == "LocalDateTime") {
-				pack = v.Name
+				pack = "xtime"
+				v.Name = "Xtime"
 			}
 			expr := &gast.SelectorExpr{
 				X:   gast.NewIdent(pack),
@@ -242,7 +258,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 			}
 		} else {
 			return &gast.IndexExpr{
-				X:      gast.NewIdent("*arraylist.List"),
+				X:      gast.NewIdent("arraylist.List"),
 				Lbrack: 0,
 				Index:  this.transType(v.Ele),
 				Rbrack: 0,
@@ -342,7 +358,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 				tps = append(tps, this.transType(vv))
 			}
 			return &gast.IndexListExpr{
-				X:       this.transExp(v.Name),
+				X:       this.transType(v.Name),
 				Lbrack:  0,
 				Indices: tps,
 				Rbrack:  0,
@@ -353,7 +369,7 @@ func (this *Translation) transType(t ast.Exp) (Type gast.Expr) {
 	case *ast.Float:
 		return gast.NewIdent("float64")
 	case *ast.Date:
-		return gast.NewIdent("time.Time")
+		return gast.NewIdent("xtime.Xtime")
 	case *ast.ArrayType:
 		return &gast.ArrayType{
 			Lbrack: 0,

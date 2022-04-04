@@ -4,11 +4,11 @@ var (
 	ConstructFieldFunc = false //构建Get,Set函数
 	TagGorm            = false //是否使用gorm标签
 	AllStatic          = false //所有变量和方法按静态类型处理
-	AppendContext      = false //添加*gin.Contex
+	AppendContext      = true  //添加*gin.Contex
 	FieldAccess        = false //Get,Set函数转换为直接成员访问
 	NoGeneric          = false //禁用泛型
 	DropResult         = false //去掉返回值
-	OneFold            = false //独立文件夹
+	OneFold            = true  //独立文件夹
 	AddErrReruen       = false //添加err返回
 	ConstructNewFunc   = false //是否构建构造New函数
 	Construct2New      = true  //是否转化调用无惨构造函数为调用new

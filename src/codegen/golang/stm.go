@@ -329,9 +329,9 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 
 			//处理 xxx.Stream().ForEach
 		} else if call, ok := expp.(*gast.CallExpr); ok && len(call.Args) == 1 {
-			if Delete, ok := call.Fun.(*gast.SelectorExpr); ok && (Delete.Sel.Name == "Delete") {
-				call.Fun = gast.NewIdent("core.DelKey")
-			}
+			//if Delete, ok := call.Fun.(*gast.SelectorExpr); ok && (Delete.Sel.Name == "Delete") {
+			//	call.Fun = gast.NewIdent("core.DelKey")
+			//}
 
 		} else if call, ok := expp.(*gast.CallExpr); ok && len(call.Args) == 4 {
 

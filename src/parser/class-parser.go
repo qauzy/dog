@@ -289,7 +289,6 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 				//类型
 				tmp.Tp = this.parseType()
 				this.assignType = tmp.Tp
-				//变量/函数名 --> 转为开头大写
 				tmp.Name = ast.NewIdent(this.current.Lexeme, this.Linenum)
 				if this.current.Kind == TOKEN_MAIN {
 					this.eatToken(TOKEN_MAIN)

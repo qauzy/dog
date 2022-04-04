@@ -55,8 +55,8 @@ func BigDecimalOp(n ast.Node) {
 			t.X = ast.NewIdent("decimal")
 			t.Sel.Name = "Zero"
 		} else if ok && sl.Name == "math" && t.Sel.Name == "BigDecimal" {
-			//t.X = ast.NewIdent("math")
-			//t.Sel.Name = "Decimal"
+			t.X = ast.NewIdent("math")
+			t.Sel.Name = "BigDecimal"
 		}
 
 	}

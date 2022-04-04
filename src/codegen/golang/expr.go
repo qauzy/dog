@@ -31,7 +31,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 	switch v := e.(type) {
 	case *ast.Ident:
 		//是类型标识符, 可能需要转换
-		if cfg.Capitalize && !cfg.AllStatic && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
+		if cfg.Capitalize && !cfg.AllStatic && nil != this.currentClass && nil != this.currentMethod && this.currentMethod.GetFormal(v.Name) == nil && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent("this." + util.Capitalize(v.Name))
 		} else if cfg.Capitalize && cfg.AllStatic && nil != this.currentClass && ((nil != this.currentClass.GetField(v.Name) && !this.currentClass.GetField(v.Name).IsStatic()) || (nil != this.currentClass.GetMethod(v.Name) && !this.currentClass.GetMethod(v.Name).IsStatic())) {
 			return gast.NewIdent(util.Capitalize(v.Name))
