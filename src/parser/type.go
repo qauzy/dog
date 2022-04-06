@@ -190,6 +190,10 @@ func (this *Parser) parseType() ast.Exp {
 		//Map.Entry
 		if this.current.Kind == TOKEN_DOT {
 			this.advance()
+			if this.current.Kind == TOKEN_CLASS {
+				this.advance()
+				return ast.NewIdent("Map.class", this.Linenum)
+			}
 			ast.SelectorExpr_new(ast.NewIdent(name, this.Linenum), this.current.Lexeme, this.Linenum)
 			name = this.current.Lexeme
 			this.eatToken(TOKEN_ID)

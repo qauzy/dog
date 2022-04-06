@@ -278,6 +278,11 @@ func (this *Parser) parseClassContext(classSingle *ast.ClassSingle) {
 						Name:     id,
 						TypeKind: ast.TYPE_CLASS,
 					}
+					if this.current.Kind == TOKEN_LBRACK {
+						this.eatToken(TOKEN_LBRACK)
+						this.eatToken(TOKEN_RBRACK)
+						tmp.Tp = &ast.ArrayType{Ele: tmp.Tp}
+					}
 
 					this.assignType = tmp.Tp
 					//变量/函数名

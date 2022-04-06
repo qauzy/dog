@@ -190,6 +190,10 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			log.Debugf("v.GetExtra() = %v", v.GetExtra())
 		}
 
+		if len(sp.Values) > 0 {
+			sp.Type = nil
+		}
+
 		d.Specs = append(d.Specs, sp)
 		stmt = &gast.DeclStmt{Decl: d}
 		return this.OptimitcStreamStm(stmt)

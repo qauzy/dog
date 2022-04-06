@@ -197,13 +197,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 
 		for _, p := range method.Formals {
 			pa := this.transFormals(p)
-			_, ok = pa.Type.(*gast.SelectorExpr)
-			if ok && cfg.StarClassTypeParam {
-				pa.Type = &gast.StarExpr{
-					Star: 0,
-					X:    pa.Type,
-				}
-			}
+
 			params.List = append(params.List, pa)
 		}
 		//处理返回值

@@ -155,7 +155,7 @@ func NewBusinessAuthApplyService(BusinessAuthApplyDao *dao.BusinessAuthApplyDao)
 	fn.Name = gast.NewIdent("New" + c.GetName())
 	fn.Type.Params.List = nil
 	for _, fi := range c.ListFields() {
-		param := this.transField(fi)
+		param := this.transFormals(fi)
 		//参数小写
 		for _, v := range param.Names {
 			v.Name = util.DeCapitalize(v.Name)

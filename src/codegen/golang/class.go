@@ -105,7 +105,7 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		}
 
 		//处理Extends
-		if cc.Extends != nil {
+		if cc.Extends != nil && c.GetType() != ast.ENUM_TYPE {
 
 			Extends := &gast.Field{
 				Doc:     nil,
@@ -129,8 +129,20 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 			//枚举序号获取函数
 			or := this.getOrdinalFN(c)
-
 			this.GolangFile.Decls = append(this.GolangFile.Decls, or)
+
+			val := this.getValuelFN(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, val)
+
+			sc := this.getScanFN(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, sc)
+
+			mj := this.getMarshalJSONFN(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, mj)
+
+			uj := this.getUnmarshalJSONFN(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, uj)
+
 		}
 
 		for _, m := range cc.Methods {
@@ -164,6 +176,130 @@ func (this *######) Ordinal() (result int) {
 
 	return
 }
+func (this *Translation) getValuelFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *######) Value() (driver.Value, error)  {
+		return this.Ordinal(),nil
+}`
+	src = strings.Replace(src, "######", c.GetName(), 1)
+	fn = this.getFunc(src)
+
+	return
+}
+func (this *Translation) getScanFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *######) Scan(v interface{}) error  {
+	switch vt := v.(type) {
+	case int:
+		this.ordinal = vt
+		switch vt {
+
+		}
+	default:
+		this = nil
+	}
+	return nil
+}`
+	src = strings.Replace(src, "######", c.GetName(), 1)
+	fn = this.getFunc(src)
+
+	if len(fn.Body.List) > 0 {
+
+		if sw1, ok := fn.Body.List[0].(*gast.TypeSwitchStmt); ok {
+			if len(sw1.Body.List) == 2 {
+
+				if cl1, ok := sw1.Body.List[0].(*gast.CaseClause); ok {
+					if sw2, ok := cl1.Body[1].(*gast.SwitchStmt); ok {
+						for idx, fi := range c.ListFields() {
+							if sf, ok := fi.(*ast.FieldEnum); ok && len(sf.Values) >= 1 {
+								cause := &gast.CaseClause{
+									Case:  0,
+									List:  nil,
+									Colon: 0,
+									Body:  nil,
+								}
+								getStm := &gast.AssignStmt{
+									Lhs: []gast.Expr{gast.NewIdent("this.CnName")},
+									Tok: token.ASSIGN,
+									Rhs: []gast.Expr{this.transExp(sf.Values[0])},
+								}
+								cause.List = append(cause.List, gast.NewIdent(fmt.Sprintf("%v", idx+1)))
+								cause.Body = append(cause.Body, getStm)
+								sw2.Body.List = append(sw2.Body.List, cause)
+
+							}
+
+						}
+					}
+
+				}
+
+			}
+
+		}
+	}
+
+	return
+}
+
+func (this *Translation) getMarshalJSONFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *######) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%v", this.ordinal)), nil
+}`
+	src = strings.Replace(src, "######", c.GetName(), 1)
+	fn = this.getFunc(src)
+
+	return
+}
+func (this *Translation) getUnmarshalJSONFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func (this *######) UnmarshalJSON(data []byte) (err error) {
+	if data == nil || len(data) == 2 {
+		return
+	}
+	this.ordinal, err = strconv.Atoi(string(data))
+	if err != nil {
+		return
+	}
+	switch this.ordinal {
+
+	}
+
+}`
+	src = strings.Replace(src, "######", c.GetName(), 1)
+	fn = this.getFunc(src)
+	sw2 := &gast.SwitchStmt{
+		Switch: 0,
+		Init:   nil,
+		Tag:    gast.NewIdent("this.ordinal"),
+		Body:   &gast.BlockStmt{},
+	}
+
+	for idx, fi := range c.ListFields() {
+		if sf, ok := fi.(*ast.FieldEnum); ok && len(sf.Values) >= 1 {
+			cause := &gast.CaseClause{
+				Case:  0,
+				List:  nil,
+				Colon: 0,
+				Body:  nil,
+			}
+			getStm := &gast.AssignStmt{
+				Lhs: []gast.Expr{gast.NewIdent("this.CnName")},
+				Tok: token.ASSIGN,
+				Rhs: []gast.Expr{this.transExp(sf.Values[0])},
+			}
+			cause.List = append(cause.List, gast.NewIdent(fmt.Sprintf("%v", idx+1)))
+			cause.Body = append(cause.Body, getStm)
+			sw2.Body.List = append(sw2.Body.List, cause)
+
+		}
+
+	}
+	fn.Body.List = append(fn.Body.List, sw2)
+	fn.Body.List = append(fn.Body.List, &gast.ReturnStmt{})
+	return
+}
 
 // 枚举转换
 //
@@ -190,7 +326,7 @@ func (this *Translation) transEnum(c ast.Class) {
 			Rparen: 0,
 		}
 		this.GolangFile.Decls = append(this.GolangFile.Decls, v)
-		var enumIdx = 0
+		var enumIdx = 1
 		for idx, fi := range cc.Fields {
 			if fiEn, ok := fi.(*ast.FieldEnum); ok {
 				value := &gast.ValueSpec{
