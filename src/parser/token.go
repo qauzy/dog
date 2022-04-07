@@ -148,7 +148,7 @@ func initTokenMap() {
 	tokenMap["enum"] = TOKEN_ENUM
 
 	//自定义处理关键字
-	tokenMap["Assert"] = TOKEN_ASSERT
+	//tokenMap["Assert"] = TOKEN_ASSERT
 
 	tMap = make(map[int]string)
 

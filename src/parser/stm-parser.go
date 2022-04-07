@@ -27,8 +27,6 @@ func (this *Parser) parseStatement() ast.Stm {
 		fallthrough
 	case TOKEN_IS_TRUE:
 		fallthrough
-	case TOKEN_ASSERT:
-		return this.parseAssertExp()
 	case TOKEN_BREAK:
 		this.advance()
 		if this.current.Kind != TOKEN_SEMI {
@@ -109,6 +107,9 @@ func (this *Parser) parseStatement() ast.Stm {
 		//2 临时变量声明
 		//3 赋值语句左边表达式
 		//4 泛型类型声明
+		if this.current.Lexeme == "Assert" {
+			return this.parseAssertExp()
+		}
 		id := this.current.Lexeme
 		this.advance()
 		x := ast.NewIdent(id, this.Linenum)

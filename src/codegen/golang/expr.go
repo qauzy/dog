@@ -527,9 +527,9 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		} else {
 			call := &gast.CallExpr{
 				Fun: &gast.IndexListExpr{
-					X:       gast.NewIdent("hashset.New"),
+					X:       gast.NewIdent("hashmap.New"),
 					Lbrack:  0,
-					Indices: []gast.Expr{this.transType(v.Ele)},
+					Indices: []gast.Expr{this.transType(v.Key), this.transType(v.Ele)},
 					Rbrack:  0,
 				},
 				Lparen:   0,

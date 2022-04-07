@@ -533,6 +533,13 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 				Op:    token.EQL,
 				Y:     gast.NewIdent("\"\""),
 			}
+		case "notEmpty":
+			cond = &gast.BinaryExpr{
+				X:     cond,
+				OpPos: 0,
+				Op:    token.NEQ,
+				Y:     gast.NewIdent("\"\""),
+			}
 		default:
 			this.TranslationBug("Assert语句转换bug")
 		}

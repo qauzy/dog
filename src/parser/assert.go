@@ -4,10 +4,8 @@ import "dog/ast"
 
 //Assert.xxx
 func (this *Parser) parseAssertExp() ast.Stm {
-	if this.current.Kind == TOKEN_ASSERT {
-		this.eatToken(TOKEN_ASSERT)
-		this.eatToken(TOKEN_DOT)
-	}
+	this.eatToken(TOKEN_ID)
+	this.eatToken(TOKEN_DOT)
 	opt := this.current.Lexeme
 	this.advance()
 	this.eatToken(TOKEN_LPAREN)
