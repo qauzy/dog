@@ -64,7 +64,7 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 
 	recv.List = append(recv.List, recvFi)
 
-	//成员值设置函数
+	//member values setter function
 	params := &gast.FieldList{
 		Opening: 0,
 		List:    nil,
@@ -93,7 +93,7 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 	}
 	setBody.List = append(setBody.List, setRetStm)
 
-	//处理返回值
+	//return value
 	setResult := &gast.FieldList{
 		Opening: 0,
 		List:    nil,
@@ -110,7 +110,7 @@ func (this *Translation) constructFieldFunc(gfi *gast.Field) {
 
 	setResult.List = append(setResult.List, ret)
 
-	//函数声明
+	//function definition
 	setFun := &gast.FuncDecl{
 		Doc:  nil,
 		Recv: recv,
@@ -245,15 +245,18 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 				Tag:     nil,
 				Comment: nil,
 			}
+
+			//if type is SelectorExpr,add *
 			_, ok = ret.Type.(*gast.SelectorExpr)
-			if ok && cfg.StarClassTypeParam {
+			ident, ok1 := ret.Type.(*gast.Ident)
+			if (ok || (ok1 && this.currentClass != nil && ident.Name == this.currentClass.GetName())) && cfg.StarClassTypeParam {
 				ret.Type = &gast.StarExpr{
 					Star: 0,
 					X:    ret.Type,
 				}
 			}
 
-			//如果是void则没有返回值
+			//if return type is void,then no return
 			if ret.Type != nil {
 				results.List = append(results.List, ret)
 			}

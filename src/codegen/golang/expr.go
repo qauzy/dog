@@ -42,114 +42,70 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		}
 		//是类型标识符,可能需要转换
 		expr = gast.NewIdent(util.GetNewId(v.Name))
-	case *ast.Not:
-		expr = &gast.UnaryExpr{
-			OpPos: 0,
-			Op:    token.NOT,
-			X:     this.transExp(v.E),
-		}
-	case *ast.LOr:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.LOR,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.LAnd:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.LAND,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.And:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.AND,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Lt:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.LSS,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Le:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.LEQ,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Gt:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.GTR,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Ge:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.GEQ,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Eq:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.EQL,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Neq:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.NEQ,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Add:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.ADD,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Sub:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.SUB,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Times:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.MUL,
-			Y:     this.transExp(v.Right),
-		}
-	case *ast.Division:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.QUO,
-			Y:     this.transExp(v.Right),
-		}
-		return expr
-	case *ast.Remainder:
-		expr = &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    token.REM,
-			Y:     this.transExp(v.Right),
-		}
-		return expr
 	case *ast.This:
 		return gast.NewIdent("this")
+	case *ast.UnaryExpr:
+		var opt token.Token
+		switch v.Opt {
+		case "+":
+			opt = token.ADD
+		case "-":
+			opt = token.SUB
+		case "!":
+			opt = token.NOT
+		}
+		expr = &gast.UnaryExpr{
+			Op: opt,
+			X:  this.transExp(v.X),
+		}
+	case *ast.BinaryExpr:
+		var opt token.Token
+		switch v.Opt {
+		case ">>":
+			opt = token.SHR
+		case "<<":
+			opt = token.SHL
+		case "+":
+			opt = token.ADD
+		case "-":
+			opt = token.SUB
+		case ">":
+			opt = token.GTR
+		case ">=":
+			opt = token.GEQ
+		case "<":
+			opt = token.LSS
+		case "<=":
+			opt = token.LEQ
+		case "==":
+			opt = token.EQL
+		case "!=":
+			opt = token.NEQ
+		case "&&":
+			opt = token.LAND
+		case "||":
+			opt = token.LOR
+		case "*":
+			opt = token.MUL
+		case "/":
+			opt = token.QUO
+		case "%":
+			opt = token.REM
+		case "|":
+			opt = token.OR
+		case "&":
+			opt = token.AND
+		case "!":
+			opt = token.NOT
+		default:
+			this.TranslationBug(v)
+		}
+		return &gast.BinaryExpr{
+			X:     this.transExp(v.Left),
+			OpPos: 0,
+			Op:    opt,
+			Y:     this.transExp(v.Right),
+		}
 	case *ast.NewList:
 		if cfg.NoGeneric {
 			call := &gast.CallExpr{
@@ -491,22 +447,7 @@ func (this *Translation) transExp(e ast.Exp) (expr gast.Expr) {
 		return this.transFuncLit(v)
 	case *ast.Lambda:
 		return this.transLambda(v)
-	case *ast.BinaryExpr:
-		var opt token.Token
-		switch v.Opt {
-		case ">>":
-			opt = token.SHR
-		case "<<":
-			opt = token.SHL
-		default:
-			this.TranslationBug(v)
-		}
-		return &gast.BinaryExpr{
-			X:     this.transExp(v.Left),
-			OpPos: 0,
-			Op:    opt,
-			Y:     this.transExp(v.Right),
-		}
+
 	case *ast.NewHash:
 		if cfg.NoGeneric {
 			call := &gast.CallExpr{

@@ -969,7 +969,7 @@ func (this *Parser) parseTimeExp() ast.Exp {
 	if exp2 != nil {
 		switch opt {
 		case TOKEN_NOT:
-			return ast.Not_new(exp2, this.Linenum)
+			return ast.UnaryExpr_new(exp2, "!", this.Linenum)
 		case TOKEN_INCREMENT:
 			return ast.Increment_new(exp2, true, this.Linenum)
 		case TOKEN_DECREMENT:
@@ -1007,7 +1007,7 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 				this.advance()
 			}
 			right := this.parseTimeExp()
-			left = ast.Times_new(left, right, this.Linenum)
+			left = ast.Binary_new(left, right, "*", this.Linenum)
 		case TOKEN_QUO:
 			this.advance()
 			//去除注释
@@ -1015,7 +1015,7 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 				this.advance()
 			}
 			right := this.parseTimeExp()
-			left = ast.Division_new(left, right, this.Linenum)
+			left = ast.Binary_new(left, right, "/", this.Linenum)
 		case TOKEN_REM:
 			this.advance()
 			//去除注释
@@ -1023,7 +1023,7 @@ func (this *Parser) parseAddSubExp() ast.Exp {
 				this.advance()
 			}
 			right := this.parseTimeExp()
-			left = ast.Remainder_new(left, right, this.Linenum)
+			left = ast.Binary_new(left, right, "%", this.Linenum)
 
 		}
 
@@ -1067,7 +1067,7 @@ func (this *Parser) parseLtExp() ast.Exp {
 				this.advance()
 			}
 			right := this.parseSHLRExp()
-			left = ast.Add_new(left, right, this.Linenum)
+			left = ast.Binary_new(left, right, "+", this.Linenum)
 			for this.current.Kind == TOKEN_COMMENT {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
@@ -1080,7 +1080,7 @@ func (this *Parser) parseLtExp() ast.Exp {
 				this.advance()
 			}
 			right := this.parseSHLRExp()
-			left = ast.Sub_new(left, right, this.Linenum)
+			left = ast.Binary_new(left, right, "-", this.Linenum)
 			for this.current.Kind == TOKEN_COMMENT {
 				log.Debugf("--------->去除注释:%v", this.current.Lexeme)
 				this.advance()
@@ -1111,13 +1111,13 @@ func (this *Parser) parseEqExp() ast.Exp {
 		right := this.parseInstanceofExp()
 		switch opt {
 		case TOKEN_LT:
-			return ast.Lt_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, "<", this.Linenum)
 		case TOKEN_LE:
-			return ast.Le_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, "<=", this.Linenum)
 		case TOKEN_GT:
-			return ast.Gt_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, ">", this.Linenum)
 		case TOKEN_GE:
-			return ast.Ge_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, ">=", this.Linenum)
 
 		}
 	}
@@ -1136,9 +1136,9 @@ func (this *Parser) parseAndExp() ast.Exp {
 		right := this.parseEqExp()
 		switch opt {
 		case TOKEN_EQ:
-			return ast.Eq_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, "==", this.Linenum)
 		case TOKEN_NE:
-			return ast.Neq_new(left, right, this.Linenum)
+			return ast.Binary_new(left, right, "!=", this.Linenum)
 		}
 	}
 	return left
@@ -1152,7 +1152,7 @@ func (this *Parser) parseOrExp() ast.Exp {
 	for this.current.Kind == TOKEN_AND {
 		this.advance()
 		right := this.parseAndExp()
-		left = ast.And_new(left, right, this.Linenum)
+		left = ast.Binary_new(left, right, "&", this.Linenum)
 	}
 	return left
 }
@@ -1165,7 +1165,7 @@ func (this *Parser) parseLAndExp() ast.Exp {
 	for this.current.Kind == TOKEN_OR {
 		this.advance()
 		right := this.parseOrExp()
-		left = ast.Or_new(left, right, this.Linenum)
+		left = ast.Binary_new(left, right, "|", this.Linenum)
 	}
 	return left
 }
@@ -1179,7 +1179,7 @@ func (this *Parser) parseLOrExp() ast.Exp {
 		this.advance()
 		log.Debugf("=============================")
 		right := this.parseLAndExp()
-		left = ast.LAnd_new(left, right, this.Linenum)
+		left = ast.Binary_new(left, right, "&&", this.Linenum)
 	}
 	return left
 }
@@ -1193,7 +1193,7 @@ func (this *Parser) parseQuestionExp() ast.Exp {
 		log.Debugf("TOKEN_LOR")
 		this.advance()
 		right := this.parseLOrExp()
-		left = ast.LOr_new(left, right, this.Linenum)
+		left = ast.Binary_new(left, right, "||", this.Linenum)
 	}
 	return left
 }
