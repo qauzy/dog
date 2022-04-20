@@ -5,7 +5,6 @@ import (
 	"dog/cfg"
 	codegen_go "dog/codegen/golang"
 	"dog/control"
-
 	"dog/parser"
 	"dog/storage"
 	log "github.com/corgi-kx/logcustom"
@@ -22,7 +21,6 @@ func dog_Parser(filename string, buf []byte) ast.File {
 }
 
 func main() {
-
 	//log.SetLogDiscardLevel(log.Levelwarn)
 	args := os.Args[1:len(os.Args)]
 	control.CodeGen_base = control.Do_arg(args)

@@ -95,13 +95,8 @@ func (this *Translation) transStm(s ast.Stm) (stmt gast.Stmt) {
 			Comment: nil,
 		}
 
-		_, ok := sp.Type.(*gast.SelectorExpr)
-		if ok && cfg.StarClassTypeDecl {
-			sp.Type = &gast.StarExpr{
-				Star: 0,
-				X:    sp.Type,
-			}
-		}
+		sp.Type = this.checkStar(sp.Type)
+
 		if len(v.Names) == len(v.Values) && v.GetExtra() == nil {
 			if len(v.Values) == 1 {
 				//?语句,用if语句实现

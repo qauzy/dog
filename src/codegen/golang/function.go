@@ -4,7 +4,6 @@ import (
 	"dog/ast"
 	"dog/cfg"
 	"dog/util"
-	log "github.com/corgi-kx/logcustom"
 	gast "go/ast"
 	"go/token"
 )
@@ -247,14 +246,7 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			}
 
 			//if type is SelectorExpr,add *
-			_, ok = ret.Type.(*gast.SelectorExpr)
-			ident, ok1 := ret.Type.(*gast.Ident)
-			if (ok || (ok1 && this.currentClass != nil && ident.Name == this.currentClass.GetName())) && cfg.StarClassTypeParam {
-				ret.Type = &gast.StarExpr{
-					Star: 0,
-					X:    ret.Type,
-				}
-			}
+			ret.Type = this.checkStar(ret.Type)
 
 			//if return type is void,then no return
 			if ret.Type != nil {
@@ -270,7 +262,6 @@ func (this *Translation) transFunc(fi ast.Method) (fn *gast.FuncDecl) {
 			}
 
 		} else {
-			log.Infof(" ************ 处理构造函数 --->>,%v", method.GetName())
 			call := &gast.CallExpr{
 				Fun:      gast.NewIdent("new"),
 				Lparen:   0,

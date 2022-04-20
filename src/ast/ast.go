@@ -1311,25 +1311,6 @@ func (this *BinaryExpr) _exp() {
 
 /*}}}*/
 
-type This struct {
-	Exp_T
-}
-
-func This_new(line int) *This {
-	e := new(This)
-	e.LineNum = line
-	return e
-}
-
-func (this *This) accept(v Visitor) {
-	v.visit(this)
-}
-
-func (this *This) _exp() {
-}
-
-//Exp end/*}}}*/
-
 //Stm   /*{{{*/
 type Stm_T struct {
 	Container Container
@@ -2092,6 +2073,22 @@ func (this *Byte) _exp() {
 }
 
 /*}}}*/
+type This struct {
+	Exp_T
+}
+
+func This_new(line int) *This {
+	e := new(This)
+	e.LineNum = line
+	return e
+}
+
+func (this *This) accept(v Visitor) {
+	v.visit(this)
+}
+
+func (this *This) _exp() {
+}
 
 //Type.Bool /*{{{*/
 type Boolean struct {

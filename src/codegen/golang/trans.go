@@ -51,13 +51,9 @@ func (this *Translation) transFormals(fi ast.Field) (gfi *gast.Field) {
 	this.currentField = fi
 	if field, ok := fi.(*ast.FieldSingle); ok {
 		tp := this.transType(field.Tp)
-		_, ok = tp.(*gast.SelectorExpr)
-		if ok && cfg.StarClassTypeParam {
-			tp = &gast.StarExpr{
-				Star: 0,
-				X:    tp,
-			}
-		}
+
+		tp = this.checkStar(tp)
+
 		//只处理成员变量
 		gfi = &gast.Field{
 			Doc:     nil,

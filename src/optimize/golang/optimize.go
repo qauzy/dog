@@ -52,7 +52,7 @@ func BigDecimalOp(n ast.Node) {
 	case *ast.SelectorExpr:
 		sl, ok := t.X.(*ast.Ident)
 		if ok && sl.Name == "BigDecimal" && t.Sel.Name == "ZERO" {
-			t.X = ast.NewIdent("decimal")
+			t.X = ast.NewIdent("math")
 			t.Sel.Name = "Zero"
 		} else if ok && sl.Name == "math" && t.Sel.Name == "BigDecimal" {
 			t.X = ast.NewIdent("math")

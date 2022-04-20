@@ -87,15 +87,14 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 		for _, fi := range cc.Fields {
 			//FIXME 是否排除static
 
-			_, ok := fi.(*ast.FieldEnum)
+			_, ok = fi.(*ast.FieldEnum)
 			if !fi.IsStatic() && (cc.GetType() == ast.CLASS_TYPE || (cc.GetType() == ast.ENUM_TYPE && !ok)) {
 				if fi.GetName() == "SerialVersionUID" {
 					continue
 				}
+
 				gfi := this.transField(fi)
-				if _, ok := fi.GetDecType().(*ast.ClassType); ok {
-					gfi.Type = &gast.StarExpr{X: gfi.Type}
-				}
+				gfi.Type = this.checkStar(gfi.Type)
 
 				Type.Fields.List = append(Type.Fields.List, gfi)
 
@@ -143,6 +142,9 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 			uj := this.getUnmarshalJSONFN(c)
 			this.GolangFile.Decls = append(this.GolangFile.Decls, uj)
 
+			vals := this.getValuesFN(c)
+			this.GolangFile.Decls = append(this.GolangFile.Decls, vals)
+
 		}
 
 		for _, m := range cc.Methods {
@@ -163,6 +165,27 @@ func (this *Translation) transClass(c ast.Class) (cl *gast.GenDecl) {
 
 	}
 
+	return
+}
+
+func (this *Translation) getValuesFN(c ast.Class) (fn *gast.FuncDecl) {
+	src := `
+func Values() (result []######) {
+	return []######{%%%%%%}
+}`
+	src = strings.Replace(src, "######", c.GetName(), 2)
+	var elements string
+	for _, fi := range c.ListFields() {
+		if sf, ok := fi.(*ast.FieldEnum); ok {
+			if elements != "" {
+				elements += ","
+			}
+			elements += sf.Name
+		}
+
+	}
+	src = strings.Replace(src, "%%%%%%", elements, 1)
+	fn = this.getFunc(src)
 	return
 }
 
